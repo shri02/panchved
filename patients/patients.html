@@ -472,6 +472,80 @@
     </div>
   </div>
 
+  <!-- 4. Recommend Package Modal -->
+  <div class="modal-dialog recommend-modal-dialog" id="recommendPackageModal" role="dialog" aria-modal="true" aria-labelledby="recommendPackageModalTitle" aria-hidden="true">
+    <div class="modal-header">
+      <div class="recommend-modal-header-text">
+        <h3 class="modal-title" id="recommendPackageModalTitle">Recommend Package</h3>
+        <p class="modal-instruction-text" style="margin-top: 4px; margin-bottom: 0;">Select a health package to recommend to this patient</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="closeRecommendPackageModalBtn" aria-label="Close dialog">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <form id="recommendPackageForm" class="modal-body recommend-modal-body">
+      <input type="hidden" id="recPatientId">
+      <input type="hidden" id="recPatientPhone">
+      <input type="hidden" id="recSelectedPackageId">
+      <input type="hidden" id="recSelectedPackageName">
+
+      <!-- Patient Banner -->
+      <div class="appointment-patient-card rec-patient-card">
+        <div class="rec-patient-info">
+          <h4 class="patient-card-name" id="recPatientName">-</h4>
+          <p class="patient-card-package" id="recPatientMeta">-</p>
+        </div>
+        <span class="rec-patient-tag">Patient</span>
+      </div>
+
+      <!-- Search Box inside Modal -->
+      <div class="form-group rec-search-form-group">
+        <div class="rec-search-wrapper">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input type="text" id="recPackageSearchInput" class="form-input rec-search-input" placeholder="Search available packages..." aria-label="Search available packages">
+        </div>
+      </div>
+
+      <!-- Available Packages List -->
+      <div class="form-group">
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Available Health Packages</span>
+          <span class="rec-pkg-count-badge" id="recPkgCountBadge">0 packages</span>
+        </label>
+        <div class="rec-packages-list-container" id="recPackagesList" role="radiogroup" aria-label="Available Health Packages">
+          <div class="rec-loading-state" style="text-align: center; padding: 28px 16px; color: #64748b;">
+            <span class="spin-loader"></span> Loading available packages...
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor's Recommendation Note -->
+      <div class="form-group">
+        <label for="recDoctorNote" class="form-label">Recommendation Note (Optional)</label>
+        <textarea id="recDoctorNote" class="form-textarea" rows="2" placeholder="Clinical reasoning or specific instructions for this recommendation..."></textarea>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="recommend-modal-footer">
+        <button type="button" class="btn-cancel-recommend" id="cancelRecommendBtn">Cancel</button>
+        <button type="submit" class="btn-primary btn-confirm-recommend" id="confirmRecommendBtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg>
+          <span>Recommend Package</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="../shared/api_config.js"></script>
   <script src="../shared/dashboard.js"></script>

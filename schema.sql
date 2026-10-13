@@ -172,6 +172,33 @@ ON DUPLICATE KEY UPDATE `package_name` = VALUES(`package_name`), `price` = VALUE
 
 
 -- ----------------------------------------------------------------------------
+-- Table: recommended_packages (Packages specifically recommended by doctor for patient)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `recommended_packages` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `patient_id` INT(11) DEFAULT NULL,
+  `patient_phone` VARCHAR(20) DEFAULT NULL,
+  `package_id` INT(11) DEFAULT NULL,
+  `package_name` VARCHAR(150) NOT NULL,
+  `doctor_id` INT(11) DEFAULT NULL,
+  `doctor_name` VARCHAR(150) NOT NULL DEFAULT 'Dr. Nidhi Jha',
+  `recommendation_note` TEXT DEFAULT NULL,
+  `status` ENUM('Recommended', 'Accepted', 'Dismissed') NOT NULL DEFAULT 'Recommended',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_rec_patient` (`patient_id`),
+  KEY `idx_rec_phone` (`patient_phone`),
+  KEY `idx_rec_pkg` (`package_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sample Seed Data for Recommended Packages
+INSERT INTO `recommended_packages` (`id`, `patient_id`, `patient_phone`, `package_id`, `package_name`, `doctor_id`, `doctor_name`, `recommendation_note`, `status`) VALUES
+(1, 1, '9876543210', 2, 'Reset Your Hormones', 1, 'Dr. Nidhi Jha', 'Recommended based on your recent metabolic and hormonal assessment to restore endocrine balance.', 'Recommended'),
+(2, 1, '9876543210', 4, 'Work On Metabolism & Weight Rehab', 2, 'Dr. Rohit Mehra', 'Recommended for improving digestive fire (Agni) and postural core strengthening.', 'Recommended')
+ON DUPLICATE KEY UPDATE `recommendation_note` = VALUES(`recommendation_note`);
+
+
+-- ----------------------------------------------------------------------------
 -- Table: appointments
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `appointments` (

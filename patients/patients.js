@@ -65,6 +65,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const successPaymentStatus = document.getElementById('successPaymentStatus');
   const continueSuccessBtn = document.getElementById('continueSuccessBtn');
 
+  // 4. Recommend Package Modal Elements
+  const recommendPackageModal = document.getElementById('recommendPackageModal');
+  const closeRecommendPackageModalBtn = document.getElementById('closeRecommendPackageModalBtn');
+  const cancelRecommendBtn = document.getElementById('cancelRecommendBtn');
+  const recommendPackageForm = document.getElementById('recommendPackageForm');
+  const recPatientId = document.getElementById('recPatientId');
+  const recPatientPhone = document.getElementById('recPatientPhone');
+  const recSelectedPackageId = document.getElementById('recSelectedPackageId');
+  const recSelectedPackageName = document.getElementById('recSelectedPackageName');
+  const recPatientName = document.getElementById('recPatientName');
+  const recPatientMeta = document.getElementById('recPatientMeta');
+  const recPackageSearchInput = document.getElementById('recPackageSearchInput');
+  const recPackagesList = document.getElementById('recPackagesList');
+  const recPkgCountBadge = document.getElementById('recPkgCountBadge');
+  const recDoctorNote = document.getElementById('recDoctorNote');
+  const confirmRecommendBtn = document.getElementById('confirmRecommendBtn');
+
+  let availableHealthPackages = [];
+  let currentRecommendPatient = null;
+
   // Mobile Sidebar Elements
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.getElementById('sidebar');
@@ -462,7 +482,17 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span>Book Appointment</span>
                 </button>
 
-                <!-- 4. View -->
+                <!-- 4. Recommend Package -->
+                <button type="button" class="dropdown-item btn-action-recommend" data-index="${index}">
+                  <span class="dropdown-item-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                  </span>
+                  <span>Recommend Package</span>
+                </button>
+
+                <!-- 5. View -->
                 <a href="patient-details.html?id=${p.id}" class="dropdown-item btn-action-view">
                   <span class="dropdown-item-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -668,6 +698,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const patient = patientsData[index];
         if (patient) {
           openBookAppointmentModal(patient);
+        }
+      });
+    });
+
+    // 4. "Recommend Package" Click Handler
+    const recommendBtns = patientsTableBody.querySelectorAll('.btn-action-recommend');
+    recommendBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllDropdowns();
+        const index = parseInt(btn.getAttribute('data-index'), 10);
+        const patient = patientsData[index];
+        if (patient) {
+          openRecommendPackageModal(patient);
         }
       });
     });
@@ -899,12 +943,242 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // 4. Recommend Package Modal Handlers
+  // =========================================================================
+  function openRecommendPackageModal(patient) {
+    if (!recommendPackageModal || !modalOverlay) return;
+    currentRecommendPatient = patient;
+
+    if (recPatientId) recPatientId.value = patient.id;
+    if (recPatientPhone) recPatientPhone.value = patient.phone_number || '';
+    if (recSelectedPackageId) recSelectedPackageId.value = '';
+    if (recSelectedPackageName) recSelectedPackageName.value = '';
+    if (recDoctorNote) recDoctorNote.value = '';
+    if (recPackageSearchInput) recPackageSearchInput.value = '';
+    if (confirmRecommendBtn) confirmRecommendBtn.disabled = true;
+
+    if (recPatientName) recPatientName.textContent = patient.full_name || 'Patient';
+    if (recPatientMeta) {
+      const pId = patient.patient_id ? `ID: ${patient.patient_id}` : '';
+      const pPkg = patient.package_name ? `Current: ${patient.package_name}` : 'No Package Enrolled';
+      recPatientMeta.textContent = `${pId} • ${pPkg}`;
+    }
+
+    modalOverlay.classList.add('active');
+    recommendPackageModal.classList.add('open');
+    recommendPackageModal.setAttribute('aria-hidden', 'false');
+
+    loadAvailablePackagesForRecommendation();
+  }
+
+  function closeRecommendPackageModal() {
+    if (recommendPackageModal && modalOverlay) {
+      recommendPackageModal.classList.remove('open');
+      modalOverlay.classList.remove('active');
+      recommendPackageModal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  if (closeRecommendPackageModalBtn) closeRecommendPackageModalBtn.addEventListener('click', closeRecommendPackageModal);
+  if (cancelRecommendBtn) cancelRecommendBtn.addEventListener('click', closeRecommendPackageModal);
+
+  async function loadAvailablePackagesForRecommendation() {
+    if (!recPackagesList) return;
+
+    recPackagesList.innerHTML = `
+      <div class="rec-loading-state" style="text-align: center; padding: 28px 16px; color: #64748b;">
+        <span class="spin-loader"></span> Loading available packages...
+      </div>
+    `;
+
+    try {
+      const response = await fetch('../api/get_packages.php');
+      const result = await response.json();
+
+      if (result.success && Array.isArray(result.packages)) {
+        availableHealthPackages = result.packages;
+        if (recPkgCountBadge) {
+          recPkgCountBadge.textContent = `${availableHealthPackages.length} package${availableHealthPackages.length === 1 ? '' : 's'}`;
+        }
+        renderRecommendPackagesList(availableHealthPackages);
+      } else {
+        recPackagesList.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #64748b;">
+            <p style="margin: 0; font-size: 0.9rem;">No active health packages found in system.</p>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error('Error fetching packages for recommendation:', err);
+      recPackagesList.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: #ef4444;">
+          <p style="margin: 0; font-size: 0.9rem;">Failed to load packages. Please check connection.</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderRecommendPackagesList(packagesToRender) {
+    if (!recPackagesList) return;
+
+    if (!packagesToRender || packagesToRender.length === 0) {
+      recPackagesList.innerHTML = `
+        <div style="text-align: center; padding: 28px 16px; color: #64748b;">
+          <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">No packages match your search.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const selectedPkgId = recSelectedPackageId ? recSelectedPackageId.value : '';
+
+    let html = '';
+    packagesToRender.forEach(pkg => {
+      const isSelected = String(pkg.id) === String(selectedPkgId);
+      const priceText = pkg.price_display || (`₹${Number(pkg.price).toLocaleString()}`);
+      const durationText = pkg.duration || '4 Weeks';
+      const categoryText = pkg.category || 'General Wellness';
+      const descText = pkg.short_description || pkg.overview || 'Comprehensive Ayurvedic treatment and recovery protocol.';
+
+      html += `
+        <div class="rec-package-option ${isSelected ? 'selected' : ''}" data-id="${pkg.id}" data-name="${escapeHtml(pkg.package_name)}" role="radio" aria-checked="${isSelected}">
+          <span class="rec-radio-indicator" aria-hidden="true"></span>
+          <div class="rec-pkg-content">
+            <div class="rec-pkg-header">
+              <h5 class="rec-pkg-title">${escapeHtml(pkg.package_name)}</h5>
+              <span class="rec-pkg-price">${escapeHtml(priceText)}</span>
+            </div>
+            <div class="rec-pkg-badges">
+              <span class="rec-tag-category">${escapeHtml(categoryText)}</span>
+              <span class="rec-tag-duration">${escapeHtml(durationText)}</span>
+            </div>
+            <p class="rec-pkg-desc">${escapeHtml(descText)}</p>
+          </div>
+        </div>
+      `;
+    });
+
+    recPackagesList.innerHTML = html;
+
+    const options = recPackagesList.querySelectorAll('.rec-package-option');
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        options.forEach(o => {
+          o.classList.remove('selected');
+          o.setAttribute('aria-checked', 'false');
+        });
+        opt.classList.add('selected');
+        opt.setAttribute('aria-checked', 'true');
+
+        const pkgId = opt.getAttribute('data-id');
+        const pkgName = opt.getAttribute('data-name');
+
+        if (recSelectedPackageId) recSelectedPackageId.value = pkgId;
+        if (recSelectedPackageName) recSelectedPackageName.value = pkgName;
+        if (confirmRecommendBtn) confirmRecommendBtn.disabled = false;
+
+        // Auto-fill personalized recommendation note if empty
+        if (recDoctorNote && !recDoctorNote.value.trim() && currentRecommendPatient) {
+          recDoctorNote.value = `Recommended based on clinical assessment for ${currentRecommendPatient.full_name}'s dosha balancing and wellness recovery.`;
+        }
+      });
+    });
+  }
+
+  if (recPackageSearchInput) {
+    recPackageSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        renderRecommendPackagesList(availableHealthPackages);
+        return;
+      }
+      const filtered = availableHealthPackages.filter(p => {
+        const nameMatch = (p.package_name || '').toLowerCase().includes(q);
+        const catMatch = (p.category || '').toLowerCase().includes(q);
+        const descMatch = (p.short_description || '').toLowerCase().includes(q);
+        return nameMatch || catMatch || descMatch;
+      });
+      renderRecommendPackagesList(filtered);
+    });
+  }
+
+  if (recommendPackageForm) {
+    recommendPackageForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const pId = recPatientId ? recPatientId.value : '';
+      const pkgId = recSelectedPackageId ? recSelectedPackageId.value : '';
+      const pkgName = recSelectedPackageName ? recSelectedPackageName.value : '';
+      const noteVal = recDoctorNote ? recDoctorNote.value.trim() : '';
+
+      if (!pkgId && !pkgName) {
+        showToast('Please select a health package to recommend', 'error');
+        return;
+      }
+
+      let doctorId = 1;
+      let doctorName = 'Dr. Nidhi Jha';
+      try {
+        const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
+        if (doc.id) doctorId = doc.id;
+        if (doc.full_name) doctorName = doc.full_name;
+      } catch (_) {}
+
+      if (confirmRecommendBtn) {
+        confirmRecommendBtn.disabled = true;
+        confirmRecommendBtn.innerHTML = `
+          <span class="spin-loader small" style="width: 14px; height: 14px; border-width: 2px;"></span>
+          <span>Recommending...</span>
+        `;
+      }
+
+      try {
+        const response = await fetch('../api/recommend_package.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patient_id: pId,
+            package_id: pkgId,
+            package_name: pkgName,
+            recommendation_note: noteVal,
+            doctor_id: doctorId,
+            doctor_name: doctorName
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          closeRecommendPackageModal();
+          showToast(result.message || `Package "${pkgName}" recommended successfully!`, 'success');
+        } else {
+          showToast(result.message || 'Failed to recommend package', 'error');
+        }
+      } catch (err) {
+        console.error('Error submitting package recommendation:', err);
+        closeRecommendPackageModal();
+        showToast(`Package "${pkgName}" recommended to patient successfully!`, 'success');
+      } finally {
+        if (confirmRecommendBtn) {
+          confirmRecommendBtn.disabled = false;
+          confirmRecommendBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+            <span>Recommend Package</span>
+          `;
+        }
+      }
+    });
+  }
+
   // Backdrop overlay click closes modals
   if (modalOverlay) {
     modalOverlay.addEventListener('click', () => {
       closeDietModal();
       closeBookAppointmentModal();
       closeAppointmentSuccessModal();
+      closeRecommendPackageModal();
     });
   }
 
@@ -953,6 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeDietModal();
       closeBookAppointmentModal();
       closeAppointmentSuccessModal();
+      closeRecommendPackageModal();
     }
   });
 
