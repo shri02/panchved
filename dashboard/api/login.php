@@ -61,7 +61,43 @@ if (empty($phoneInput) || empty($passwordInput)) {
 
 $cleanPhoneNum = cleanPhone($phoneInput);
 
-// 1. Strictly look up doctor from `doctors` table by registered phone number (or email / doctorid)
+// 1. Check if user is an Admin or Patient attempting to access the Doctor portal
+$userQuery = "SELECT id, username, full_name, email, phone_number, password_hash, role, status FROM `users` WHERE `phone_number` = ? OR `phone_number` = ? OR `email` = ? OR `username` = ? LIMIT 1";
+$stmtUser = mysqli_prepare($connection1, $userQuery);
+$userFromUsers = null;
+if ($stmtUser) {
+    mysqli_stmt_bind_param($stmtUser, "ssss", $phoneInput, $cleanPhoneNum, $phoneInput, $phoneInput);
+    mysqli_stmt_execute($stmtUser);
+    $userRes = mysqli_stmt_get_result($stmtUser);
+    $userFromUsers = mysqli_fetch_assoc($userRes);
+    mysqli_stmt_close($stmtUser);
+}
+
+if ($userFromUsers) {
+    $uRole = strtolower(trim((string)($userFromUsers['role'] ?? '')));
+    // Strictly reject Admin or Patient users from logging in to Doctor portal
+    if ($uRole === 'admin' || $uRole === 'super admin' || $uRole === 'patient') {
+        $pwMatch = password_verify($passwordInput, $userFromUsers['password_hash']) 
+            || ($userFromUsers['password_hash'] === md5($passwordInput)) 
+            || ($userFromUsers['password_hash'] === $passwordInput)
+            || ($passwordInput === 'admin123' && $uRole === 'admin');
+        if ($pwMatch) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied. ' . ucfirst($userFromUsers['role']) . ' credentials cannot be used to log in to the Doctor portal.'
+            ]);
+            exit();
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid phone number or password. No registered doctor found with this number.'
+            ]);
+            exit();
+        }
+    }
+}
+
+// 2. Look up doctor from `doctors` table by registered phone number, email or doctorid
 $docQuery = "SELECT * FROM `doctors` WHERE `phone_number` = ? OR `phone_number` = ? OR `email` = ? OR `doctorid` = ? LIMIT 1";
 $stmtDoc = mysqli_prepare($connection1, $docQuery);
 mysqli_stmt_bind_param($stmtDoc, "ssss", $phoneInput, $cleanPhoneNum, $phoneInput, $phoneInput);
@@ -70,19 +106,11 @@ $docRes = mysqli_stmt_get_result($stmtDoc);
 $doctor = mysqli_fetch_assoc($docRes);
 mysqli_stmt_close($stmtDoc);
 
-// If no doctor record found with this phone number
+// If no doctor record found directly in `doctors` table
 if (!$doctor) {
-    // Check if an admin user in `users` table is logging in
-    $userQuery = "SELECT * FROM `users` WHERE `phone_number` = ? OR `phone_number` = ? OR `email` = ? OR `username` = ? LIMIT 1";
-    $stmtUser = mysqli_prepare($connection1, $userQuery);
-    mysqli_stmt_bind_param($stmtUser, "ssss", $phoneInput, $cleanPhoneNum, $phoneInput, $phoneInput);
-    mysqli_stmt_execute($stmtUser);
-    $userRes = mysqli_stmt_get_result($stmtUser);
-    $user = mysqli_fetch_assoc($userRes);
-    mysqli_stmt_close($stmtUser);
-
-    if ($user) {
-        $pwMatch = password_verify($passwordInput, $user['password_hash']) || ($user['password_hash'] === $passwordInput);
+    // Only allow if user is specifically registered with role 'Doctor' in `users` table
+    if ($userFromUsers && strtolower(trim((string)($userFromUsers['role'] ?? ''))) === 'doctor') {
+        $pwMatch = password_verify($passwordInput, $userFromUsers['password_hash']) || ($userFromUsers['password_hash'] === $passwordInput);
         if (!$pwMatch) {
             echo json_encode([
                 'success' => false,
@@ -91,36 +119,36 @@ if (!$doctor) {
             exit();
         }
 
-        // Try to match linked doctor
-        $findDoc = mysqli_query($connection1, "SELECT * FROM `doctors` WHERE `email` = '" . mysqli_real_escape_string($connection1, $user['email']) . "' OR `phone_number` = '" . mysqli_real_escape_string($connection1, $user['phone_number']) . "' LIMIT 1");
+        // Try to match linked doctor record
+        $findDoc = mysqli_query($connection1, "SELECT * FROM `doctors` WHERE `email` = '" . mysqli_real_escape_string($connection1, $userFromUsers['email']) . "' OR `phone_number` = '" . mysqli_real_escape_string($connection1, $userFromUsers['phone_number']) . "' LIMIT 1");
         if ($findDoc && mysqli_num_rows($findDoc) > 0) {
             $doctor = mysqli_fetch_assoc($findDoc);
         } else {
             $doctor = [
-                'id' => $user['id'],
-                'doctorid' => 'DOC' . str_pad($user['id'], 6, '0', STR_PAD_LEFT),
-                'full_name' => $user['full_name'],
+                'id' => $userFromUsers['id'],
+                'doctorid' => 'DOC' . str_pad($userFromUsers['id'], 6, '0', STR_PAD_LEFT),
+                'full_name' => $userFromUsers['full_name'],
                 'date_of_birth' => '1990-01-01',
-                'phone_number' => $user['phone_number'],
+                'phone_number' => $userFromUsers['phone_number'],
                 'gender' => 'Male',
-                'email' => $user['email'],
+                'email' => $userFromUsers['email'],
                 'years_of_experience' => 5,
                 'expertise' => 'Doctor',
                 'area' => 'General Practice',
                 'registration_number' => 'REG1234',
                 'hpr_registration_number' => 'HPR1234',
-                'status' => $user['status'] ?? 'Active'
+                'status' => $userFromUsers['status'] ?? 'Active'
             ];
         }
     } else {
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid phone number. No registered doctor found with this number.'
+            'message' => 'Invalid phone number or password. No registered doctor found with this number.'
         ]);
         exit();
     }
 } else {
-    // 2. Doctor found in `doctors` table - check account status
+    // 3. Doctor found in `doctors` table - check account status
     if (isset($doctor['status']) && strtolower($doctor['status']) === 'inactive') {
         echo json_encode([
             'success' => false,
@@ -129,7 +157,7 @@ if (!$doctor) {
         exit();
     }
 
-    // 3. Strictly verify password against the `doctors` table password column
+    // Verify password against `doctors` password column and linked `users` table
     $storedPassword = (string)($doctor['password'] ?? '');
     $passwordValid = false;
 
@@ -141,7 +169,12 @@ if (!$doctor) {
         }
     }
 
-    // If password does not match, strictly throw an error
+    if (!$passwordValid && $userFromUsers && strtolower(trim((string)($userFromUsers['role'] ?? ''))) === 'doctor') {
+        if (password_verify($passwordInput, $userFromUsers['password_hash']) || $userFromUsers['password_hash'] === $passwordInput) {
+            $passwordValid = true;
+        }
+    }
+
     if (!$passwordValid) {
         echo json_encode([
             'success' => false,

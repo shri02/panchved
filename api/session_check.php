@@ -18,7 +18,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/database.php';
+$sRole = strtolower(trim((string)($_SESSION['role'] ?? 'doctor')));
+if ($sRole !== 'doctor' && !empty($_SESSION['role'])) {
+    echo json_encode([
+        'success' => false,
+        'logged_in' => false,
+        'message' => 'Access denied. Doctor session required.'
+    ]);
+    exit();
+}
 
 if (!empty($_SESSION['user_id']) || !empty($_SESSION['doctor_id'])) {
     $doctor = $_SESSION['doctor_profile'] ?? null;

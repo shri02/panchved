@@ -38,13 +38,22 @@
     getUser: function () {
       try {
         const u = localStorage.getItem('ocayur_user') || localStorage.getItem('panchved_user');
-        return u ? JSON.parse(u) : null;
+        if (!u) return null;
+        const parsed = JSON.parse(u);
+        const role = (parsed && parsed.role ? String(parsed.role).toLowerCase() : '');
+        if (role === 'admin' || role === 'super admin' || role === 'patient') {
+          return null;
+        }
+        return parsed;
       } catch (e) {
         return null;
       }
     },
     isLoggedIn: function () {
-      return !!(this.getDoctor() || this.getUser());
+      const doc = this.getDoctor();
+      if (doc) return true;
+      const u = this.getUser();
+      return !!(u && (String(u.role).toLowerCase() === 'doctor' || u.doctorid));
     },
     logout: async function () {
       try {
