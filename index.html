@@ -1,175 +1,290 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/favicon.png">
+  <head>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/favicon.png" />
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ocayur - Doctor Portal | Login</title>
-  <meta name="description" content="Login to Ocayur Doctor Portal - Ayurveda Lifestyle">
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="login-page">
-    <div class="login-wrapper">
-      
-      <!-- Brand Logo Section -->
-      <header class="brand-header">
-        <div class="logo-container">
-          <img 
-            src="assets/logo.svg" 
-            alt="Ocayur - Ayurveda Lifestyle" 
-            class="brand-logo-img"
-            width="170"
-            height="85"
-          >
-        </div>
-      </header>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ocayur - Doctor Portal | Login</title>
+    <meta
+      name="description"
+      content="Login to Ocayur Doctor Portal - Ayurveda Lifestyle"
+    />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="login-page">
+      <div class="login-wrapper">
+        <!-- Brand Logo Section -->
+        <header class="brand-header">
+          <div class="logo-container">
+            <img
+              src="assets/logo.svg"
+              alt="Ocayur - Ayurveda Lifestyle"
+              class="brand-logo-img"
+              width="170"
+              height="85"
+            />
+          </div>
+        </header>
 
-      <!-- Login Card Container -->
-      <section class="login-card" aria-labelledby="login-heading">
-        <h2 id="login-heading" class="card-title">Login</h2>
+        <!-- Login Card Container -->
+        <section class="login-card" aria-labelledby="login-heading">
+          <h2 id="login-heading" class="card-title">Login</h2>
 
-        <form id="loginForm" class="login-form" novalidate>
-          
-          <!-- Phone Number Input Field -->
-          <div class="form-group">
-            <label for="phoneNumber" class="field-label">
-              <span class="label-icon" aria-hidden="true">
-                <!-- Phone Icon -->
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-              </span>
-              <span class="label-text">Phone Number</span>
-              <span class="required-star" aria-hidden="true">*</span>
-            </label>
-            
-            <div class="input-container phone-input-container" id="phoneContainer">
-              <!-- Country Code Selector -->
-              <div class="country-code-selector" id="countrySelector" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="country-code-val" id="selectedCountryCode">+91</span>
-                <span class="dropdown-chevron" aria-hidden="true">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
+          <form id="loginForm" class="login-form" novalidate>
+            <!-- Phone Number Input Field -->
+            <div class="form-group">
+              <label for="phoneNumber" class="field-label">
+                <span class="label-icon" aria-hidden="true">
+                  <!-- Phone Icon -->
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+                    ></path>
                   </svg>
                 </span>
-                
-                <!-- Country Dropdown Menu -->
-                <ul class="country-dropdown-list" id="countryList" role="listbox" aria-label="Country Code Selection">
-                  <li role="option" class="active" data-code="+91">🇮🇳 India (+91)</li>
-                  <li role="option" data-code="+1">🇺🇸 USA (+1)</li>
-                  <li role="option" data-code="+44">🇬🇧 UK (+44)</li>
-                  <li role="option" data-code="+971">🇦🇪 UAE (+971)</li>
-                  <li role="option" data-code="+61">🇦🇺 Australia (+61)</li>
-                  <li role="option" data-code="+65">🇸🇬 Singapore (+65)</li>
-                </ul>
+                <span class="label-text">Phone Number</span>
+                <span class="required-star" aria-hidden="true">*</span>
+              </label>
+
+              <div
+                class="input-container phone-input-container"
+                id="phoneContainer"
+              >
+                <!-- Country Code Selector -->
+                <div
+                  class="country-code-selector"
+                  id="countrySelector"
+                  tabindex="0"
+                  role="button"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <span class="country-code-val" id="selectedCountryCode"
+                    >+91</span
+                  >
+                  <span class="dropdown-chevron" aria-hidden="true">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+
+                  <!-- Country Dropdown Menu -->
+                  <ul
+                    class="country-dropdown-list"
+                    id="countryList"
+                    role="listbox"
+                    aria-label="Country Code Selection"
+                  >
+                    <li role="option" class="active" data-code="+91">
+                      🇮🇳 India (+91)
+                    </li>
+                    <li role="option" data-code="+1">🇺🇸 USA (+1)</li>
+                    <li role="option" data-code="+44">🇬🇧 UK (+44)</li>
+                    <li role="option" data-code="+971">🇦🇪 UAE (+971)</li>
+                    <li role="option" data-code="+61">🇦🇺 Australia (+61)</li>
+                    <li role="option" data-code="+65">🇸🇬 Singapore (+65)</li>
+                  </ul>
+                </div>
+
+                <div class="field-divider" aria-hidden="true"></div>
+
+                <!-- Phone Number Input -->
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  class="field-input phone-input"
+                  placeholder="9876543210"
+                  value="9876543210"
+                  maxlength="10"
+                  autocomplete="tel-national"
+                  required
+                />
               </div>
+              <span class="error-message" id="phoneError" role="alert"></span>
+            </div>
 
-              <div class="field-divider" aria-hidden="true"></div>
+            <!-- Password Input Field -->
+            <div class="form-group">
+              <label for="password" class="field-label">
+                <span class="label-icon" aria-hidden="true">
+                  <!-- Lock Icon -->
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="11"
+                      width="18"
+                      height="11"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <span class="label-text">Password</span>
+                <span class="required-star" aria-hidden="true">*</span>
+              </label>
 
-              <!-- Phone Number Input -->
-              <input 
-                type="tel" 
-                id="phoneNumber" 
-                name="phoneNumber" 
-                class="field-input phone-input" 
-                placeholder="9876543210" 
-                value="9876543210"
-                maxlength="12" 
-                autocomplete="tel-national"
-                required
+              <div
+                class="input-container password-input-container"
+                id="passwordContainer"
+              >
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="field-input password-input"
+                  placeholder="••••••••"
+                  value="123456"
+                  autocomplete="current-password"
+                  required
+                />
+
+                <!-- Password Toggle Visibility Button -->
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  id="togglePasswordBtn"
+                  aria-label="Toggle password visibility"
+                  title="Show password"
+                >
+                  <!-- Eye Off Icon (Default when hidden) -->
+                  <svg
+                    class="eye-off-icon"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    ></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                  <!-- Eye On Icon (Shown when password revealed) -->
+                  <svg
+                    class="eye-on-icon hidden"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+              <span
+                class="error-message"
+                id="passwordError"
+                role="alert"
+              ></span>
+            </div>
+
+            <!-- Forgot Password Link -->
+            <div class="forgot-password-row">
+              <a
+                href="javascript:void(0)"
+                class="forgot-password-link"
+                id="forgotPasswordLink"
+                onclick="
+                  showToast('This feature will be available soon.', 'info');
+                  return false;
+                "
+                >Forgot Password</a
               >
             </div>
-            <span class="error-message" id="phoneError" role="alert"></span>
-          </div>
 
-          <!-- Password Input Field -->
-          <div class="form-group">
-            <label for="password" class="field-label">
-              <span class="label-icon" aria-hidden="true">
-                <!-- Lock Icon -->
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-              </span>
-              <span class="label-text">Password</span>
-              <span class="required-star" aria-hidden="true">*</span>
-            </label>
-            
-            <div class="input-container password-input-container" id="passwordContainer">
-              <input 
-                type="password" 
-                id="password" 
-                name="password" 
-                class="field-input password-input" 
-                placeholder="••••••••" 
-                value="123456"
-                autocomplete="current-password"
-                required
-              >
-              
-              <!-- Password Toggle Visibility Button -->
-              <button 
-                type="button" 
-                class="password-toggle-btn" 
-                id="togglePasswordBtn" 
-                aria-label="Toggle password visibility"
-                title="Show password"
-              >
-                <!-- Eye Off Icon (Default when hidden) -->
-                <svg class="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-                <!-- Eye On Icon (Shown when password revealed) -->
-                <svg class="eye-on-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-            </div>
-            <span class="error-message" id="passwordError" role="alert"></span>
-          </div>
+            <!-- Submit Button -->
+            <button type="submit" class="login-submit-btn" id="loginBtn">
+              <span class="btn-text">Login</span>
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+            </button>
 
-          <!-- Forgot Password Link -->
-          <div class="forgot-password-row">
-            <a href="javascript:void(0)" class="forgot-password-link" id="forgotPasswordLink" onclick="showToast('This feature will be available soon.', 'info'); return false;">Forgot Password</a>
-          </div>
+            <!-- Terms and Privacy Footer -->
+            <footer class="form-footer">
+              <p class="terms-text">
+                I agree to the
+                <a
+                  href="javascript:void(0)"
+                  class="footer-link"
+                  id="termsLink"
+                  onclick="
+                    showToast('This feature will be available soon.', 'info');
+                    return false;
+                  "
+                  >Terms &amp; Conditions</a
+                >
+                and
+                <a
+                  href="javascript:void(0)"
+                  class="footer-link"
+                  id="privacyLink"
+                  onclick="
+                    showToast('This feature will be available soon.', 'info');
+                    return false;
+                  "
+                  >Privacy Policy</a
+                >
+              </p>
+            </footer>
+          </form>
+        </section>
+      </div>
+    </main>
 
-          <!-- Submit Button -->
-          <button type="submit" class="login-submit-btn" id="loginBtn">
-            <span class="btn-text">Login</span>
-            <span class="btn-spinner hidden" aria-hidden="true"></span>
-          </button>
+    <!-- Notification Toast for feedback -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-          <!-- Terms and Privacy Footer -->
-          <footer class="form-footer">
-            <p class="terms-text">
-              I agree to the 
-              <a href="javascript:void(0)" class="footer-link" id="termsLink" onclick="showToast('This feature will be available soon.', 'info'); return false;">Terms &amp; Conditions</a> 
-              and 
-              <a href="javascript:void(0)" class="footer-link" id="privacyLink" onclick="showToast('This feature will be available soon.', 'info'); return false;">Privacy Policy</a>
-            </p>
-          </footer>
-
-        </form>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- Notification Toast for feedback -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
