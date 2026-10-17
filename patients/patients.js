@@ -503,7 +503,17 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span>Recommend Package</span>
                 </button>
 
-                <!-- 5. View -->
+                <!-- 5. Chat with Patient -->
+                <a href="chat.html?patient_id=${p.id}" class="dropdown-item btn-action-chat" title="Chat with ${escapeHtml(p.full_name)}">
+                  <span class="dropdown-item-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </span>
+                  <span>Chat</span>
+                </a>
+
+                <!-- 6. View -->
                 <a href="patient-details.html?id=${p.id}" class="dropdown-item btn-action-view">
                   <span class="dropdown-item-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
