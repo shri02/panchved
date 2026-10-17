@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
       qParams.append('action', 'patients_list');
       if (currentDoctorId > 0) qParams.append('doctor_id', currentDoctorId);
       if (currentDoctorName) qParams.append('doctor_name', currentDoctorName);
-      if (activePatientId > 0) qParams.append('patient_id', activePatientId);
+      if (activePatientId > 0) qParams.append('target_patient_id', activePatientId);
 
       const res = await fetch(`../api/chat.php?${qParams.toString()}`);
       const data = await res.json();
@@ -153,14 +153,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderPatientsList(allPatients);
 
-        // If active patient is not in list or default 1, set to first patient
-        const hasActive = allPatients.some(p => p.id === activePatientId);
-        if (!hasActive && allPatients.length > 0) {
-          activePatientId = allPatients[0].id;
-        }
+        if (allPatients.length > 0) {
+          // If active patient is not in list, set to first patient
+          const hasActive = allPatients.some(p => p.id === activePatientId);
+          if (!hasActive) {
+            activePatientId = allPatients[0].id;
+          }
 
-        // Load active conversation
-        loadChatThread(activePatientId);
+          // Load active conversation
+          loadChatThread(activePatientId);
+        } else {
+          // No patients
+          if (activePatientName) activePatientName.textContent = 'No Patients';
+          if (chatMessagesContainer) {
+            chatMessagesContainer.innerHTML = `
+              <div class="chat-empty-state">
+                <div class="chat-empty-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+                <h3 style="font-size: 1.05rem; color: #25231F; margin: 0 0 4px;">No Assigned Patients</h3>
+                <p style="font-size: 0.85rem; color: #5C564D; margin: 0;">You do not have any patient consultations or messages assigned to you yet.</p>
+              </div>
+            `;
+          }
+        }
+      } else if (!data.success) {
+        chatPatientsList.innerHTML = `
+          <li style="padding: 24px; text-align: center; color: #D32F2F; font-size: 0.85rem;">
+            ${escapeHtml(data.message || 'Failed to load patient conversations.')}
+          </li>
+        `;
       }
     } catch (err) {
       console.error('Error loading patients:', err);

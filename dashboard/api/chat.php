@@ -218,8 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $patientIdParam = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
 $action = trim($_GET['action'] ?? '');
 
-// If specific patient is selected
-if ($patientIdParam > 0) {
+// If specific patient is selected and action is not 'patients_list'
+if ($action !== 'patients_list' && $patientIdParam > 0) {
     // 2.1 Fetch Patient Details
     $patStmt = mysqli_prepare($connection1, "SELECT id, patient_id, full_name, phone_number, package_name, status, gender, age FROM patients WHERE id = ? LIMIT 1");
     mysqli_stmt_bind_param($patStmt, "i", $patientIdParam);
@@ -290,7 +290,7 @@ if ($patientIdParam > 0) {
 // STRICT: Only return patients related to this doctor (via chats, appointments, or packages)
 // ============================================================================
 $patientsList = [];
-$targetPatientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
+$targetPatientId = isset($_GET['target_patient_id']) ? (int)$_GET['target_patient_id'] : (isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0);
 $escapedDocName = mysqli_real_escape_string($connection1, $docInfo['full_name'] ?? '');
 
 $whereClauses = [];
