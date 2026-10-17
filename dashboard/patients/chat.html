@@ -159,10 +159,10 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="main-content">
+    <main class="main-content" style="height: 100vh; max-height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
       
       <!-- Top Page Header -->
-      <header class="content-header">
+      <header class="content-header" style="flex-shrink: 0; padding: 14px 32px 14px; min-height: 68px;">
         <div class="welcome-heading">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
             <a href="patients.html" style="color: #723F1E; text-decoration: none; font-weight: 600; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 4px;">
@@ -193,11 +193,11 @@
       </header>
 
       <!-- Dashboard Body Container (Handles proper desktop padding) -->
-      <div class="dashboard-body" style="padding-top: 16px;">
+      <div class="dashboard-body chat-dashboard-body" style="flex: 1; min-height: 0; padding: 12px 32px 18px; overflow: hidden; display: flex; flex-direction: column;">
         
         <!-- Chat Page Card Container -->
-        <div class="chat-page-container">
-          <div class="chat-layout">
+        <div class="chat-page-container" style="flex: 1; min-height: 0; height: 100%;">
+          <div class="chat-layout" style="height: 100%; min-height: 0;">
             
             <!-- Left Column: Patient Conversations -->
             <aside class="chat-sidebar" id="chatSidebar">

@@ -3,11 +3,42 @@
    Theme: Warm Terracotta (#723F1E) & Deep Olive (#484831) on Warm Ivory (#FAF6EE)
    ========================================================================== */
 
+/* Doctor Portal - Prevent page-level scroll so chat container fits viewport */
+html:has(.chat-page-container),
+body:has(.chat-page-container) {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+.main-content:has(.chat-page-container) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-header:has(+ .dashboard-body .chat-page-container) {
+  flex-shrink: 0;
+}
+
+.dashboard-body:has(.chat-page-container) {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 100px);
+  padding: 12px 32px 18px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .chat-page-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 150px);
-  min-height: 580px;
+  flex: 1;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid var(--color-border-card, #ECE5D9);
@@ -18,8 +49,10 @@
 
 .chat-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   height: 100%;
+  min-height: 0;
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -30,6 +63,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -91,11 +126,14 @@
 }
 
 .chat-patients-list {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   list-style: none;
   margin: 0;
   padding: 8px;
+  scroll-behavior: smooth;
 }
 
 .patient-conv-item {
@@ -191,12 +229,16 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  max-height: 100%;
   background: #FFFFFF;
   position: relative;
+  overflow: hidden;
 }
 
 /* Chat Header */
 .chat-header {
+  flex-shrink: 0;
   padding: 14px 24px;
   border-bottom: 1px solid #ECE5D9;
   background: #FFFFFF;
@@ -299,13 +341,17 @@
 
 /* Chat Messages Stream */
 .chat-messages-container {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   padding: 24px;
   background: #FAF6EE;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-date-divider {
@@ -402,9 +448,11 @@
 
 /* Chat Input Bar */
 .chat-input-bar {
-  padding: 16px 24px;
+  flex-shrink: 0;
+  padding: 14px 24px 16px;
   background: #FFFFFF;
   border-top: 1px solid #ECE5D9;
+  z-index: 5;
 }
 
 .chat-input-form {

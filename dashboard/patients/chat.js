@@ -435,7 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function scrollToBottom() {
     if (chatMessagesContainer) {
-      chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      requestAnimationFrame(() => {
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      });
     }
   }
 
