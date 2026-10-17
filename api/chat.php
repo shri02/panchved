@@ -22,6 +22,11 @@ if ($requestMethod === 'OPTIONS') {
 
 require_once __DIR__ . '/database.php';
 
+date_default_timezone_set('Asia/Kolkata');
+if (isset($connection1) && $connection1) {
+    mysqli_query($connection1, "SET time_zone = '+05:30'");
+}
+
 function sendJson($success, $message, $data = [], $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode(array_merge([

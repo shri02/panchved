@@ -85,6 +85,10 @@ mysqli_set_charset(
     "utf8mb4"
 );
 
+// Standardize application & database timezone to Indian Standard Time (IST / UTC+05:30)
+date_default_timezone_set('Asia/Kolkata');
+mysqli_query($connection1, "SET time_zone = '+05:30'");
+
 
 /*
 |--------------------------------------------------------------------------
