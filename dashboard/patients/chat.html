@@ -1,46 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="apple-touch-icon" href="../assets/favicon.png">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patient Chat | Ocayur Doctor Portal</title>
+  <title>Ocayur - Doctor Portal | Patient Chat</title>
+  <meta name="description" content="Ocayur Doctor Portal - One-to-one consultation chat with patients.">
   
-  <link rel="icon" type="image/png" href="../assets/favicon.png">
-  <!-- Fonts -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Base Style & Chat Style -->
-  <link rel="stylesheet" href="../style.css">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../shared/dashboard.css">
   <link rel="stylesheet" href="patients.css">
   <link rel="stylesheet" href="chat.css">
 </head>
-<body class="dashboard-body-tag">
+<body>
   
   <div class="app-layout">
     
-    <!-- Mobile Header -->
-    <header class="mobile-header" aria-label="Mobile Navigation Bar">
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open Navigation Menu">
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-topbar" aria-label="Mobile Navigation Bar">
+      <button class="mobile-nav-toggle" id="mobileMenuBtn" aria-label="Toggle navigation menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
           <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
-      <a href="../dashboard/dashboard.html" class="mobile-logo-link">
-        <img src="../assets/logo.svg" alt="Ocayur Logo" class="mobile-logo-img">
-      </a>
-      <a href="../profile/profile.html" class="mobile-user-avatar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
+
+      <div class="mobile-brand">
+        <img src="../assets/logo.svg" alt="Ocayur Logo" class="mobile-logo-img" width="100" height="40">
+      </div>
+
+      <a href="../profile/profile.html" class="mobile-user-avatar" aria-label="Doctor Profile" title="View Doctor Profile">
+        <div class="avatar-circle small">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
       </a>
     </header>
 
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <!-- Sidebar Overlay for Mobile Drawer -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
@@ -52,6 +60,8 @@
 
       <nav class="sidebar-nav" aria-label="Main Navigation">
         <ul class="nav-list">
+          
+          <!-- Dashboard -->
           <li class="nav-item">
             <a href="../dashboard/dashboard.html" class="nav-link">
               <span class="nav-icon" aria-hidden="true">
@@ -64,6 +74,7 @@
             </a>
           </li>
 
+          <!-- My Patients -->
           <li class="nav-item">
             <a href="patients.html" class="nav-link">
               <span class="nav-icon" aria-hidden="true">
@@ -78,6 +89,7 @@
             </a>
           </li>
 
+          <!-- Messages (Active) -->
           <li class="nav-item">
             <a href="chat.html" class="nav-link active" id="navChat" aria-current="page">
               <span class="nav-icon" aria-hidden="true">
@@ -89,6 +101,7 @@
             </a>
           </li>
 
+          <!-- Packages -->
           <li class="nav-item">
             <a href="../packages/packages.html" class="nav-link">
               <span class="nav-icon" aria-hidden="true">
@@ -102,6 +115,7 @@
             </a>
           </li>
 
+          <!-- Appointments -->
           <li class="nav-item">
             <a href="../appointments/appointments.html" class="nav-link">
               <span class="nav-icon" aria-hidden="true">
@@ -114,6 +128,7 @@
             </a>
           </li>
 
+          <!-- Courses -->
           <li class="nav-item">
             <a href="../courses/courses.html" class="nav-link">
               <span class="nav-icon" aria-hidden="true">
@@ -128,6 +143,7 @@
         </ul>
       </nav>
 
+      <!-- Sidebar Bottom Logout Button -->
       <div class="sidebar-footer">
         <a href="../index.html" class="logout-btn" id="logoutBtn" title="Log out of portal">
           <span class="logout-icon" aria-hidden="true">
@@ -159,7 +175,7 @@
             <span style="color: #8E877B;">/</span>
             <span style="color: #25231F; font-weight: 700; font-size: 0.92rem;">Direct Chat</span>
           </div>
-          <h1 class="page-title" style="margin: 0; font-size: 1.55rem;">Patient Consultation Chat</h1>
+          <h1 class="page-title">Patient Consultation Chat</h1>
         </div>
 
         <!-- Doctor Profile Card Pill -->
@@ -170,114 +186,119 @@
             </svg>
           </div>
           <div class="doctor-info">
-            <span class="doctor-name" id="doctorNameHeader">Dr. Nidhi Jha</span>
-            <span class="doctor-role" id="doctorRoleHeader">Ayurveda Physician</span>
+            <span class="doctor-name" id="doctorNameHeader">Doctor</span>
+            <span class="doctor-role" id="doctorRoleHeader">Specialist</span>
           </div>
         </a>
       </header>
 
-      <!-- Chat Page Wrapper -->
-      <div class="chat-page-container">
-        <div class="chat-layout">
-          
-          <!-- Left Column: Patient Conversations -->
-          <aside class="chat-sidebar" id="chatSidebar">
-            <div class="chat-sidebar-header">
-              <div class="chat-sidebar-title">
-                <span>Conversations</span>
-                <span class="patient-count-badge" id="patientCountBadge">0 Patients</span>
-              </div>
-              <div class="chat-search-wrap">
-                <span class="chat-search-icon" aria-hidden="true">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                </span>
-                <input type="text" id="patientFilterInput" class="chat-search-input" placeholder="Search patient name or ID...">
-              </div>
-            </div>
-
-            <!-- Patient List -->
-            <ul class="chat-patients-list" id="chatPatientsList">
-              <li style="padding: 24px; text-align: center; color: #8E877B;">
-                Loading patient directory...
-              </li>
-            </ul>
-          </aside>
-
-          <!-- Right Column: Main Chat Stream -->
-          <section class="chat-main-window" id="chatMainWindow">
+      <!-- Dashboard Body Container (Handles proper desktop padding) -->
+      <div class="dashboard-body" style="padding-top: 16px;">
+        
+        <!-- Chat Page Card Container -->
+        <div class="chat-page-container">
+          <div class="chat-layout">
             
-            <!-- Chat Header -->
-            <header class="chat-header">
-              <div class="chat-header-user">
-                <div class="chat-header-avatar" id="activePatientAvatar">PT</div>
-                <div>
-                  <h2 class="chat-header-name" id="activePatientName">Select a Patient</h2>
-                  <div class="chat-header-meta">
-                    <span id="activePatientId">ID: -</span>
-                    <span>•</span>
-                    <span id="activePatientPackage">Package: -</span>
-                    <span class="chat-status-pill" id="activePatientStatus">Ongoing</span>
+            <!-- Left Column: Patient Conversations -->
+            <aside class="chat-sidebar" id="chatSidebar">
+              <div class="chat-sidebar-header">
+                <div class="chat-sidebar-title">
+                  <span>Conversations</span>
+                  <span class="patient-count-badge" id="patientCountBadge">0 Patients</span>
+                </div>
+                <div class="chat-search-wrap">
+                  <span class="chat-search-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </span>
+                  <input type="text" id="patientFilterInput" class="chat-search-input" placeholder="Search patient name or ID...">
+                </div>
+              </div>
+
+              <!-- Patient List -->
+              <ul class="chat-patients-list" id="chatPatientsList">
+                <li style="padding: 24px; text-align: center; color: #8E877B;">
+                  Loading patient conversations...
+                </li>
+              </ul>
+            </aside>
+
+            <!-- Right Column: Main Chat Stream -->
+            <section class="chat-main-window" id="chatMainWindow">
+              
+              <!-- Chat Header -->
+              <header class="chat-header">
+                <div class="chat-header-user">
+                  <div class="chat-header-avatar" id="activePatientAvatar">PT</div>
+                  <div>
+                    <h2 class="chat-header-name" id="activePatientName">Select a Patient</h2>
+                    <div class="chat-header-meta">
+                      <span id="activePatientId">ID: -</span>
+                      <span>•</span>
+                      <span id="activePatientPackage">Package: -</span>
+                      <span class="chat-status-pill" id="activePatientStatus">Ongoing</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Manual Refresh Button & Last Seen Status -->
-              <div class="chat-header-actions">
-                <span class="refresh-timestamp-text" id="refreshTimestampText">Updated just now</span>
-                <button type="button" class="btn-refresh-chat" id="btnManualRefresh" title="Click to manually refresh chat logs and view read receipts">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                  </svg>
-                  <span>Refresh Messages</span>
-                </button>
-              </div>
-            </header>
-
-            <!-- Messages Stream -->
-            <div class="chat-messages-container" id="chatMessagesContainer">
-              <div class="chat-empty-state">
-                <div class="chat-empty-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
+                <!-- Manual Refresh Button & Last Seen Status -->
+                <div class="chat-header-actions">
+                  <span class="refresh-timestamp-text" id="refreshTimestampText">Updated just now</span>
+                  <button type="button" class="btn-refresh-chat" id="btnManualRefresh" title="Click to manually refresh chat logs and view read receipts">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <polyline points="1 20 1 14 7 14"></polyline>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    <span>Refresh Messages</span>
+                  </button>
                 </div>
-                <h3 style="font-size: 1.1rem; color: #25231F; margin: 0 0 6px;">No conversation selected</h3>
-                <p style="font-size: 0.88rem; margin: 0;">Please select a patient from the list to start messaging.</p>
+              </header>
+
+              <!-- Messages Stream -->
+              <div class="chat-messages-container" id="chatMessagesContainer">
+                <div class="chat-empty-state">
+                  <div class="chat-empty-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </div>
+                  <h3 style="font-size: 1.1rem; color: #25231F; margin: 0 0 6px;">No conversation selected</h3>
+                  <p style="font-size: 0.88rem; margin: 0;">Please select a patient from the list to start messaging.</p>
+                </div>
               </div>
-            </div>
 
-            <!-- Message Input Area -->
-            <footer class="chat-input-bar">
-              <form class="chat-input-form" id="chatInputForm">
-                <textarea 
-                  id="chatTextInput" 
-                  class="chat-textarea" 
-                  placeholder="Type a message to patient... (Press Enter to send, Shift+Enter for new line)"
-                  rows="1"
-                  required
-                ></textarea>
-                <button type="submit" class="btn-send-message" id="btnSendMessage">
-                  <span>Send</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                  </svg>
-                </button>
-              </form>
-              <div class="chat-hint-bar">
-                <span>Direct 1-on-1 consultation logs stored securely.</span>
-                <span>Click <strong>Refresh Messages</strong> to fetch new patient replies &amp; update seen status.</span>
-              </div>
-            </footer>
+              <!-- Message Input Area -->
+              <footer class="chat-input-bar">
+                <form class="chat-input-form" id="chatInputForm">
+                  <textarea 
+                    id="chatTextInput" 
+                    class="chat-textarea" 
+                    placeholder="Type a message to patient... (Press Enter to send, Shift+Enter for new line)"
+                    rows="1"
+                    required
+                  ></textarea>
+                  <button type="submit" class="btn-send-message" id="btnSendMessage">
+                    <span>Send</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
+                </form>
+                <div class="chat-hint-bar">
+                  <span>Direct 1-on-1 consultation logs stored securely.</span>
+                  <span>Click <strong>Refresh Messages</strong> to fetch new patient replies &amp; update seen status.</span>
+                </div>
+              </footer>
 
-          </section>
+            </section>
 
+          </div>
         </div>
+
       </div>
 
     </main>

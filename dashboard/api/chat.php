@@ -55,17 +55,38 @@ if (!$hasTable) {
     ], 200);
 }
 
-// Resolve active Doctor ID
-$doctorId = 0;
-if (!empty($_SESSION['doctor_id'])) {
-    $doctorId = (int)$_SESSION['doctor_id'];
-} elseif (!empty($_GET['doctor_id'])) {
-    $doctorId = (int)$_GET['doctor_id'];
-} elseif (!empty($_POST['doctor_id'])) {
-    $doctorId = (int)$_POST['doctor_id'];
+// Parse raw input if POST
+$postData = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawPost = file_get_contents('php://input');
+    $decodedPost = json_decode($rawPost, true);
+    $postData = is_array($decodedPost) ? $decodedPost : $_POST;
 }
 
-// Fallback to primary active doctor in DB if not in session
+// Resolve active Doctor ID
+$doctorId = 0;
+if (!empty($_GET['doctor_id'])) {
+    $doctorId = (int)$_GET['doctor_id'];
+} elseif (!empty($postData['doctor_id'])) {
+    $doctorId = (int)$postData['doctor_id'];
+} elseif (!empty($_POST['doctor_id'])) {
+    $doctorId = (int)$_POST['doctor_id'];
+} elseif (!empty($_SESSION['doctor_id'])) {
+    $doctorId = (int)$_SESSION['doctor_id'];
+} elseif (!empty($_SESSION['doctor_profile']['id'])) {
+    $doctorId = (int)$_SESSION['doctor_profile']['id'];
+}
+
+// Fallback: check by doctor_name if sent
+$docNameParam = trim($_GET['doctor_name'] ?? ($postData['doctor_name'] ?? ''));
+if ($doctorId <= 0 && !empty($docNameParam)) {
+    $qDocN = mysqli_query($connection1, "SELECT id FROM doctors WHERE full_name = '" . mysqli_real_escape_string($connection1, $docNameParam) . "' OR full_name LIKE '%" . mysqli_real_escape_string($connection1, $docNameParam) . "%' LIMIT 1");
+    if ($qDocN && $dNR = mysqli_fetch_assoc($qDocN)) {
+        $doctorId = (int)$dNR['id'];
+    }
+}
+
+// Fallback to primary active doctor in DB if not found
 if ($doctorId <= 0) {
     $qDoc = mysqli_query($connection1, "SELECT id, full_name, expertise FROM doctors WHERE status = 'Active' ORDER BY id ASC LIMIT 1");
     if ($qDoc && $docRow = mysqli_fetch_assoc($qDoc)) {
@@ -265,10 +286,36 @@ if ($patientIdParam > 0) {
 }
 
 // ============================================================================
-// 2.4 If no patient_id or action=patients_list: Return list of all patients with chat previews
+// 2.4 If no patient_id or action=patients_list: Return list of patients with chat previews
+// STRICT: Only return patients related to this doctor (via chats, appointments, or packages)
 // ============================================================================
 $patientsList = [];
-$pQuery = "SELECT id, patient_id, full_name, phone_number, package_name, status FROM patients ORDER BY id ASC";
+$targetPatientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
+$escapedDocName = mysqli_real_escape_string($connection1, $docInfo['full_name'] ?? '');
+
+$whereClauses = [];
+$whereClauses[] = "EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.doctor_id = {$doctorId} AND cm.patient_id = p.id)";
+if (!empty($escapedDocName)) {
+    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE (a.doctor_id = {$doctorId} OR a.doctor_name = '{$escapedDocName}') AND (a.patient_id = p.id OR a.patient_name = p.full_name))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE (pp.doctor_id = {$doctorId} OR pp.doctor_name = '{$escapedDocName}') AND (pp.patient_id = p.id OR pp.patient_phone = p.phone_number))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE (rp.doctor_id = {$doctorId} OR rp.doctor_name = '{$escapedDocName}') AND (rp.patient_id = p.id OR rp.patient_phone = p.phone_number))";
+} else {
+    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE a.doctor_id = {$doctorId} AND (a.patient_id = p.id OR a.patient_name = p.full_name))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE pp.doctor_id = {$doctorId} AND (pp.patient_id = p.id OR pp.patient_phone = p.phone_number))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE rp.doctor_id = {$doctorId} AND (rp.patient_id = p.id OR rp.patient_phone = p.phone_number))";
+}
+if ($targetPatientId > 0) {
+    $whereClauses[] = "p.id = {$targetPatientId}";
+}
+
+$pQuery = "SELECT id, patient_id, full_name, phone_number, package_name, status 
+           FROM patients p 
+           WHERE " . implode(" OR ", $whereClauses) . " 
+           ORDER BY (
+             SELECT COALESCE(MAX(created_at), '2000-01-01') 
+             FROM chat_messages cm2 
+             WHERE cm2.doctor_id = {$doctorId} AND cm2.patient_id = p.id
+           ) DESC, p.id ASC";
 $pRes = mysqli_query($connection1, $pQuery);
 
 if ($pRes) {

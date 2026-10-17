@@ -77,11 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Load Doctor Profile into Header if available
+  let currentDoctorId = 0;
+  let currentDoctorName = '';
   try {
     const docData = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
-    if (docData.full_name) {
+    if (docData.id || docData.doctor_id) {
+      currentDoctorId = parseInt(docData.id || docData.doctor_id, 10) || 0;
+    }
+    if (docData.full_name || docData.name) {
+      currentDoctorName = docData.full_name || docData.name || '';
       const dName = document.getElementById('doctorNameHeader');
-      if (dName) dName.textContent = docData.full_name;
+      if (dName) dName.textContent = currentDoctorName;
     }
     if (docData.expertise || docData.role) {
       const dRole = document.getElementById('doctorRoleHeader');
@@ -94,8 +100,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   async function loadPatientsDirectory() {
     try {
-      const res = await fetch('../api/chat.php?action=patients_list');
+      const qParams = new URLSearchParams();
+      qParams.append('action', 'patients_list');
+      if (currentDoctorId > 0) qParams.append('doctor_id', currentDoctorId);
+      if (currentDoctorName) qParams.append('doctor_name', currentDoctorName);
+      if (activePatientId > 0) qParams.append('patient_id', activePatientId);
+
+      const res = await fetch(`../api/chat.php?${qParams.toString()}`);
       const data = await res.json();
+
+      if (data.doctor) {
+        if (!currentDoctorId && data.doctor.id) currentDoctorId = parseInt(data.doctor.id, 10);
+        const dName = document.getElementById('doctorNameHeader');
+        if (dName && data.doctor.full_name) dName.textContent = data.doctor.full_name;
+        const dRole = document.getElementById('doctorRoleHeader');
+        if (dRole && data.doctor.expertise) dRole.textContent = data.doctor.expertise;
+      }
 
       if (data.table_missing) {
         chatMessagesContainer.innerHTML = `
@@ -239,8 +259,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`../api/chat.php?patient_id=${patientId}`);
+      const qParams = new URLSearchParams();
+      qParams.append('patient_id', patientId);
+      if (currentDoctorId > 0) qParams.append('doctor_id', currentDoctorId);
+      if (currentDoctorName) qParams.append('doctor_name', currentDoctorName);
+
+      const res = await fetch(`../api/chat.php?${qParams.toString()}`);
       const data = await res.json();
+
+      if (data.doctor) {
+        if (!currentDoctorId && data.doctor.id) currentDoctorId = parseInt(data.doctor.id, 10);
+        const dName = document.getElementById('doctorNameHeader');
+        if (dName && data.doctor.full_name) dName.textContent = data.doctor.full_name;
+        const dRole = document.getElementById('doctorRoleHeader');
+        if (dRole && data.doctor.expertise) dRole.textContent = data.doctor.expertise;
+      }
 
       if (data.table_missing) {
         return;
@@ -392,15 +425,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSendMessage) btnSendMessage.disabled = true;
 
     try {
+      const payload = {
+        patient_id: activePatientId,
+        message: text
+      };
+      if (currentDoctorId > 0) {
+        payload.doctor_id = currentDoctorId;
+      }
+      if (currentDoctorName) {
+        payload.doctor_name = currentDoctorName;
+      }
+
       const response = await fetch('../api/chat.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          patient_id: activePatientId,
-          message: text
-        })
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
