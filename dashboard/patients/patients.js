@@ -327,6 +327,17 @@ document.addEventListener('DOMContentLoaded', () => {
       params.set('status', selectedStatuses.join(','));
     }
 
+    // Pass logged-in doctor context from localStorage/session
+    try {
+      const docStr = localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor') || localStorage.getItem('ocayur_user') || localStorage.getItem('panchved_user');
+      if (docStr) {
+        const doc = JSON.parse(docStr);
+        if (doc.id) params.set('doctor_id', doc.id);
+        if (doc.full_name) params.set('doctor_name', doc.full_name);
+        if (doc.doctorid) params.set('doctor_code', doc.doctorid);
+      }
+    } catch (_) {}
+
     // Show loading state
     patientsTableBody.innerHTML = `
       <tr>

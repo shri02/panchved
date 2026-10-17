@@ -40,14 +40,176 @@ $statusFilter = trim($_GET['status'] ?? '');
 $page = max(1, intval($_GET['page'] ?? 1));
 $limit = max(1, intval($_GET['limit'] ?? 5)); // 5 items per page to match the UI screenshot
 
+// 1. Identify doctor of login from session, GET parameters, or doctor profile
+$doctorId = intval($_GET['doctor_id'] ?? $_SESSION['doctor_id'] ?? ($_SESSION['doctor_profile']['id'] ?? 0));
+$doctorName = trim($_GET['doctor_name'] ?? $_SESSION['doctor_name'] ?? ($_SESSION['doctor_profile']['full_name'] ?? ''));
+$doctorCode = trim($_GET['doctor_code'] ?? $_SESSION['doctor_code'] ?? ($_SESSION['doctor_profile']['doctorid'] ?? ''));
+$doctorPhone = trim($_GET['phone'] ?? $_SESSION['phone_number'] ?? ($_SESSION['doctor_profile']['phone_number'] ?? ''));
+$doctorEmail = trim($_GET['email'] ?? $_SESSION['email'] ?? ($_SESSION['doctor_profile']['email'] ?? ''));
+
+// Lookup canonical doctor details in `doctors` table
+$currentDoctor = null;
+if ($doctorId > 0) {
+    $dStmt = mysqli_prepare($connection1, "SELECT * FROM `doctors` WHERE `id` = ? LIMIT 1");
+    if ($dStmt) {
+        mysqli_stmt_bind_param($dStmt, "i", $doctorId);
+        mysqli_stmt_execute($dStmt);
+        $dRes = mysqli_stmt_get_result($dStmt);
+        $currentDoctor = mysqli_fetch_assoc($dRes);
+        mysqli_stmt_close($dStmt);
+    }
+}
+
+if (!$currentDoctor && !empty($doctorCode)) {
+    $dStmt = mysqli_prepare($connection1, "SELECT * FROM `doctors` WHERE `doctorid` = ? LIMIT 1");
+    if ($dStmt) {
+        mysqli_stmt_bind_param($dStmt, "s", $doctorCode);
+        mysqli_stmt_execute($dStmt);
+        $dRes = mysqli_stmt_get_result($dStmt);
+        $currentDoctor = mysqli_fetch_assoc($dRes);
+        mysqli_stmt_close($dStmt);
+    }
+}
+
+if (!$currentDoctor && !empty($doctorName)) {
+    $dStmt = mysqli_prepare($connection1, "SELECT * FROM `doctors` WHERE `full_name` = ? LIMIT 1");
+    if ($dStmt) {
+        mysqli_stmt_bind_param($dStmt, "s", $doctorName);
+        mysqli_stmt_execute($dStmt);
+        $dRes = mysqli_stmt_get_result($dStmt);
+        $currentDoctor = mysqli_fetch_assoc($dRes);
+        mysqli_stmt_close($dStmt);
+    }
+}
+
+if (!$currentDoctor && !empty($doctorPhone)) {
+    $cleanP = preg_replace('/\D+/', '', $doctorPhone);
+    if (strlen($cleanP) === 12 && substr($cleanP, 0, 2) === '91') {
+        $cleanP = substr($cleanP, 2);
+    }
+    $dStmt = mysqli_prepare($connection1, "SELECT * FROM `doctors` WHERE `phone_number` = ? OR `phone_number` = ? LIMIT 1");
+    if ($dStmt) {
+        mysqli_stmt_bind_param($dStmt, "ss", $doctorPhone, $cleanP);
+        mysqli_stmt_execute($dStmt);
+        $dRes = mysqli_stmt_get_result($dStmt);
+        $currentDoctor = mysqli_fetch_assoc($dRes);
+        mysqli_stmt_close($dStmt);
+    }
+}
+
+if ($currentDoctor) {
+    $doctorId = intval($currentDoctor['id']);
+    $doctorName = trim($currentDoctor['full_name']);
+    $doctorCode = trim($currentDoctor['doctorid'] ?? '');
+}
+
+// Strict requirement: If no doctor of login is identified, return empty patient directory
+if ($doctorId <= 0 && empty($doctorName)) {
+    echo json_encode([
+        'success' => true,
+        'patients' => [],
+        'available_packages' => [],
+        'available_statuses' => [],
+        'pagination' => [
+            'current_page' => 1,
+            'total_pages' => 1,
+            'items_per_page' => $limit,
+            'total_items' => 0,
+            'start_item' => 0,
+            'end_item' => 0
+        ]
+    ]);
+    exit();
+}
+
+// Doctor variations for matching
+$cleanDocName = preg_replace('/^Dr\.?\s*/i', '', $doctorName);
+$withDr = 'Dr. ' . $cleanDocName;
+$withoutDr = $cleanDocName;
+$likeDoc = '%' . $cleanDocName . '%';
+$docIdStr = strval($doctorId);
+
+// Doctor Association Clause:
+// Patient should only show up if:
+// 1. Patient package has the doctor of login (in patient_packages or assigned in packages table), OR
+// 2. Patient made consultation directly with the doctor of login (in appointments table)
+$doctorWhereClause = "(
+    -- 1. Direct consultation or appointment with doctor of login
+    EXISTS (
+        SELECT 1 FROM appointments a 
+        WHERE (a.patient_id = p.id OR (a.patient_name = p.full_name AND p.full_name != ''))
+          AND (
+              (a.doctor_id > 0 AND a.doctor_id = ?) 
+              OR (a.doctor_name != '' AND (a.doctor_name = ? OR a.doctor_name = ? OR a.doctor_name LIKE ?))
+          )
+    )
+    OR
+    -- 2. Patient package booked with doctor of login (in patient_packages table)
+    EXISTS (
+        SELECT 1 FROM patient_packages pp
+        WHERE (pp.patient_id = p.id OR (pp.patient_phone != '' AND pp.patient_phone = p.phone_number))
+          AND (
+              (pp.doctor_id > 0 AND pp.doctor_id = ?)
+              OR (pp.doctor_name != '' AND (pp.doctor_name = ? OR pp.doctor_name = ? OR pp.doctor_name LIKE ?))
+              OR EXISTS (
+                  SELECT 1 FROM packages pkg 
+                  WHERE (pkg.id = pp.package_id OR pkg.package_name = pp.package_name COLLATE utf8mb4_unicode_ci)
+                    AND (
+                        pkg.assigned_doctor IN (?, ?, ?, ?)
+                        OR pkg.assigned_doctor_one IN (?, ?, ?, ?)
+                        OR pkg.assigned_doctor_2 IN (?, ?, ?, ?)
+                        OR pkg.assign_doctor_two IN (?, ?, ?, ?)
+                        OR pkg.assigned_doctor LIKE ?
+                        OR pkg.assigned_doctor_one LIKE ?
+                    )
+              )
+          )
+    )
+    OR
+    -- 3. Patient assigned package in patients table has doctor of login as assigned doctor in packages table
+    EXISTS (
+        SELECT 1 FROM packages pkg2
+        WHERE pkg2.package_name = p.package_name COLLATE utf8mb4_unicode_ci
+          AND p.package_name IS NOT NULL AND p.package_name != ''
+          AND (
+              pkg2.assigned_doctor IN (?, ?, ?, ?)
+              OR pkg2.assigned_doctor_one IN (?, ?, ?, ?)
+              OR pkg2.assigned_doctor_2 IN (?, ?, ?, ?)
+              OR pkg2.assign_doctor_two IN (?, ?, ?, ?)
+              OR pkg2.assigned_doctor LIKE ?
+              OR pkg2.assigned_doctor_one LIKE ?
+          )
+    )
+)";
+
+$doctorParams = [
+    // 1. appointments
+    $doctorId, $withDr, $withoutDr, $likeDoc,
+    // 2. patient_packages
+    $doctorId, $withDr, $withoutDr, $likeDoc,
+    // packages in patient_packages
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $likeDoc, $likeDoc,
+    // 3. packages in patients.package_name
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $withDr, $withoutDr, $doctorName, $docIdStr,
+    $likeDoc, $likeDoc
+];
+$doctorTypes = "isss" . "isss" . "ssssssssssssssssss" . "ssssssssssssssssss";
+
 // Build Dynamic SQL Query & Parameter Bindings
-$whereClauses = [];
-$params = [];
-$types = "";
+$whereClauses = [$doctorWhereClause];
+$params = $doctorParams;
+$types = $doctorTypes;
 
 // 1. Search Query
 if (!empty($search)) {
-    $whereClauses[] = "(`full_name` LIKE ? OR `patient_id` LIKE ? OR `phone_number` LIKE ? OR `package_name` LIKE ?)";
+    $whereClauses[] = "(p.`full_name` LIKE ? OR p.`patient_id` LIKE ? OR p.`phone_number` LIKE ? OR p.`package_name` LIKE ?)";
     $searchTerm = "%" . $search . "%";
     $params[] = $searchTerm;
     $params[] = $searchTerm;
@@ -60,7 +222,7 @@ if (!empty($search)) {
 if (!empty($packageFilter)) {
     $packages = array_map('trim', explode(',', $packageFilter));
     $placeholders = implode(',', array_fill(0, count($packages), '?'));
-    $whereClauses[] = "`package_name` IN ($placeholders)";
+    $whereClauses[] = "p.`package_name` IN ($placeholders)";
     foreach ($packages as $pkg) {
         $params[] = $pkg;
         $types .= "s";
@@ -71,20 +233,17 @@ if (!empty($packageFilter)) {
 if (!empty($statusFilter)) {
     $statuses = array_map('trim', explode(',', $statusFilter));
     $placeholders = implode(',', array_fill(0, count($statuses), '?'));
-    $whereClauses[] = "`status` IN ($placeholders)";
+    $whereClauses[] = "p.`status` IN ($placeholders)";
     foreach ($statuses as $st) {
         $params[] = $st;
         $types .= "s";
     }
 }
 
-$whereSql = "";
-if (count($whereClauses) > 0) {
-    $whereSql = "WHERE " . implode(" AND ", $whereClauses);
-}
+$whereSql = "WHERE " . implode(" AND ", $whereClauses);
 
 // 4. Count Total Records matching criteria directly in SQL
-$countSql = "SELECT COUNT(*) as total FROM `patients` $whereSql";
+$countSql = "SELECT COUNT(*) as total FROM `patients` p $whereSql";
 $countStmt = mysqli_prepare($connection1, $countSql);
 
 $totalItems = 0;
@@ -98,12 +257,6 @@ if ($countStmt) {
         $totalItems = intval($countRow['total']);
     }
     mysqli_stmt_close($countStmt);
-} else {
-    // Fallback count query
-    $countRes = mysqli_query($connection1, $countSql);
-    if ($countRes && $countRow = mysqli_fetch_assoc($countRes)) {
-        $totalItems = intval($countRow['total']);
-    }
 }
 
 // Calculate pagination
@@ -114,7 +267,7 @@ if ($page > $totalPages && $totalPages > 0) {
 $offset = ($page - 1) * $limit;
 
 // 5. Fetch Paginated Records directly from MySQL
-$dataSql = "SELECT * FROM `patients` $whereSql ORDER BY `id` ASC LIMIT ? OFFSET ?";
+$dataSql = "SELECT p.* FROM `patients` p $whereSql ORDER BY p.`id` ASC LIMIT ? OFFSET ?";
 $dataStmt = mysqli_prepare($connection1, $dataSql);
 
 $patients = [];
@@ -156,30 +309,38 @@ if ($dataStmt) {
     mysqli_stmt_close($dataStmt);
 }
 
-// Fetch all available packages for filter options strictly from patients table
-$pkgQuery = "SELECT DISTINCT `package_name` FROM `patients` WHERE `package_name` IS NOT NULL AND `package_name` != '' ORDER BY `package_name` ASC";
-$pkgRes = mysqli_query($connection1, $pkgQuery);
+// Fetch all available packages for filter options strictly for this doctor's patients
+$pkgQuery = "SELECT DISTINCT p.`package_name` FROM `patients` p WHERE $doctorWhereClause AND p.`package_name` IS NOT NULL AND p.`package_name` != '' ORDER BY p.`package_name` ASC";
+$pkgStmt = mysqli_prepare($connection1, $pkgQuery);
 $availablePackages = [];
-if ($pkgRes) {
+if ($pkgStmt) {
+    mysqli_stmt_bind_param($pkgStmt, $doctorTypes, ...$doctorParams);
+    mysqli_stmt_execute($pkgStmt);
+    $pkgRes = mysqli_stmt_get_result($pkgStmt);
     while ($pRow = mysqli_fetch_assoc($pkgRes)) {
         $pkgName = trim($pRow['package_name']);
         if (!empty($pkgName) && !in_array($pkgName, $availablePackages)) {
             $availablePackages[] = $pkgName;
         }
     }
+    mysqli_stmt_close($pkgStmt);
 }
 
-// Fetch all available statuses for filter options strictly from patients table
-$statusQuery = "SELECT DISTINCT `status` FROM `patients` WHERE `status` IS NOT NULL AND `status` != '' ORDER BY `status` ASC";
-$statusRes = mysqli_query($connection1, $statusQuery);
+// Fetch all available statuses for filter options strictly for this doctor's patients
+$statusQuery = "SELECT DISTINCT p.`status` FROM `patients` p WHERE $doctorWhereClause AND p.`status` IS NOT NULL AND p.`status` != '' ORDER BY p.`status` ASC";
+$statusStmt = mysqli_prepare($connection1, $statusQuery);
 $availableStatuses = [];
-if ($statusRes) {
+if ($statusStmt) {
+    mysqli_stmt_bind_param($statusStmt, $doctorTypes, ...$doctorParams);
+    mysqli_stmt_execute($statusStmt);
+    $statusRes = mysqli_stmt_get_result($statusStmt);
     while ($sRow = mysqli_fetch_assoc($statusRes)) {
         $stName = ucfirst(strtolower(trim($sRow['status'])));
         if (!empty($stName) && !in_array($stName, $availableStatuses)) {
             $availableStatuses[] = $stName;
         }
     }
+    mysqli_stmt_close($statusStmt);
 }
 
 $startItem = $totalItems > 0 ? ($offset + 1) : 0;
