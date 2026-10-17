@@ -171,14 +171,20 @@
       <!-- Dashboard Body Container -->
       <div class="dashboard-body">
 
-        <!-- Back Link Navigation (Image 1, 2) -->
-        <div class="back-nav-container">
+        <!-- Back Link Navigation & Chat Button -->
+        <div class="back-nav-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <a href="patients.html" class="back-nav-link" id="backNavBtn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
             <span>Back</span>
+          </a>
+          <a href="chat.html" class="chat-nav-link" id="chatWithPatientBtn" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: #723F1E; color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 12px rgba(114, 63, 30, 0.2); transition: all 0.2s ease;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Chat with Patient</span>
           </a>
         </div>
 

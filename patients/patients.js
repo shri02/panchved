@@ -445,10 +445,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="progress-badge ${statusBadgeClass}" id="badge-${index}">${escapeHtml(patientStatus)}</span>
           </td>
 
-          <!-- Action Column with 3-dot dropdown menu & Status Popover -->
+          <!-- Action Column with Chat & 3-dot dropdown menu -->
           <td class="cell-action">
-            <div class="action-dropdown-wrapper">
+            <div class="action-dropdown-wrapper" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
               
+              <!-- Direct Chat Button -->
+              <a href="chat.html?patient_id=${p.id}" class="btn-action-chat-direct" title="Chat with ${escapeHtml(p.full_name)}" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: #FAF6EE; color: #723F1E; border: 1px solid #ECE5D9; text-decoration: none; transition: all 0.2s ease;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </a>
+
               <!-- 3-Dots Trigger Button -->
               <button type="button" class="action-menu-btn" aria-label="Options for ${escapeHtml(p.full_name)}" data-index="${index}">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

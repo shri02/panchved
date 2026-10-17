@@ -19,10 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPatientId = urlParams.get('patient_id');
   }
 
+  // Chat Button & Link Binding
+  const chatWithPatientBtn = document.getElementById('chatWithPatientBtn');
+  if (chatWithPatientBtn) {
+    chatWithPatientBtn.href = `chat.html?patient_id=${currentPatientId}`;
+  }
+
   // DOM Elements
   const metricTotalAppts = document.getElementById('metricTotalAppts');
   const metricPendingFollowups = document.getElementById('metricPendingFollowups');
   const metricUnreadMessages = document.getElementById('metricUnreadMessages');
+
+  if (metricUnreadMessages) {
+    const unreadCard = metricUnreadMessages.closest('.metric-card');
+    if (unreadCard) {
+      unreadCard.style.cursor = 'pointer';
+      unreadCard.title = 'Click to open chat with this patient';
+      unreadCard.addEventListener('click', () => {
+        window.location.href = `chat.html?patient_id=${currentPatientId}`;
+      });
+    }
+  }
 
   const tabPersonal = document.getElementById('tabPersonal');
   const tabAppointments = document.getElementById('tabAppointments');
