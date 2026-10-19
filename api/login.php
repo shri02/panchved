@@ -75,25 +75,13 @@ if ($stmtUser) {
 
 if ($userFromUsers) {
     $uRole = strtolower(trim((string)($userFromUsers['role'] ?? '')));
-    // Strictly reject Admin or Patient users from logging in to Doctor portal
+    // Strictly reject Admin or Patient users from logging in to Doctor portal without leaking role
     if ($uRole === 'admin' || $uRole === 'super admin' || $uRole === 'patient') {
-        $pwMatch = password_verify($passwordInput, $userFromUsers['password_hash']) 
-            || ($userFromUsers['password_hash'] === md5($passwordInput)) 
-            || ($userFromUsers['password_hash'] === $passwordInput)
-            || ($passwordInput === 'admin123' && $uRole === 'admin');
-        if ($pwMatch) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Access denied. ' . ucfirst($userFromUsers['role']) . ' credentials cannot be used to log in to the Doctor portal.'
-            ]);
-            exit();
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid phone number or password. No registered doctor found with this number.'
-            ]);
-            exit();
-        }
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid credentials. Please check your credentials.'
+        ]);
+        exit();
     }
 }
 
@@ -114,7 +102,7 @@ if (!$doctor) {
         if (!$pwMatch) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Invalid password. Please enter the correct password.'
+                'message' => 'Invalid credentials. Please check your credentials.'
             ]);
             exit();
         }
@@ -143,7 +131,7 @@ if (!$doctor) {
     } else {
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid phone number or password. No registered doctor found with this number.'
+            'message' => 'Invalid credentials. Please check your credentials.'
         ]);
         exit();
     }
@@ -178,7 +166,7 @@ if (!$doctor) {
     if (!$passwordValid) {
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid password. Please check your password and try again.'
+            'message' => 'Invalid credentials. Please check your credentials.'
         ]);
         exit();
     }
