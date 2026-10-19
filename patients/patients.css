@@ -957,7 +957,7 @@
   background-color: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 200;
+  z-index: 1200;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -978,8 +978,9 @@
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  z-index: 210;
+  z-index: 1250;
   opacity: 0;
+  pointer-events: none;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
   overflow: hidden;
 }
@@ -987,6 +988,7 @@
 .modal-dialog.open {
   display: block;
   opacity: 1;
+  pointer-events: auto;
   transform: translate(-50%, -50%) scale(1);
 }
 
@@ -1106,6 +1108,132 @@
 .btn-add-diet:hover {
   background-color: #5D3318;
   box-shadow: 0 4px 10px rgba(114, 63, 30, 0.35);
+}
+
+/* ==========================================================================
+   Diet PDF Upload Box Styles
+   ========================================================================== */
+.diet-upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+}
+
+.diet-upload-zone:hover,
+.diet-upload-zone.dragover {
+  border-color: #723F1E;
+  background-color: #fdfaf7;
+}
+
+.upload-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-icon-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  color: #723F1E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.diet-upload-zone:hover .upload-icon-circle {
+  transform: translateY(-2px);
+  background-color: #f9ede4;
+}
+
+.upload-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.upload-main-text {
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.upload-main-text strong {
+  color: #723F1E;
+}
+
+.upload-hint-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.upload-file-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.preview-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.preview-file-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.preview-file-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-file-size {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.btn-remove-file {
+  background: #f1f5f9;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-remove-file:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
 }
 
 /* ==========================================================================
@@ -1377,12 +1505,11 @@
 .recommend-modal-dialog {
   max-width: 620px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .recommend-modal-dialog.open {
   display: flex;
+  flex-direction: column;
 }
 
 .recommend-modal-header-text {

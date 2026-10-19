@@ -40,6 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const dietPatientId = document.getElementById('dietPatientId');
   const dietNotes = document.getElementById('dietNotes');
   const saveDietBtn = document.getElementById('saveDietBtn');
+  const dietPdfInput = document.getElementById('dietPdfInput');
+  const dietUploadZone = document.getElementById('dietUploadZone');
+  const dietUploadPrompt = document.getElementById('dietUploadPrompt');
+  const dietFilePreview = document.getElementById('dietFilePreview');
+  const dietFileName = document.getElementById('dietFileName');
+  const dietFileSize = document.getElementById('dietFileSize');
+  const removeDietFileBtn = document.getElementById('removeDietFileBtn');
+  const dietPatientBanner = document.getElementById('dietPatientBanner');
+  const dietPatientNameText = document.getElementById('dietPatientNameText');
 
   // 2. Book Appointment Modal Elements (Image 4)
   const bookAppointmentModal = document.getElementById('bookAppointmentModal');
@@ -769,10 +778,100 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   // Add Diet Modal Handlers (Image 3)
   // =========================================================================
+  let selectedDietFile = null;
+
+  function formatBytes(bytes, decimals = 1) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  function resetDietFileUpload() {
+    selectedDietFile = null;
+    if (dietPdfInput) dietPdfInput.value = '';
+    if (dietUploadPrompt) dietUploadPrompt.style.display = 'flex';
+    if (dietFilePreview) dietFilePreview.style.display = 'none';
+    if (dietFileName) dietFileName.textContent = '';
+    if (dietFileSize) dietFileSize.textContent = '';
+    if (dietUploadZone) dietUploadZone.classList.remove('dragover');
+  }
+
+  function handleDietFileSelect(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      showToast('Please select a valid PDF file (.pdf)', 'error');
+      return;
+    }
+    // Max 15MB limit
+    if (file.size > 15 * 1024 * 1024) {
+      showToast('PDF file size exceeds 15MB limit', 'error');
+      return;
+    }
+
+    selectedDietFile = file;
+    if (dietFileName) dietFileName.textContent = file.name;
+    if (dietFileSize) dietFileSize.textContent = formatBytes(file.size);
+    if (dietUploadPrompt) dietUploadPrompt.style.display = 'none';
+    if (dietFilePreview) dietFilePreview.style.display = 'flex';
+  }
+
+  if (dietUploadZone && dietPdfInput) {
+    dietUploadZone.addEventListener('click', (e) => {
+      // Don't re-trigger if clicking remove button
+      if (e.target.closest('#removeDietFileBtn')) return;
+      dietPdfInput.click();
+    });
+
+    dietPdfInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleDietFileSelect(e.target.files[0]);
+      }
+    });
+
+    // Drag and Drop
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dietUploadZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dietUploadZone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dietUploadZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dietUploadZone.classList.remove('dragover');
+      });
+    });
+
+    dietUploadZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleDietFileSelect(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (removeDietFileBtn) {
+    removeDietFileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetDietFileUpload();
+    });
+  }
+
   function openDietModal(patient) {
     if (!dietModal || !modalOverlay) return;
     dietPatientId.value = patient.id;
     if (dietNotes) dietNotes.value = '';
+    resetDietFileUpload();
+
+    if (dietPatientBanner && dietPatientNameText) {
+      dietPatientNameText.textContent = patient.full_name || patient.name || 'Patient #' + patient.id;
+      dietPatientBanner.style.display = 'block';
+    }
 
     modalOverlay.classList.add('active');
     dietModal.classList.add('open');
@@ -784,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dietModal.classList.remove('open');
       modalOverlay.classList.remove('active');
       dietModal.setAttribute('aria-hidden', 'true');
+      resetDietFileUpload();
     }
   }
 
@@ -794,10 +894,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dietForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const pId = dietPatientId.value;
-      const notesVal = dietNotes.value.trim();
+      const notesVal = dietNotes ? dietNotes.value.trim() : '';
 
-      if (!notesVal) {
-        showToast('Please enter diet plan notes', 'error');
+      if (!notesVal && !selectedDietFile) {
+        showToast('Please enter diet plan notes or attach a PDF chart', 'error');
         return;
       }
 
@@ -807,19 +907,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
+        const formData = new FormData();
+        formData.append('patient_id', pId);
+        formData.append('notes', notesVal);
+        if (selectedDietFile) {
+          formData.append('diet_pdf', selectedDietFile);
+        }
+
         const res = await fetch('../api/add_diet.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            patient_id: pId,
-            notes: notesVal
-          })
+          body: formData
         });
 
         const data = await res.json();
         if (data.success) {
           closeDietModal();
-          showToast(data.message || 'Diet plan added successfully!', 'success');
+          showToast(data.message || 'Diet plan saved successfully!', 'success');
         } else {
           showToast(data.message || 'Failed to save diet plan', 'error');
         }
@@ -830,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally {
         if (saveDietBtn) {
           saveDietBtn.disabled = false;
-          saveDietBtn.textContent = 'Add';
+          saveDietBtn.textContent = 'Save Diet Plan';
         }
       }
     });

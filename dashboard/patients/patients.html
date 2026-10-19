@@ -344,15 +344,62 @@
     </div>
     <form id="dietForm" class="modal-body diet-modal-body">
       <input type="hidden" id="dietPatientId">
-      <p class="modal-instruction-text">Write a diet plan to be shared with the patient.</p>
+      <p class="modal-instruction-text">Write a diet plan or attach a PDF chart to share with the patient.</p>
       
+      <div id="dietPatientBanner" style="display: none; padding: 6px 12px; background: #fdfaf7; border-left: 3px solid #723F1E; border-radius: 4px; font-size: 0.85rem; color: #5D3318; font-weight: 600;">
+        Patient: <span id="dietPatientNameText">-</span>
+      </div>
+
       <div class="form-group">
         <label for="dietNotes" class="form-label">Notes</label>
-        <textarea id="dietNotes" class="form-textarea" rows="4" placeholder="Enter here" required></textarea>
+        <textarea id="dietNotes" class="form-textarea" rows="3" placeholder="Enter dietary instructions, guidelines, or meal plan here..."></textarea>
+      </div>
+
+      <!-- PDF Upload Option -->
+      <div class="form-group">
+        <label class="form-label">Attach Diet Chart / Plan (PDF)</label>
+        <div class="diet-upload-zone" id="dietUploadZone">
+          <input type="file" id="dietPdfInput" name="diet_pdf" accept=".pdf,application/pdf" style="display: none;">
+          
+          <div class="upload-zone-content" id="dietUploadPrompt">
+            <div class="upload-icon-circle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="upload-text-group">
+              <span class="upload-main-text"><strong>Click to browse</strong> or drag &amp; drop PDF</span>
+              <span class="upload-hint-text">PDF document up to 15MB</span>
+            </div>
+          </div>
+
+          <div class="upload-file-preview" id="dietFilePreview" style="display: none;">
+            <div class="preview-file-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="9" y1="13" x2="15" y2="13"></line>
+                <line x1="9" y1="17" x2="15" y2="17"></line>
+              </svg>
+            </div>
+            <div class="preview-file-details">
+              <span class="preview-file-name" id="dietFileName">diet_chart.pdf</span>
+              <span class="preview-file-size" id="dietFileSize">0 KB</span>
+            </div>
+            <button type="button" class="btn-remove-file" id="removeDietFileBtn" title="Remove PDF">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer-single">
-        <button type="submit" class="btn-primary btn-add-diet" id="saveDietBtn">Add</button>
+        <button type="submit" class="btn-primary btn-add-diet" id="saveDietBtn">Save Diet Plan</button>
       </div>
     </form>
   </div>

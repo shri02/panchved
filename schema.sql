@@ -349,5 +349,24 @@ INSERT INTO `prescriptions` (`id`, `prescription_code`, `patient_id`, `patient_n
 (3, 'RX-003', 3, 'Vikram Malhotra', 2, 'Dr. Rohit Mehra', 'Orthopedic & Sports Rehab', '+91 9823456789', 'rohitmehra@gmail.com', 3, '2026-09-15', '02:30 PM', 'Lower lumbar spine stiffness, post-strenuous exercise', 'Lower back ache, Hamstring tightness (Severity : Mild)', 'Lumbar Spondylosis', '4 months', '[{\"medication\":\"TRIPHALA GUGGULU (TABLET)\",\"dose\":\"2 TABLETS\",\"frequency\":\"0-0-2 BEFORE SLEEP\",\"duration\":\"14 DAYS\",\"remarks\":\"TAKE WITH WARM WATER AT BEDTIME FOR GUT HEALTH\"}]', 'L4-L5 lumbar tenderness on flexion', 'Kottamchukkadi Taila local application + Physio core stretches')
 ON DUPLICATE KEY UPDATE `patient_name` = VALUES(`patient_name`), `medications` = VALUES(`medications`), `symptoms` = VALUES(`symptoms`), `diagnosis` = VALUES(`diagnosis`), `notes` = VALUES(`notes`);
 
+-- ----------------------------------------------------------------------------
+-- Table: patient_diets (Personalized Diet Plans & Uploaded PDF Charts)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `patient_diets` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `patient_id` INT(11) NOT NULL,
+  `doctor_id` INT(11) DEFAULT NULL,
+  `doctor_name` VARCHAR(150) DEFAULT NULL,
+  `notes` TEXT DEFAULT NULL,
+  `pdf_path` VARCHAR(255) DEFAULT NULL,
+  `file_name` VARCHAR(255) DEFAULT NULL,
+  `file_size` INT(11) DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_diet_patient_id` (`patient_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
+
 
