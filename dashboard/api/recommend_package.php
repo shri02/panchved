@@ -29,7 +29,7 @@ $createTableSql = "CREATE TABLE IF NOT EXISTS `recommended_packages` (
   `package_id` INT(11) DEFAULT NULL,
   `package_name` VARCHAR(150) NOT NULL,
   `doctor_id` INT(11) DEFAULT NULL,
-  `doctor_name` VARCHAR(150) NOT NULL DEFAULT 'Dr. Nidhi Jha',
+  `doctor_name` VARCHAR(150) NOT NULL DEFAULT 'Doctor',
   `recommendation_note` TEXT DEFAULT NULL,
   `status` ENUM('Recommended', 'Accepted', 'Dismissed') NOT NULL DEFAULT 'Recommended',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -61,7 +61,7 @@ if (empty($doctorName)) {
             $doctorId = intval($docRow['id']);
         }
     } else {
-        $doctorName = 'Dr. Nidhi Jha';
+        $doctorName = 'Doctor';
     }
 }
 

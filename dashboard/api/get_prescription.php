@@ -26,9 +26,9 @@ $prescriptionId = intval($_GET['prescription_id'] ?? 0);
 
 // 1. Fetch Patient Info from `patients` table to ensure 100% dynamic patient data
 $patientInfo = [
-    'full_name' => 'Rahul Sharma',
-    'gender' => 'Male',
-    'age' => 34
+    'full_name' => 'Patient',
+    'gender' => '--',
+    'age' => '--'
 ];
 
 if ($patientId > 0) {
@@ -38,15 +38,15 @@ if ($patientId > 0) {
         mysqli_stmt_execute($pStmt);
         $pRes = mysqli_stmt_get_result($pStmt);
         if ($pRow = mysqli_fetch_assoc($pRes)) {
-            $patientInfo['full_name'] = $pRow['full_name'] ?: 'Rahul Sharma';
-            $patientInfo['gender'] = $pRow['gender'] ?: 'Male';
+            $patientInfo['full_name'] = $pRow['full_name'] ?: 'Patient';
+            $patientInfo['gender'] = $pRow['gender'] ?: '--';
             $pAge = intval($pRow['age'] ?: 0);
             if ($pAge <= 0 && !empty($pRow['dob'])) {
                 $bDate = new DateTime($pRow['dob']);
                 $today = new DateTime();
                 $pAge = $today->diff($bDate)->y;
             }
-            $patientInfo['age'] = $pAge > 0 ? $pAge : 34;
+            $patientInfo['age'] = $pAge > 0 ? $pAge : '--';
         }
         mysqli_stmt_close($pStmt);
     }
@@ -99,17 +99,17 @@ if (!$rxRecord && $patientId > 0) {
                     'prescription_date' => $aRow['appointment_date'] ?: date('Y-m-d'),
                     'prescription_time' => $aRow['appointment_time'] ?: date('h:i A'),
                     'patient_name' => $patientInfo['full_name'],
-                    'doctor_name' => $aRow['doctor_name'] ?: 'Dr. Ananya Prasad',
-                    'medical_history' => $decoded['medical_history'] ?? 'No Known Significant Medical History',
-                    'symptoms' => is_array($decoded['symptoms'] ?? null) ? json_encode($decoded['symptoms']) : ($decoded['symptoms'] ?? 'Constipation (Severity : Moderate)'),
-                    'diagnosis' => $decoded['diagnosis'] ?? 'Migraine',
-                    'diagnosis_duration' => $decoded['diagnosis_duration'] ?? '3 months',
+                    'doctor_name' => $aRow['doctor_name'] ?: 'Doctor',
+                    'medical_history' => $decoded['medical_history'] ?? '',
+                    'symptoms' => is_array($decoded['symptoms'] ?? null) ? json_encode($decoded['symptoms']) : ($decoded['symptoms'] ?? ''),
+                    'diagnosis' => $decoded['diagnosis'] ?? '',
+                    'diagnosis_duration' => $decoded['diagnosis_duration'] ?? '',
                     'medications' => is_array($decoded['medications'] ?? null) ? json_encode($decoded['medications']) : null,
-                    'examination_findings' => $decoded['examination_findings'] ?? 'Abdomen Feels Distended',
-                    'notes' => $decoded['notes'] ?? $aRow['notes'] ?? 'Gandbush ( Cow Ghee + Triphala Powder )',
+                    'examination_findings' => $decoded['examination_findings'] ?? '',
+                    'notes' => $decoded['notes'] ?? $aRow['notes'] ?? '',
                     'doctor_specialty' => $decoded['doctor_specialty'] ?? 'Ayurvedic Medicine',
-                    'doctor_phone' => $decoded['phone'] ?? '+91 7896543210',
-                    'doctor_email' => $decoded['email'] ?? $decoded['support_email'] ?? 'ocayursupport@gmail.com'
+                    'doctor_phone' => $decoded['phone'] ?? '',
+                    'doctor_email' => $decoded['email'] ?? $decoded['support_email'] ?? ''
                 ];
             }
         }
@@ -118,15 +118,7 @@ if (!$rxRecord && $patientId > 0) {
 }
 
 // 4. Default Medication Setup if not in record
-$defaultMedications = [
-    [
-        'medication' => 'TAB MEENTOACID (TABLET)',
-        'dose' => '1 TABLET',
-        'frequency' => '1-0-1 BEFORE MEAL',
-        'duration' => '10 DAYS',
-        'remarks' => 'TAKE 1 TABLET - TWICE A DAY, BEFORE BREAKFAST AND BEFORE DINNER FOR 10 DAYS'
-    ]
-];
+$defaultMedications = [];
 
 // Parse medications JSON from database
 $medications = $defaultMedications;
@@ -144,25 +136,25 @@ $rxTimeFormatted = $rxRecord['prescription_time'] ?? '11:20 AM';
 
 // Construct final dynamic prescription response
 $responsePrescription = [
-    'id' => intval($rxRecord['id'] ?? 1),
-    'prescription_code' => $rxRecord['prescription_code'] ?? 'RX-001',
+    'id' => intval($rxRecord['id'] ?? 0),
+    'prescription_code' => $rxRecord['prescription_code'] ?? ($rxRecord['id'] ? ('RX-' . str_pad($rxRecord['id'], 3, '0', STR_PAD_LEFT)) : '--'),
     'date' => $rxDateFormatted,
     'time' => $rxTimeFormatted,
     'patient_id' => $patientId,
     'patient_name' => $rxRecord['patient_name'] ?? $patientInfo['full_name'],
     'gender' => $patientInfo['gender'],
     'age' => $patientInfo['age'],
-    'medical_history' => $rxRecord['medical_history'] ?? 'No Known Significant Medical History',
-    'symptoms' => $rxRecord['symptoms'] ?? 'Constipation (Severity : Moderate)',
-    'diagnosis' => $rxRecord['diagnosis'] ?? 'Migraine',
-    'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? '3 months',
+    'medical_history' => $rxRecord['medical_history'] ?? '',
+    'symptoms' => $rxRecord['symptoms'] ?? '',
+    'diagnosis' => $rxRecord['diagnosis'] ?? '',
+    'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? '',
     'medications' => $medications,
-    'examination_findings' => $rxRecord['examination_findings'] ?? 'Abdomen Feels Distended',
-    'notes' => $rxRecord['notes'] ?? 'Gandbush ( Cow Ghee + Triphala Powder )',
-    'doctor_name' => $rxRecord['doctor_name'] ?? 'Dr. Ananya Prasad',
+    'examination_findings' => $rxRecord['examination_findings'] ?? '',
+    'notes' => $rxRecord['notes'] ?? '',
+    'doctor_name' => $rxRecord['doctor_name'] ?? 'Doctor',
     'doctor_specialty' => $rxRecord['doctor_specialty'] ?? 'Ayurvedic Medicine',
-    'doctor_phone' => $rxRecord['doctor_phone'] ?? '+91 7896543210',
-    'doctor_email' => $rxRecord['doctor_email'] ?? 'ocayursupport@gmail.com'
+    'doctor_phone' => $rxRecord['doctor_phone'] ?? '',
+    'doctor_email' => $rxRecord['doctor_email'] ?? ''
 ];
 
 echo json_encode([

@@ -116,8 +116,8 @@ if ($stmtDoc) {
 if (!$docInfo) {
     $docInfo = [
         'id' => $doctorId,
-        'doctorid' => 'DOC000001',
-        'full_name' => 'Dr. Nidhi Jha',
+        'doctorid' => $doctorId > 0 ? ('DOC' . str_pad($doctorId, 6, '0', STR_PAD_LEFT)) : 'DOC000001',
+        'full_name' => $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor',
         'expertise' => 'Ayurveda Physician'
     ];
 }

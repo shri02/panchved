@@ -172,7 +172,7 @@
             </svg>
           </div>
           <div class="doctor-info">
-            <span class="doctor-name">John Doe</span>
+            <span class="doctor-name">Doctor</span>
             <span class="doctor-role">Doctor</span>
           </div>
         </a>
@@ -270,15 +270,15 @@
               <h3 class="course-section-heading">ABOUT THE SPEAKER</h3>
               
               <div class="speaker-profile-header">
-                <div class="speaker-avatar-circle" id="detailSpeakerAvatar">AM</div>
+                <div class="speaker-avatar-circle" id="detailSpeakerAvatar">--</div>
                 <div class="speaker-info-col">
-                  <span class="speaker-name" id="detailSpeakerName">Dr. Ananya Mehta</span>
-                  <span class="speaker-role" id="detailSpeakerRole">Ayurveda Physician</span>
+                  <span class="speaker-name" id="detailSpeakerName">--</span>
+                  <span class="speaker-role" id="detailSpeakerRole">--</span>
                 </div>
               </div>
 
               <p class="course-section-text" id="detailSpeakerBio">
-                Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu.
+                --
               </p>
             </div>
 
@@ -309,8 +309,8 @@
               <!-- Card 1: Workshop Details -->
               <div class="checkout-card">
                 <h2 class="checkout-card-title" style="margin-bottom: 12px;">Workshop Details</h2>
-                <div class="checkout-workshop-name" id="checkoutWorkshopName">Ayurveda Lifestyle Workshop</div>
-                <div class="checkout-workshop-author" id="checkoutWorkshopAuthor">By Dr. Ananya Mehta</div>
+                <div class="checkout-workshop-name" id="checkoutWorkshopName">--</div>
+                <div class="checkout-workshop-author" id="checkoutWorkshopAuthor">--</div>
 
                 <div class="checkout-schedule-box">
                   <div class="checkout-schedule-item">
@@ -352,9 +352,9 @@
 
                 <!-- 1. Display View (Initial State - First Image) -->
                 <div class="checkout-user-info" id="checkoutUserDetailsDisplay">
-                  <div class="checkout-user-name" id="displayUserName">Hrutik Gaonkar</div>
-                  <div class="checkout-user-meta checkout-user-email" id="displayUserEmail">hrutikgaonkar11@gmail.com</div>
-                  <div class="checkout-user-meta checkout-user-phone" id="displayUserPhone">9988776655</div>
+                  <div class="checkout-user-name" id="displayUserName">--</div>
+                  <div class="checkout-user-meta checkout-user-email" id="displayUserEmail">--</div>
+                  <div class="checkout-user-meta checkout-user-phone" id="displayUserPhone">--</div>
                 </div>
 
                 <!-- 2. Edit Form View (Shown on clicking Edit - Second Image) -->
@@ -365,7 +365,7 @@
                       <label for="inputUserName" class="checkout-form-label">
                         Name <span class="required-star">*</span>
                       </label>
-                      <input type="text" id="inputUserName" name="userName" class="checkout-form-input" placeholder="Enter your name" value="Hrutik Gaonkar" required>
+                      <input type="text" id="inputUserName" name="userName" class="checkout-form-input" placeholder="Enter your name" value="" required>
                     </div>
 
                     <!-- Field 2: Email -->
@@ -373,7 +373,7 @@
                       <label for="inputUserEmail" class="checkout-form-label">
                         Email <span class="required-star">*</span>
                       </label>
-                      <input type="email" id="inputUserEmail" name="userEmail" class="checkout-form-input" placeholder="Enter your email" value="hrutikgaonkar11@gmail.com" required>
+                      <input type="email" id="inputUserEmail" name="userEmail" class="checkout-form-input" placeholder="Enter your email" value="" required>
                     </div>
 
                     <!-- Field 3: Phone -->
@@ -381,7 +381,7 @@
                       <label for="inputUserPhone" class="checkout-form-label">
                         Phone <span class="required-star">*</span>
                       </label>
-                      <input type="tel" id="inputUserPhone" name="userPhone" class="checkout-form-input" placeholder="Enter your phone" value="9988776655" maxlength="10" required>
+                      <input type="tel" id="inputUserPhone" name="userPhone" class="checkout-form-input" placeholder="Enter your phone" value="" maxlength="10" required>
                     </div>
                   </div>
 
@@ -868,9 +868,9 @@
         }
       }
 
-      const name = doctor?.full_name || doctor?.name || 'Hrutik Gaonkar';
-      const email = doctor?.email || doctor?.doctor_email || doctor?.user_email || 'hrutikgaonkar11@gmail.com';
-      const phone = doctor?.phone_number || doctor?.phoneNumber || doctor?.phone || doctor?.doctor_phone || '9988776655';
+      const name = doctor?.full_name || doctor?.name || 'Doctor';
+      const email = doctor?.email || doctor?.doctor_email || doctor?.user_email || '';
+      const phone = doctor?.phone_number || doctor?.phoneNumber || doctor?.phone || doctor?.doctor_phone || '';
 
       const displayNameEl = document.getElementById('displayUserName');
       const displayEmailEl = document.getElementById('displayUserEmail');

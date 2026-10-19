@@ -25,10 +25,10 @@ $data = json_decode($rawInput, true) ?: $_POST;
 
 $workshopId = intval($data['workshop_id'] ?? 1);
 $doctorId = intval($_SESSION['doctor_id'] ?? $data['doctor_id'] ?? 1);
-$doctorName = trim($data['doctor_name'] ?? $_SESSION['doctor_name'] ?? 'John Doe');
-$doctorEmail = trim($data['doctor_email'] ?? $_SESSION['doctor_email'] ?? 'johndoe@gmail.com');
-$doctorPhone = trim($data['doctor_phone'] ?? $_SESSION['doctor_phone'] ?? '9876543210');
-$amount = floatval($data['amount'] ?? 500.00);
+$doctorName = trim($data['doctor_name'] ?? $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor');
+$doctorEmail = trim($data['doctor_email'] ?? $_SESSION['doctor_email'] ?? $_SESSION['email'] ?? '');
+$doctorPhone = trim($data['doctor_phone'] ?? $_SESSION['doctor_phone'] ?? $_SESSION['phone_number'] ?? '');
+$amount = floatval($data['amount'] ?? 0.00);
 $paymentMethod = trim($data['payment_method'] ?? 'card');
 
 // Fetch workshop info
@@ -40,7 +40,7 @@ $workshop = mysqli_fetch_assoc($res);
 mysqli_stmt_close($stmt);
 
 $workshopTitle = $workshop['title'] ?? 'Ayurveda Wellness Workshop';
-$workshopDate = $workshop['date'] ?? '2026-09-02';
+$workshopDate = $workshop['date'] ?? date('Y-m-d');
 $formattedDate = date('j M Y', strtotime($workshopDate) ?: time());
 
 // Generate unique 6-digit booking code

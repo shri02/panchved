@@ -30,7 +30,7 @@ $patientId = intval($input['patient_id'] ?? ($_POST['patient_id'] ?? 0));
 $notes = trim((string)($input['notes'] ?? ($_POST['notes'] ?? '')));
 
 $doctorId = intval($_SESSION['user_id'] ?? $_SESSION['doctor_id'] ?? 0);
-$doctorName = trim((string)($_SESSION['full_name'] ?? $_SESSION['user_name'] ?? 'Dr. Nidhi Jha'));
+$doctorName = trim((string)($_SESSION['full_name'] ?? $_SESSION['doctor_name'] ?? $_SESSION['user_name'] ?? 'Doctor'));
 
 $uploadedPdfFileName = null;
 $originalFileName = null;

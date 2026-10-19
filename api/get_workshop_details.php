@@ -68,10 +68,10 @@ function getInitials($name) {
             $initials .= strtoupper($clean[0]);
         }
     }
-    return substr($initials, 0, 2) ?: 'AM';
+    return substr($initials, 0, 2) ?: 'IN';
 }
 
-$speaker = $workshop['speaker'] ?: ($workshop['instructor'] ?: 'Dr. Ananya Mehta');
+$speaker = $workshop['speaker'] ?: ($workshop['instructor'] ?: 'Instructor');
 $feeNum = floatval($workshop['fee'] > 0 ? $workshop['fee'] : ($workshop['price'] > 0 ? $workshop['price'] : 5999.00));
 $durationText = trim($workshop['duration_text'] ?? '');
 

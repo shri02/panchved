@@ -35,7 +35,7 @@ $packageName = trim($input['package_name'] ?? 'Stresscare');
 
 // Doctor details from input, session, or database
 $doctorId = intval($input['doctor_id'] ?? $_SESSION['doctor_id'] ?? $_SESSION['user_id'] ?? 1);
-$doctorName = trim($input['doctor_name'] ?? $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Dr. Nidhi Jha');
+$doctorName = trim($input['doctor_name'] ?? $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor');
 
 // If patient details not provided, fetch from `patients` table
 if ($patientId > 0 && (empty($patientName) || empty($packageName))) {
@@ -46,14 +46,14 @@ if ($patientId > 0 && (empty($patientName) || empty($packageName))) {
         $res = mysqli_stmt_get_result($stmt);
         if ($row = mysqli_fetch_assoc($res)) {
             if (empty($patientName)) $patientName = $row['full_name'];
-            if (empty($packageName)) $packageName = $row['package_name'] ?: 'Stresscare';
+            if (empty($packageName)) $packageName = $row['package_name'] ?: 'General Consultation';
         }
         mysqli_stmt_close($stmt);
     }
 }
 
 if (empty($patientName)) {
-    $patientName = 'Rahul Sharma';
+    $patientName = 'Patient';
 }
 
 function calculateDurationFromTime($timeStr, $fallbackDuration = '45 mins') {

@@ -168,16 +168,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPatientData = data.patient;
 
         // 1. Populate Metrics
-        if (metricTotalAppts) metricTotalAppts.textContent = data.metrics.total_appointments || 12;
-        if (metricPendingFollowups) metricPendingFollowups.textContent = data.metrics.pending_followups || 12;
-        if (metricUnreadMessages) metricUnreadMessages.textContent = data.metrics.unread_messages || 3;
+        if (metricTotalAppts) metricTotalAppts.textContent = data.metrics.total_appointments ?? 0;
+        if (metricPendingFollowups) metricPendingFollowups.textContent = data.metrics.pending_followups ?? 0;
+        if (metricUnreadMessages) metricUnreadMessages.textContent = data.metrics.unread_messages ?? 0;
 
         // 2. Populate Personal Details
-        if (patientDetailName) patientDetailName.textContent = data.patient.full_name || 'Rahul Sharma';
-        if (patientDetailAge) patientDetailAge.textContent = data.patient.age || 34;
-        if (patientDetailGender) patientDetailGender.textContent = data.patient.gender || 'Male';
-        if (patientDetailPhone) patientDetailPhone.textContent = data.patient.phone_number || '9876543210';
-        if (patientDetailEmail) patientDetailEmail.textContent = data.patient.email || 'rahulsharma@gmail.com';
+        if (patientDetailName) patientDetailName.textContent = data.patient.full_name || 'Patient';
+        if (patientDetailAge) patientDetailAge.textContent = data.patient.age || '--';
+        if (patientDetailGender) patientDetailGender.textContent = data.patient.gender || '--';
+        if (patientDetailPhone) patientDetailPhone.textContent = data.patient.phone_number || '--';
+        if (patientDetailEmail) patientDetailEmail.textContent = data.patient.email || '--';
 
         // 3. Populate Health Progress Values
         if (data.health_progress) {
@@ -435,8 +435,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function openBookAppointment() {
     if (!bookAppointmentModal || !modalOverlay) return;
 
-    const patientName = currentPatientData?.full_name || 'Rahul Sharma';
-    const pkgName = currentPatientData?.package_name || 'Gut Healing Package';
+    const patientName = currentPatientData?.full_name || 'Patient';
+    const pkgName = currentPatientData?.package_name || 'General Consultation';
 
     appointmentPatientId.value = currentPatientId;
     appointmentPackageName.value = pkgName;
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const agendaVal = appointmentAgendaInput.value.trim();
 
       let doctorId = 1;
-      let doctorName = 'Dr. Nidhi Jha';
+      let doctorName = 'Doctor';
       try {
         const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
         if (doc.id) doctorId = doc.id;
@@ -534,10 +534,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function openSuccessModal(appt) {
     if (!appointmentSuccessModal || !modalOverlay) return;
 
-    if (successPatientName) successPatientName.textContent = appt.patient_name || 'Rahul Sharma';
-    if (successConsultation) successConsultation.textContent = appt.consultation_type || 'Follow-up Consultation';
-    if (successDateTime) successDateTime.textContent = appt.date_time_formatted || '23 Sep 2026, 10:00 - 10:45 AM';
-    if (successPaymentStatus) successPaymentStatus.textContent = appt.payment_status || 'Included in Package';
+    if (successPatientName) successPatientName.textContent = appt.patient_name || currentPatientData?.full_name || 'Patient';
+    if (successConsultation) successConsultation.textContent = appt.consultation_type || '--';
+    if (successDateTime) successDateTime.textContent = appt.date_time_formatted || '--';
+    if (successPaymentStatus) successPaymentStatus.textContent = appt.payment_status || '--';
 
     modalOverlay.classList.add('active');
     appointmentSuccessModal.classList.add('open');
@@ -591,36 +591,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         if (data.success && data.prescription) {
           const rx = data.prescription;
-          if (rxPatientName) rxPatientName.textContent = rx.patient_name || currentPatientData?.full_name || 'John Doe';
-          if (rxPatientGender) rxPatientGender.textContent = rx.gender || currentPatientData?.gender || 'Male';
-          if (rxPatientAge) rxPatientAge.textContent = rx.age || currentPatientData?.age || '34';
-          if (rxMedicalHistory) rxMedicalHistory.textContent = rx.medical_history || 'No Known Significant Medical History';
-          if (rxSymptoms) rxSymptoms.textContent = (typeof rx.symptoms === 'string') ? rx.symptoms : (Array.isArray(rx.symptoms) && rx.symptoms.length ? rx.symptoms.map(s => `${s.symptom || s.name || ''} (Severity: ${s.severity || 'Moderate'})`).join(', ') : 'Constipation (Severity : Moderate)');
-          if (rxDiagnosis) rxDiagnosis.textContent = rx.diagnosis ? `${rx.diagnosis} (Duration : ${rx.diagnosis_duration || '3 months'})` : 'Migraine (Duration : 3 months)';
-          if (rxExamFindings) rxExamFindings.textContent = rx.examination_findings || 'Abdomen Feels Distended';
-          if (rxDoctorNotes) rxDoctorNotes.textContent = rx.notes || 'Gandbush ( Cow Ghee + Triphala Powder )';
-          if (rxDoctorName) rxDoctorName.textContent = rx.doctor_name || 'Dr. Ananya Prasad';
+          if (rxPatientName) rxPatientName.textContent = rx.patient_name || currentPatientData?.full_name || '--';
+          if (rxPatientGender) rxPatientGender.textContent = rx.gender || currentPatientData?.gender || '--';
+          if (rxPatientAge) rxPatientAge.textContent = rx.age || currentPatientData?.age || '--';
+          if (rxMedicalHistory) rxMedicalHistory.textContent = rx.medical_history || '--';
+          if (rxSymptoms) rxSymptoms.textContent = (typeof rx.symptoms === 'string' && rx.symptoms) ? rx.symptoms : (Array.isArray(rx.symptoms) && rx.symptoms.length ? rx.symptoms.map(s => `${s.symptom || s.name || ''} (Severity: ${s.severity || 'Moderate'})`).join(', ') : '--');
+          if (rxDiagnosis) rxDiagnosis.textContent = rx.diagnosis ? `${rx.diagnosis}${rx.diagnosis_duration ? ' (Duration : ' + rx.diagnosis_duration + ')' : ''}` : '--';
+          if (rxExamFindings) rxExamFindings.textContent = rx.examination_findings || '--';
+          if (rxDoctorNotes) rxDoctorNotes.textContent = rx.notes || '--';
+          if (rxDoctorName) rxDoctorName.textContent = rx.doctor_name || 'Doctor';
           if (rxDoctorSpec) rxDoctorSpec.textContent = rx.doctor_specialty || 'Ayurvedic Medicine';
-          if (rxDate) rxDate.textContent = rx.date || '08/09/2026';
-          if (rxTime) rxTime.textContent = rx.time || '11:20 AM';
-          if (rxDoctorPhone) rxDoctorPhone.textContent = rx.doctor_phone || rx.phone || '+91 7896543210';
-          if (rxDoctorEmail) rxDoctorEmail.textContent = rx.doctor_email || rx.email || rx.support_email || 'ocayursupport@gmail.com';
+          if (rxDate) rxDate.textContent = rx.date || '--';
+          if (rxTime) rxTime.textContent = rx.time || '--';
+          if (rxDoctorPhone) rxDoctorPhone.textContent = rx.doctor_phone || rx.phone || '--';
+          if (rxDoctorEmail) rxDoctorEmail.textContent = rx.doctor_email || rx.email || rx.support_email || '--';
 
           // Medications Table
-          if (rxMedicationRows && Array.isArray(rx.medications) && rx.medications.length > 0) {
-            let medHtml = '';
-            rx.medications.forEach(m => {
-              medHtml += `
-                <div class="rx-med-row-grid">
-                  <span class="rx-med-cell rx-med-name">${escapeHtml(m.medication || m.name || 'TAB MEENTOACID (TABLET)')}</span>
-                  <span class="rx-med-cell rx-med-dose">${escapeHtml(m.dose || '1 TABLET')}</span>
-                  <span class="rx-med-cell rx-med-freq">${escapeHtml(m.frequency || '1-0-1 BEFORE MEAL')}</span>
-                  <span class="rx-med-cell rx-med-dur">${escapeHtml(m.duration || '10 DAYS')}</span>
-                  <span class="rx-med-cell rx-med-rem">${escapeHtml(m.remarks || 'TAKE 1 TABLET - TWICE A DAY, BEFORE BREAKFAST AND BEFORE DINNER FOR 10 DAYS')}</span>
-                </div>
-              `;
-            });
-            rxMedicationRows.innerHTML = medHtml;
+          if (rxMedicationRows) {
+            if (Array.isArray(rx.medications) && rx.medications.length > 0) {
+              let medHtml = '';
+              rx.medications.forEach(m => {
+                medHtml += `
+                  <div class="rx-med-row-grid">
+                    <span class="rx-med-cell rx-med-name">${escapeHtml(m.medication || m.name || '--')}</span>
+                    <span class="rx-med-cell rx-med-dose">${escapeHtml(m.dose || '--')}</span>
+                    <span class="rx-med-cell rx-med-freq">${escapeHtml(m.frequency || '--')}</span>
+                    <span class="rx-med-cell rx-med-dur">${escapeHtml(m.duration || '--')}</span>
+                    <span class="rx-med-cell rx-med-rem">${escapeHtml(m.remarks || '--')}</span>
+                  </div>
+                `;
+              });
+              rxMedicationRows.innerHTML = medHtml;
+            } else {
+              rxMedicationRows.innerHTML = '<div style="padding: 12px; color: #64748b; text-align: center;">No medications listed.</div>';
+            }
           }
         }
       }

@@ -27,16 +27,16 @@ $patientId = intval($input['patient_id'] ?? 0);
 $appointmentId = intval($input['appointment_id'] ?? 0);
 $patientName = trim($input['patient_name'] ?? '');
 $diagnosis = trim($input['diagnosis_name'] ?? $input['diagnosis'] ?? 'Migraine');
-$diagnosisDuration = trim($input['diagnosis_duration'] ?? $input['duration'] ?? '3 months');
+$diagnosisDuration = trim($input['diagnosis_duration'] ?? $input['duration'] ?? '');
 $symptoms = $input['symptoms'] ?? [];
 $medications = $input['medications'] ?? [];
-$examinationFindings = trim($input['examination_findings'] ?? 'Abdomen Feels Distended');
-$notes = trim($input['notes'] ?? 'Gandbush ( Cow Ghee + Triphala Powder )');
-$medicalHistory = trim($input['medical_history'] ?? 'No Known Significant Medical History');
+$examinationFindings = trim($input['examination_findings'] ?? '');
+$notes = trim($input['notes'] ?? '');
+$medicalHistory = trim($input['medical_history'] ?? '');
 
 // Doctor Info
 $doctorId = $_SESSION['doctor_id'] ?? $_SESSION['user_id'] ?? 1;
-$doctorName = $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Dr. Ananya Prasad';
+$doctorName = $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor';
 $doctorArea = $_SESSION['doctor_area'] ?? 'Ayurvedic Medicine';
 
 // If patient info not provided, fetch from DB
@@ -54,7 +54,7 @@ if ($patientId > 0 && empty($patientName)) {
 }
 
 if (empty($patientName)) {
-    $patientName = 'Rahul Sharma';
+    $patientName = 'Patient';
 }
 
 // Format structured prescription object

@@ -992,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const agendaVal = appointmentAgendaInput.value.trim();
 
       let doctorId = 1;
-      let doctorName = 'Dr. Nidhi Jha';
+      let doctorName = 'Doctor';
       try {
         const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
         if (doc.id) doctorId = doc.id;
@@ -1051,10 +1051,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function openAppointmentSuccessModal(appointment) {
     if (!appointmentSuccessModal || !modalOverlay) return;
 
-    if (successPatientName) successPatientName.textContent = appointment.patient_name || 'Rahul Sharma';
-    if (successConsultation) successConsultation.textContent = appointment.consultation_type || 'Follow-up Consultation';
-    if (successDateTime) successDateTime.textContent = appointment.date_time_formatted || '23 Sep 2026, 10:00 - 10:45 AM';
-    if (successPaymentStatus) successPaymentStatus.textContent = appointment.payment_status || 'Included in Package';
+    if (successPatientName) successPatientName.textContent = appointment.patient_name || 'Patient';
+    if (successConsultation) successConsultation.textContent = appointment.consultation_type || '--';
+    if (successDateTime) successDateTime.textContent = appointment.date_time_formatted || '--';
+    if (successPaymentStatus) successPaymentStatus.textContent = appointment.payment_status || '--';
 
     modalOverlay.classList.add('active');
     appointmentSuccessModal.classList.add('open');
@@ -1251,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       let doctorId = 1;
-      let doctorName = 'Dr. Nidhi Jha';
+      let doctorName = 'Doctor';
       try {
         const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
         if (doc.id) doctorId = doc.id;
