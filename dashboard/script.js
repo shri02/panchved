@@ -28,6 +28,17 @@ function showToast(message, type = 'info') {
 window.showToast = showToast;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Page Loader Overlay Logic
+  const pageLoader = document.getElementById('pageLoader');
+  const hidePageLoader = () => {
+    if (!pageLoader) return;
+    pageLoader.classList.add('hidden');
+    setTimeout(() => {
+      pageLoader.style.display = 'none';
+    }, 450);
+  };
+  setTimeout(hidePageLoader, 350);
+
   // Elements
   const loginForm = document.getElementById('loginForm');
   const phoneInput = document.getElementById('phoneNumber');

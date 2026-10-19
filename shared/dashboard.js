@@ -4,6 +4,18 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Page Loader Overlay Logic
+  const pageLoader = document.getElementById('pageLoader');
+  const hidePageLoader = () => {
+    if (!pageLoader) return;
+    pageLoader.classList.add('hidden');
+    setTimeout(() => {
+      pageLoader.style.display = 'none';
+    }, 450);
+  };
+  window.hidePageLoader = hidePageLoader;
+  setTimeout(hidePageLoader, 2500);
+
   // Helper for determining current path depth & API paths
   const subfolders = ['dashboard', 'patients', 'appointments', 'packages', 'courses', 'profile', 'shared'];
   const isInSubfolder = subfolders.some(folder => window.location.pathname.includes('/' + folder + '/'));
@@ -359,6 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>
         `;
       }
+    })
+    .finally(() => {
+      hidePageLoader();
     });
   }
 
@@ -846,5 +861,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Startup initialization
   fetchDoctorProfile();
-  fetchDashboardData(1);
+  if (document.getElementById('consultationTableBody')) {
+    fetchDashboardData(1);
+  } else {
+    setTimeout(hidePageLoader, 400);
+  }
 });

@@ -400,6 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
       updatePagination({ start_item: 0, end_item: 0, total_items: 0, current_page: 1, total_pages: 1 });
+    } finally {
+      window.hidePageLoader?.();
     }
   }
 

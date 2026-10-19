@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.warn('Packages fetch error (fallback to current DOM):', err);
+    } finally {
+      window.hidePageLoader?.();
     }
   }
 
