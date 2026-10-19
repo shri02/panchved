@@ -81,12 +81,6 @@ if (isset($_FILES['diet_pdf']) && is_array($_FILES['diet_pdf']) && ($_FILES['die
         @mkdir($uploadDir, 0777, true);
     }
 
-    // Also mirror to panchved-patient upload dir if accessible
-    $patientPortalUploadDir = __DIR__ . '/../../panchved-patient/uploads/diets';
-    if (!is_dir($patientPortalUploadDir)) {
-        @mkdir($patientPortalUploadDir, 0777, true);
-    }
-
     $cleanBaseName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($originalFileName, PATHINFO_FILENAME));
     $uploadedPdfFileName = 'diet_' . ($patientId > 0 ? $patientId : 'p') . '_' . date('Ymd_His') . '_' . substr(md5(uniqid()), 0, 6) . '.pdf';
     $targetPath = $uploadDir . '/' . $uploadedPdfFileName;
@@ -102,9 +96,28 @@ if (isset($_FILES['diet_pdf']) && is_array($_FILES['diet_pdf']) && ($_FILES['die
     $fileSizeBytes = (int)filesize($targetPath);
     $pdfRelPath = 'uploads/diets/' . $uploadedPdfFileName;
 
-    // Copy to patient portal folder as well for direct web server access
-    if (is_dir($patientPortalUploadDir)) {
-        @copy($targetPath, $patientPortalUploadDir . '/' . $uploadedPdfFileName);
+    // Mirror copy to patient portal directories so both portals have immediate local access
+    $patientCandidateDirs = [
+        __DIR__ . '/../../panchved-patient/uploads/diets',
+        __DIR__ . '/../../../panchved-patient/uploads/diets',
+        dirname(__DIR__, 2) . '/panchved-patient/uploads/diets',
+        dirname(__DIR__, 3) . '/panchved-patient/uploads/diets'
+    ];
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $doc = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\');
+        $patientCandidateDirs[] = $doc . '/panchved-patient/uploads/diets';
+        $patientCandidateDirs[] = $doc . '/patient/uploads/diets';
+        $patientCandidateDirs[] = $doc . '/../panchved-patient/uploads/diets';
+        $patientCandidateDirs[] = $doc . '/../patient/uploads/diets';
+    }
+
+    foreach ($patientCandidateDirs as $pDir) {
+        if (!is_dir($pDir)) {
+            @mkdir($pDir, 0777, true);
+        }
+        if (is_dir($pDir)) {
+            @copy($targetPath, $pDir . '/' . $uploadedPdfFileName);
+        }
     }
 }
 
