@@ -43,30 +43,43 @@ if ($packageId > 0) {
 }
 
 if (!$package) {
-    // Default fallback
-    $res = mysqli_query($connection1, "SELECT * FROM `packages` WHERE `id` = 1 LIMIT 1");
-    $package = mysqli_fetch_assoc($res);
+    // If no specific package ID provided, default to the first active package in the database
+    $res = mysqli_query($connection1, "SELECT * FROM `packages` ORDER BY `id` ASC LIMIT 1");
+    if ($res) {
+        $package = mysqli_fetch_assoc($res);
+    }
 }
 
-// Fallback protocol guidelines matching Image 2
-$protocolName = $package['package_name'] ?? 'Stress & Sleep Balance Protocol';
-$dietHydration = $package['diet_hydration'] ?: 'Personalized dietary recommendations, food preferences, and daily water intake guidelines based on the patient\'s assessment.';
-$yogaPhysio = $package['yoga_physio'] ?: 'Prescribed yoga, breathing exercises, and physiotherapy practices to support relaxation and physical wellbeing.';
-$ayurvedaDincharya = $package['ayurveda_dinacharya'] ?: "A customized daily wellness schedule comprising diet, hydration, physical activity, and Ayurvedic practices as per the doctor's protocol.\nMorning Ritual: Detox drink, Abhyanga, or Nasya, as prescribed.\nNight Ritual: Abhyanga, Padabhyanga, music therapy, meditation, or herbal night tea, as recommended.";
-$dailyActivity = $package['daily_activity'] ?: 'Personalized step goals, physical activity recommendations, and sleep routine guidelines.';
-$patientMonitoring = $package['patient_monitoring'] ?: 'Regular tracking of weight, abdomen girth, blood pressure, and blood sugar levels to assess patient progress.';
-$followupReview = $package['followup_review'] ?: 'Scheduled consultations to evaluate patient response, review monitoring records, and modify the protocol based on clinical assessment.';
+if (!$package) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Protocol package not found'
+    ]);
+    exit();
+}
+
+$protocolName = $package['package_name'] ?? 'Protocol Details';
+$dietHydration = trim((string)($package['diet_hydration'] ?? ''));
+$yogaPhysio = trim((string)($package['yoga_physio'] ?? ''));
+$ayurvedaDincharya = trim((string)($package['ayurveda_dinacharya'] ?? ''));
+$dailyActivity = trim((string)($package['daily_activity'] ?? ''));
+$patientMonitoring = trim((string)($package['patient_monitoring'] ?? ''));
+$followupReview = trim((string)($package['followup_review'] ?? ''));
 
 echo json_encode([
     'success' => true,
     'protocol' => [
-        'id' => intval($package['id'] ?? 1),
-        'package_id' => $package['package_id'] ?? 'PKG-001',
+        'id' => intval($package['id']),
+        'package_id' => $package['package_id'] ?? '',
         'package_name' => $protocolName,
-        'duration' => $package['duration'] ?? '3 Months',
-        'price' => floatval($package['price'] ?? 7999.00),
-        'enrollments' => intval($package['enrollments'] ?? 18),
+        'category' => $package['category'] ?? '',
+        'duration' => $package['duration'] ?? '',
+        'price' => floatval($package['price'] ?? 0.00),
+        'enrollments' => intval($package['enrollments'] ?? 0),
         'short_description' => $package['short_description'] ?? '',
+        'overview' => $package['overview'] ?? '',
+        'benefits' => $package['benefits'] ?? '',
+        'included' => $package['included'] ?? '',
         'diet_hydration' => $dietHydration,
         'yoga_physio' => $yogaPhysio,
         'ayurveda_dinacharya' => $ayurvedaDincharya,

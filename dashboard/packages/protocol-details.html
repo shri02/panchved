@@ -159,8 +159,8 @@
       <!-- Top Page Header -->
       <header class="content-header">
         <div class="welcome-heading">
-          <h1 class="page-title" id="protocolTitle">Stress &amp; Sleep Balance Protocol</h1>
-          <p class="welcome-subtitle">View Ayurveda protocols, guidelines and patient programs.</p>
+          <h1 class="page-title" id="protocolTitle">Protocol Details</h1>
+          <p class="welcome-subtitle" id="protocolSubtitle">View Ayurveda protocols, guidelines and patient programs.</p>
         </div>
 
         <!-- Doctor Profile Card Pill -->
@@ -177,7 +177,7 @@
         </a>
       </header>
 
-      <!-- Main Protocol Guidelines Body (Matching Image exactly) -->
+      <!-- Main Protocol Guidelines Body -->
       <div class="dashboard-body" style="padding: 32px 36px 48px;">
 
         <section class="protocol-content-wrapper" aria-label="Ayurveda Protocol Guidelines">
@@ -186,7 +186,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="dietHydrationTitle">DIET &amp; HYDRATION</h2>
             <div class="protocol-guideline-desc" id="dietHydrationContent">
-              Personalized dietary recommendations, food preferences, and daily water intake guidelines based on the patient's assessment.
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -194,7 +194,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="yogaPhysioTitle">YOGA &amp; PHYSIOTHERAPY</h2>
             <div class="protocol-guideline-desc" id="yogaPhysioContent">
-              Prescribed yoga, breathing exercises, and physiotherapy practices to support relaxation and physical wellbeing.
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -202,9 +202,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="ayurvedaDincharyaTitle">AYURVEDA DINCHARYA (DAILY ROUTINE)</h2>
             <div class="protocol-guideline-desc" id="ayurvedaDincharyaContent">
-              <p>A customized daily wellness schedule comprising diet, hydration, physical activity, and Ayurvedic practices as per the doctor's protocol.</p>
-              <p>Morning Ritual: Detox drink, Abhyanga, or Nasya, as prescribed.</p>
-              <p>Night Ritual: Abhyanga, Padabhyanga, music therapy, meditation, or herbal night tea, as recommended.</p>
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -212,7 +210,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="dailyActivityTitle">DAILY ACTIVITY</h2>
             <div class="protocol-guideline-desc" id="dailyActivityContent">
-              Personalized step goals, physical activity recommendations, and sleep routine guidelines.
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -220,7 +218,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="patientMonitoringTitle">PATIENT MONITORING</h2>
             <div class="protocol-guideline-desc" id="patientMonitoringContent">
-              Regular tracking of weight, abdomen girth, blood pressure, and blood sugar levels to assess patient progress.
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -228,7 +226,7 @@
           <div class="protocol-guideline-section">
             <h2 class="protocol-guideline-title" id="followupReviewTitle">FOLLOW-UP &amp; PROGRESS REVIEW</h2>
             <div class="protocol-guideline-desc" id="followupReviewContent">
-              Scheduled consultations to evaluate patient response, review monitoring records, and modify the protocol based on clinical assessment.
+              <span class="loading-placeholder" style="color: #94a3b8;">--</span>
             </div>
           </div>
 
@@ -243,11 +241,14 @@
   <script src="../shared/dashboard.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      const pageLoader = document.getElementById('pageLoader');
+
       const urlParams = new URLSearchParams(window.location.search);
       const pkgId = urlParams.get('id') || urlParams.get('package_id');
       const pkgSlug = urlParams.get('package') || '';
 
       const protocolTitle = document.getElementById('protocolTitle');
+      const protocolSubtitle = document.getElementById('protocolSubtitle');
       const dietHydrationContent = document.getElementById('dietHydrationContent');
       const yogaPhysioContent = document.getElementById('yogaPhysioContent');
       const ayurvedaDincharyaContent = document.getElementById('ayurvedaDincharyaContent');
@@ -256,12 +257,14 @@
       const followupReviewContent = document.getElementById('followupReviewContent');
 
       function formatText(text) {
-        if (!text) return '';
+        if (!text || !text.trim()) {
+          return '<span class="empty-field-text" style="color: #94a3b8; font-style: italic;">No specific guidelines provided for this section.</span>';
+        }
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length <= 1) {
-          return text;
+          return `<p style="margin: 0; line-height: 1.6;">${escapeHtml(text.trim())}</p>`;
         }
-        return lines.map(line => `<p style="margin: 0 0 6px 0;">${escapeHtml(line)}</p>`).join('');
+        return lines.map(line => `<p style="margin: 0 0 8px 0; line-height: 1.6;">${escapeHtml(line)}</p>`).join('');
       }
 
       function escapeHtml(str) {
@@ -280,9 +283,6 @@
         apiUrl += `?id=${encodeURIComponent(pkgId)}`;
       } else if (pkgSlug) {
         apiUrl += `?package=${encodeURIComponent(pkgSlug)}`;
-      } else {
-        // Default to ID 4 (Stress & Sleep Balance / Reset Thoughts) or 1
-        apiUrl += `?id=4`;
       }
 
       try {
@@ -292,38 +292,53 @@
           if (data.success && data.protocol) {
             const p = data.protocol;
             if (protocolTitle) {
-              let name = p.package_name || 'Stress & Sleep Balance Protocol';
-              if (name === 'Reset Thoughts Package') {
-                name = 'Stress & Sleep Balance Protocol';
-              } else if (!name.toLowerCase().includes('protocol')) {
+              let name = p.package_name || 'Protocol Details';
+              if (!name.toLowerCase().includes('protocol')) {
                 name = `${name} Protocol`;
               }
               protocolTitle.textContent = name;
               document.title = `Ocayur - Doctor Portal | ${name}`;
             }
 
-            if (dietHydrationContent && p.diet_hydration) {
+            if (protocolSubtitle && p.category) {
+              protocolSubtitle.textContent = `Category: ${p.category} | Duration: ${p.duration || '4 Weeks'}`;
+            }
+
+            if (dietHydrationContent) {
               dietHydrationContent.innerHTML = formatText(p.diet_hydration);
             }
-            if (yogaPhysioContent && p.yoga_physio) {
+            if (yogaPhysioContent) {
               yogaPhysioContent.innerHTML = formatText(p.yoga_physio);
             }
-            if (ayurvedaDincharyaContent && p.ayurveda_dinacharya) {
+            if (ayurvedaDincharyaContent) {
               ayurvedaDincharyaContent.innerHTML = formatText(p.ayurveda_dinacharya);
             }
-            if (dailyActivityContent && p.daily_activity) {
+            if (dailyActivityContent) {
               dailyActivityContent.innerHTML = formatText(p.daily_activity);
             }
-            if (patientMonitoringContent && p.patient_monitoring) {
+            if (patientMonitoringContent) {
               patientMonitoringContent.innerHTML = formatText(p.patient_monitoring);
             }
-            if (followupReviewContent && p.followup_review) {
+            if (followupReviewContent) {
               followupReviewContent.innerHTML = formatText(p.followup_review);
             }
+          } else {
+            if (protocolTitle) protocolTitle.textContent = 'Protocol Not Found';
+            if (dietHydrationContent) dietHydrationContent.innerHTML = '<span class="empty-field-text" style="color: #ef4444;">Protocol details could not be found for this package.</span>';
           }
+        } else {
+          if (protocolTitle) protocolTitle.textContent = 'Error Loading Protocol';
         }
       } catch (err) {
         console.warn('Could not load dynamic protocol:', err);
+        if (protocolTitle) protocolTitle.textContent = 'Error Loading Protocol';
+      } finally {
+        if (window.hidePageLoader) {
+          window.hidePageLoader();
+        } else if (pageLoader) {
+          pageLoader.classList.add('hidden');
+          setTimeout(() => { pageLoader.style.display = 'none'; }, 400);
+        }
       }
     });
   </script>
