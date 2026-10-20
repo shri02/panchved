@@ -207,7 +207,7 @@
                 <div class="form-grid-2col">
                   <!-- Symptom Select -->
                   <div class="form-field-group">
-                    <label class="field-label" for="symptomSelect-1">Symptom</label>
+                    <label class="field-label" for="symptomSelect-1">Symptom <span class="required-star" aria-hidden="true">*</span></label>
                     <div class="select-wrapper">
                       <select class="form-select-control" id="symptomSelect-1" required>
                         <option value="" disabled selected hidden>Select symptom</option>
@@ -229,7 +229,7 @@
 
                   <!-- Severity Select -->
                   <div class="form-field-group">
-                    <label class="field-label" for="severitySelect-1">Severity</label>
+                    <label class="field-label" for="severitySelect-1">Severity <span class="required-star" aria-hidden="true">*</span></label>
                     <div class="select-wrapper">
                       <select class="form-select-control" id="severitySelect-1" required>
                         <option value="" disabled selected hidden>Select severity</option>
@@ -249,7 +249,7 @@
                 <!-- Notes Input -->
                 <div class="form-field-group">
                   <label class="field-label" for="symptomNotes-1">Notes</label>
-                  <input type="text" class="form-input-control" id="symptomNotes-1" placeholder="Enter notes">
+                  <textarea class="form-textarea-control" id="symptomNotes-1" placeholder="Enter notes" rows="2"></textarea>
                 </div>
               </div>
             </div>
@@ -266,12 +266,12 @@
 
             <div class="form-grid-2col">
               <div class="form-field-group">
-                <label class="field-label" for="diagnosisName">Diagnosis name<span class="required-star">*</span></label>
+                <label class="field-label" for="diagnosisName">Diagnosis name <span class="required-star" aria-hidden="true">*</span></label>
                 <input type="text" class="form-input-control" id="diagnosisName" placeholder="Enter diagnosis" required>
               </div>
 
               <div class="form-field-group">
-                <label class="field-label" for="diagnosisDuration">Duration<span class="required-star">*</span></label>
+                <label class="field-label" for="diagnosisDuration">Duration <span class="required-star" aria-hidden="true">*</span></label>
                 <input type="text" class="form-input-control" id="diagnosisDuration" placeholder="enter duration" required>
               </div>
             </div>
@@ -285,10 +285,10 @@
               <table class="medication-table" aria-label="Prescription Medication Table">
                 <thead>
                   <tr>
-                    <th scope="col" style="width: 28%;">Medication</th>
-                    <th scope="col" style="width: 18%;">Dose</th>
-                    <th scope="col" style="width: 18%;">Frequency</th>
-                    <th scope="col" style="width: 18%;">Duration</th>
+                    <th scope="col" style="width: 28%;">Medication <span class="required-star" aria-hidden="true">*</span></th>
+                    <th scope="col" style="width: 18%;">Dose <span class="required-star" aria-hidden="true">*</span></th>
+                    <th scope="col" style="width: 18%;">Frequency <span class="required-star" aria-hidden="true">*</span></th>
+                    <th scope="col" style="width: 18%;">Duration <span class="required-star" aria-hidden="true">*</span></th>
                     <th scope="col" style="width: 18%;">Remarks</th>
                   </tr>
                 </thead>
@@ -387,9 +387,9 @@
             </div>
             <div class="form-grid-2col">
               <div class="form-field-group">
-                <label class="field-label" for="symptomSelect-${symptomCount}">Symptom</label>
+                <label class="field-label" for="symptomSelect-${symptomCount}">Symptom <span class="required-star" aria-hidden="true">*</span></label>
                 <div class="select-wrapper">
-                  <select class="form-select-control" id="symptomSelect-${symptomCount}">
+                  <select class="form-select-control" id="symptomSelect-${symptomCount}" required>
                     <option value="" disabled selected hidden>Select symptom</option>
                     <option value="Headache">Headache</option>
                     <option value="Insomnia">Insomnia / Sleep disturbance</option>
@@ -407,9 +407,9 @@
                 </div>
               </div>
               <div class="form-field-group">
-                <label class="field-label" for="severitySelect-${symptomCount}">Severity</label>
+                <label class="field-label" for="severitySelect-${symptomCount}">Severity <span class="required-star" aria-hidden="true">*</span></label>
                 <div class="select-wrapper">
-                  <select class="form-select-control" id="severitySelect-${symptomCount}">
+                  <select class="form-select-control" id="severitySelect-${symptomCount}" required>
                     <option value="" disabled selected hidden>Select severity</option>
                     <option value="Mild">Mild</option>
                     <option value="Moderate" selected>Moderate</option>
@@ -425,7 +425,7 @@
             </div>
             <div class="form-field-group">
               <label class="field-label" for="symptomNotes-${symptomCount}">Notes</label>
-              <input type="text" class="form-input-control" id="symptomNotes-${symptomCount}" placeholder="Enter notes">
+              <textarea class="form-textarea-control" id="symptomNotes-${symptomCount}" placeholder="Enter notes" rows="2"></textarea>
             </div>
           `;
           symptomsList.appendChild(symptomBox);
@@ -476,7 +476,7 @@
           document.querySelectorAll('.symptom-box-item').forEach(box => {
             const symSelect = box.querySelector('select[id^="symptomSelect"]');
             const sevSelect = box.querySelector('select[id^="severitySelect"]');
-            const noteInput = box.querySelector('input[id^="symptomNotes"]');
+            const noteInput = box.querySelector('[id^="symptomNotes"]');
             symptoms.push({
               symptom: symSelect?.value || 'Constipation',
               severity: sevSelect?.value || 'Moderate',

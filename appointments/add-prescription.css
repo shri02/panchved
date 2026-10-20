@@ -114,8 +114,10 @@
   color: #475569;
 }
 
+.required-star,
 .field-label .required-star {
   color: #ef4444;
+  font-weight: 700;
   margin-left: 2px;
 }
 

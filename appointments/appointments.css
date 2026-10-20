@@ -161,7 +161,8 @@
   color: #25231F;
 }
 
-.cell-agenda {
+.cell-agenda,
+.cell-complaint {
   font-size: 0.8125rem;
   color: #5C564D;
   max-width: 220px;

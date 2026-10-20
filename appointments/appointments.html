@@ -227,7 +227,7 @@
                   <th scope="col">Patient's Name</th>
                   <th scope="col">Date</th>
                   <th scope="col">Time</th>
-                  <th scope="col">Agenda</th>
+                  <th scope="col">Complaint</th>
                   <th scope="col">Duration</th>
                   <th scope="col">Action</th>
                 </tr>
@@ -275,7 +275,7 @@
                   <th scope="col">Patient's Name</th>
                   <th scope="col">Time</th>
                   <th scope="col">Date</th>
-                  <th scope="col">Agenda</th>
+                  <th scope="col">Complaint</th>
                   <th scope="col">Duration</th>
                   <th scope="col">Action</th>
                 </tr>
@@ -414,7 +414,7 @@
             </td>
             <td>${escapeHtml(item.date)}</td>
             <td>${escapeHtml(item.time)}</td>
-            <td class="cell-agenda" title="${escapeHtml(item.agenda)}">${escapeHtml(item.agenda)}</td>
+            <td class="cell-agenda cell-complaint" title="${escapeHtml(item.complaint || item.agenda || '')}">${escapeHtml(item.complaint || item.agenda || '')}</td>
             <td class="cell-duration">${escapeHtml(calculatedDuration)}</td>
             <td>
               <a href="${escapeHtml(item.meet_link)}" target="_blank" rel="noopener noreferrer" class="meet-link" aria-label="Join Google Meet for ${escapeHtml(item.patient_name)}">
@@ -444,7 +444,7 @@
             </td>
             <td>${escapeHtml(item.time)}</td>
             <td>${escapeHtml(item.date)}</td>
-            <td class="cell-agenda" title="${escapeHtml(item.agenda)}">${escapeHtml(item.agenda)}</td>
+            <td class="cell-agenda cell-complaint" title="${escapeHtml(item.complaint || item.agenda || '')}">${escapeHtml(item.complaint || item.agenda || '')}</td>
             <td class="cell-duration">${escapeHtml(calculatedDuration)}</td>
             <td>
               <a href="${prescriptionUrl}" class="btn-add-prescription" aria-label="Add prescription for ${escapeHtml(item.patient_name)}">
