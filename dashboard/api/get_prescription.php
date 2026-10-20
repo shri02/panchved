@@ -130,9 +130,33 @@ if ($rxRecord && !empty($rxRecord['medications'])) {
 }
 
 // Format date e.g. "08/09/2026"
-$rxRawDate = $rxRecord['prescription_date'] ?? date('Y-m-d');
-$rxDateFormatted = date('d/m/Y', strtotime($rxRawDate) ?: time());
-$rxTimeFormatted = $rxRecord['prescription_time'] ?? '11:20 AM';
+$rxRawDate = trim($rxRecord['prescription_date'] ?? '');
+$rxDateFormatted = '--';
+if (!empty($rxRawDate) && $rxRawDate !== '0000-00-00' && strpos($rxRawDate, '-0001') === false) {
+    $ts = strtotime($rxRawDate);
+    if ($ts && $ts > 0) {
+        $rxDateFormatted = date('d/m/Y', $ts);
+    }
+}
+if ($rxDateFormatted === '--') {
+    $rxDateFormatted = date('d/m/Y');
+}
+$rxTimeFormatted = trim($rxRecord['prescription_time'] ?? '');
+if (empty($rxTimeFormatted) || $rxTimeFormatted === '--') {
+    $rxTimeFormatted = date('h:i A');
+}
+
+// Format/parse symptoms
+$symptomsData = $rxRecord['symptoms'] ?? '';
+if (!empty($symptomsData) && is_string($symptomsData)) {
+    $trimmed = trim($symptomsData);
+    if (str_starts_with($trimmed, '[') || str_starts_with($trimmed, '{')) {
+        $decodedSyms = json_decode($trimmed, true);
+        if (is_array($decodedSyms)) {
+            $symptomsData = $decodedSyms;
+        }
+    }
+}
 
 // Construct final dynamic prescription response
 $responsePrescription = [
@@ -145,7 +169,7 @@ $responsePrescription = [
     'gender' => $patientInfo['gender'],
     'age' => $patientInfo['age'],
     'medical_history' => $rxRecord['medical_history'] ?? '',
-    'symptoms' => $rxRecord['symptoms'] ?? '',
+    'symptoms' => $symptomsData,
     'diagnosis' => $rxRecord['diagnosis'] ?? '',
     'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? '',
     'medications' => $medications,
