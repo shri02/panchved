@@ -34,7 +34,7 @@ $startTime = ($sTimeParsed !== false) ? date('g:i A', $sTimeParsed) : $sTimeRaw;
 $eTimeParsed = strtotime($eTimeRaw);
 $endTime = ($eTimeParsed !== false) ? date('g:i A', $eTimeParsed) : $eTimeRaw;
 $paymentStatus = trim($input['payment_status'] ?? 'Included in Package');
-$agenda = trim($input['agenda'] ?? '');
+$agenda = trim($input['complaint'] ?? $input['agenda'] ?? '');
 $packageName = trim($input['package_name'] ?? 'Stresscare');
 
 // Doctor details from input, session, or database

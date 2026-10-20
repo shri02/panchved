@@ -517,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appointmentDateInput) appointmentDateInput.value = today;
     if (startTimeInput) startTimeInput.value = '10:00';
     if (endTimeInput) endTimeInput.value = '10:45';
+    if (appointmentAgendaInput) appointmentAgendaInput.value = '';
 
     modalOverlay.classList.add('active');
     bookAppointmentModal.classList.add('open');
@@ -571,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
             end_time: eTime,
             payment_status: payStatus,
             agenda: agendaVal,
+            complaint: agendaVal,
             doctor_id: doctorId,
             doctor_name: doctorName
           })

@@ -439,7 +439,7 @@
         
         <!-- Consultation Type -->
         <div class="form-group">
-          <label for="consultationTypeSelect" class="form-label">Consultation Type</label>
+          <label for="consultationTypeSelect" class="form-label">Consultation Type <span class="required-star" aria-hidden="true">*</span></label>
           <div class="select-wrapper">
             <select id="consultationTypeSelect" class="form-select" required>
               <option value="" disabled>Select consultation type</option>
@@ -454,7 +454,7 @@
 
         <!-- Select Date -->
         <div class="form-group">
-          <label for="appointmentDateInput" class="form-label">Select Date</label>
+          <label for="appointmentDateInput" class="form-label">Select Date <span class="required-star" aria-hidden="true">*</span></label>
           <div class="input-with-icon-wrapper">
             <input type="date" id="appointmentDateInput" class="form-input" required>
           </div>
@@ -462,19 +462,19 @@
 
         <!-- Start Time -->
         <div class="form-group">
-          <label for="startTimeInput" class="form-label">Start Time</label>
+          <label for="startTimeInput" class="form-label">Start Time <span class="required-star" aria-hidden="true">*</span></label>
           <input type="time" id="startTimeInput" class="form-input" value="10:00" required>
         </div>
 
         <!-- End Time -->
         <div class="form-group">
-          <label for="endTimeInput" class="form-label">End Time</label>
+          <label for="endTimeInput" class="form-label">End Time <span class="required-star" aria-hidden="true">*</span></label>
           <input type="time" id="endTimeInput" class="form-input" value="10:45" required>
         </div>
 
         <!-- Payment Status -->
         <div class="form-group">
-          <label for="paymentStatusSelect" class="form-label">Payment Status</label>
+          <label for="paymentStatusSelect" class="form-label">Payment Status <span class="required-star" aria-hidden="true">*</span></label>
           <div class="select-wrapper">
             <select id="paymentStatusSelect" class="form-select" required>
               <option value="Included in Package" selected>Included in Package</option>
@@ -485,10 +485,10 @@
           </div>
         </div>
 
-        <!-- Agenda -->
+        <!-- Complaint -->
         <div class="form-group">
-          <label for="appointmentAgendaInput" class="form-label">Agenda</label>
-          <input type="text" id="appointmentAgendaInput" class="form-input" placeholder="Message text goes here">
+          <label for="appointmentAgendaInput" class="form-label">Complaint</label>
+          <textarea id="appointmentAgendaInput" class="form-textarea" rows="2" placeholder="Enter patient complaint or symptoms..."></textarea>
         </div>
 
       </div>

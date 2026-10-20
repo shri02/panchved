@@ -1027,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
             end_time: eTime,
             payment_status: payStatus,
             agenda: agendaVal,
+            complaint: agendaVal,
             doctor_id: doctorId,
             doctor_name: doctorName
           })

@@ -1054,6 +1054,12 @@
   color: #334155;
 }
 
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
 .form-input,
 .form-select,
 .form-textarea {
@@ -1099,6 +1105,13 @@ input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
 .form-textarea {
   resize: vertical;
   min-height: 100px;
+}
+
+#appointmentAgendaInput.form-textarea {
+  min-height: 42px;
+  height: 42px;
+  line-height: 1.4;
+  resize: vertical;
 }
 
 .modal-footer-single {
