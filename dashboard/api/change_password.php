@@ -56,8 +56,15 @@ if (empty($newPassword)) {
     exit();
 }
 
-if (strlen($newPassword) < 6) {
-    echo json_encode(['success' => false, 'message' => 'New password must be at least 6 characters long.']);
+$hasLetter = preg_match('/[a-zA-Z]/', $newPassword);
+$hasNumber = preg_match('/[0-9]/', $newPassword);
+$hasSpecial = preg_match('/[^a-zA-Z0-9]/', $newPassword);
+
+if (strlen($newPassword) < 8 || !$hasLetter || !$hasNumber || !$hasSpecial) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'The password should contain special characters, numbers, and alphabets, and it must be at least 8 digits long.'
+    ]);
     exit();
 }
 

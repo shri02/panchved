@@ -731,6 +731,77 @@ document.addEventListener('DOMContentLoaded', () => {
   const changePasswordForm = document.getElementById('changePasswordForm');
   const updatePasswordBtn = document.getElementById('updatePasswordBtn');
 
+  const profileOldPasswordInput = document.getElementById('oldPassword');
+  const profileNewPasswordInput = document.getElementById('newPassword');
+  const profileConfirmPasswordInput = document.getElementById('confirmPassword');
+  const strengthBarFill = document.getElementById('strengthBarFill');
+  const strengthLabel = document.getElementById('strengthLabel');
+  const newPasswordError = document.getElementById('newPasswordError');
+  const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+  // Live Password Strength Meter
+  if (profileNewPasswordInput && strengthBarFill && strengthLabel) {
+    profileNewPasswordInput.addEventListener('input', () => {
+      const val = profileNewPasswordInput.value;
+      if (newPasswordError) {
+        newPasswordError.textContent = '';
+        newPasswordError.classList.remove('visible');
+      }
+      profileNewPasswordInput.classList.remove('input-error');
+
+      if (!val) {
+        strengthBarFill.style.width = '0%';
+        strengthBarFill.style.backgroundColor = '#e2e8f0';
+        strengthLabel.textContent = 'Enter password';
+        strengthLabel.style.color = '#94a3b8';
+        return;
+      }
+
+      const hasLetter = /[a-zA-Z]/.test(val);
+      const hasNumber = /[0-9]/.test(val);
+      const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
+      let score = 0;
+      if (val.length >= 8) score += 1;
+      if (val.length >= 12) score += 1;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 1;
+      if (hasNumber) score += 1;
+      if (hasSpecial) score += 1;
+
+      if (val.length < 8) {
+        strengthBarFill.style.width = '25%';
+        strengthBarFill.style.backgroundColor = '#ef4444';
+        strengthLabel.textContent = 'Too short';
+        strengthLabel.style.color = '#ef4444';
+      } else if (!hasLetter || !hasNumber || !hasSpecial) {
+        strengthBarFill.style.width = '50%';
+        strengthBarFill.style.backgroundColor = '#f59e0b';
+        strengthLabel.textContent = 'Weak';
+        strengthLabel.style.color = '#f59e0b';
+      } else if (score <= 4) {
+        strengthBarFill.style.width = '75%';
+        strengthBarFill.style.backgroundColor = '#3b82f6';
+        strengthLabel.textContent = 'Good';
+        strengthLabel.style.color = '#3b82f6';
+      } else {
+        strengthBarFill.style.width = '100%';
+        strengthBarFill.style.backgroundColor = '#10b981';
+        strengthLabel.textContent = 'Strong';
+        strengthLabel.style.color = '#10b981';
+      }
+    });
+  }
+
+  if (profileConfirmPasswordInput) {
+    profileConfirmPasswordInput.addEventListener('input', () => {
+      if (confirmPasswordError) {
+        confirmPasswordError.textContent = '';
+        confirmPasswordError.classList.remove('visible');
+      }
+      profileConfirmPasswordInput.classList.remove('input-error');
+    });
+  }
+
   if (changePasswordForm) {
     changePasswordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -742,17 +813,24 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePasswordBtn.textContent = 'Updating...';
       }
 
-      const oldPasswordInput = document.getElementById('oldPassword');
-      const newPasswordInput = document.getElementById('newPassword');
-      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const oldPassword = profileOldPasswordInput?.value || '';
+      const newPassword = profileNewPasswordInput?.value || '';
+      const confirmPassword = profileConfirmPasswordInput?.value || '';
 
-      const oldPassword = oldPasswordInput?.value || '';
-      const newPassword = newPasswordInput?.value || '';
-      const confirmPassword = confirmPasswordInput?.value || '';
+      if (newPasswordError) {
+        newPasswordError.textContent = '';
+        newPasswordError.classList.remove('visible');
+      }
+      if (confirmPasswordError) {
+        confirmPasswordError.textContent = '';
+        confirmPasswordError.classList.remove('visible');
+      }
+      profileNewPasswordInput?.classList.remove('input-error');
+      profileConfirmPasswordInput?.classList.remove('input-error');
 
       if (!oldPassword) {
         showToast('Please enter your Old Password', 'error');
-        if (oldPasswordInput) oldPasswordInput.focus();
+        if (profileOldPasswordInput) profileOldPasswordInput.focus();
         if (updatePasswordBtn) {
           updatePasswordBtn.disabled = false;
           updatePasswordBtn.textContent = origBtnText;
@@ -762,7 +840,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!newPassword) {
         showToast('Please enter a New Password', 'error');
-        if (newPasswordInput) newPasswordInput.focus();
+        if (newPasswordError) {
+          newPasswordError.textContent = 'Please enter a New Password';
+          newPasswordError.classList.add('visible');
+        }
+        if (profileNewPasswordInput) {
+          profileNewPasswordInput.classList.add('input-error');
+          profileNewPasswordInput.focus();
+        }
         if (updatePasswordBtn) {
           updatePasswordBtn.disabled = false;
           updatePasswordBtn.textContent = origBtnText;
@@ -770,9 +855,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (newPassword.length < 6) {
-        showToast('New password must be at least 6 characters', 'error');
-        if (newPasswordInput) newPasswordInput.focus();
+      const hasLetter = /[a-zA-Z]/.test(newPassword);
+      const hasNumber = /[0-9]/.test(newPassword);
+      const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
+
+      if (newPassword.length < 8 || !hasLetter || !hasNumber || !hasSpecial) {
+        const errorMsg = 'The password should contain special characters, numbers, and alphabets, and it must be at least 8 digits long.';
+        showToast(errorMsg, 'error');
+        if (newPasswordError) {
+          newPasswordError.textContent = errorMsg;
+          newPasswordError.classList.add('visible');
+        }
+        if (profileNewPasswordInput) {
+          profileNewPasswordInput.classList.add('input-error');
+          profileNewPasswordInput.focus();
+        }
         if (updatePasswordBtn) {
           updatePasswordBtn.disabled = false;
           updatePasswordBtn.textContent = origBtnText;
@@ -782,7 +879,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (newPassword !== confirmPassword) {
         showToast('New Password and Confirm Password do not match', 'error');
-        if (confirmPasswordInput) confirmPasswordInput.focus();
+        if (confirmPasswordError) {
+          confirmPasswordError.textContent = 'New Password and Confirm Password do not match';
+          confirmPasswordError.classList.add('visible');
+        }
+        if (profileConfirmPasswordInput) {
+          profileConfirmPasswordInput.classList.add('input-error');
+          profileConfirmPasswordInput.focus();
+        }
         if (updatePasswordBtn) {
           updatePasswordBtn.disabled = false;
           updatePasswordBtn.textContent = origBtnText;
@@ -822,16 +926,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok && result && result.success) {
           showToast(result.message || 'Password updated successfully!', 'success');
           changePasswordForm.reset();
+          if (strengthBarFill) {
+            strengthBarFill.style.width = '0%';
+            strengthBarFill.style.backgroundColor = '#e2e8f0';
+          }
+          if (strengthLabel) {
+            strengthLabel.textContent = 'Enter password';
+            strengthLabel.style.color = '#94a3b8';
+          }
         } else {
-          showToast(result?.message || 'Password updated successfully!', (result && result.success === false) ? 'error' : 'success');
+          showToast(result?.message || 'Failed to update password.', (result && result.success === false) ? 'error' : 'success');
           if (!result || result.success !== false) {
             changePasswordForm.reset();
+            if (strengthBarFill) {
+              strengthBarFill.style.width = '0%';
+              strengthBarFill.style.backgroundColor = '#e2e8f0';
+            }
+            if (strengthLabel) {
+              strengthLabel.textContent = 'Enter password';
+              strengthLabel.style.color = '#94a3b8';
+            }
           }
         }
       } catch (err) {
         console.warn('Change password network fallback:', err);
         showToast('Password updated successfully!', 'success');
         changePasswordForm.reset();
+        if (strengthBarFill) {
+          strengthBarFill.style.width = '0%';
+          strengthBarFill.style.backgroundColor = '#e2e8f0';
+        }
+        if (strengthLabel) {
+          strengthLabel.textContent = 'Enter password';
+          strengthLabel.style.color = '#94a3b8';
+        }
       } finally {
         if (updatePasswordBtn) {
           updatePasswordBtn.disabled = false;

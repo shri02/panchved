@@ -462,6 +462,14 @@
                     </svg>
                   </button>
                 </div>
+                <!-- Password Strength Meter -->
+                <div class="strength-meter-wrap" id="strengthMeterWrap">
+                  <div class="strength-bar-track">
+                    <div class="strength-bar-fill" id="strengthBarFill"></div>
+                  </div>
+                  <span class="strength-label" id="strengthLabel">Enter password</span>
+                </div>
+                <span class="field-error" id="newPasswordError"></span>
               </div>
 
               <div class="profile-field-group">
@@ -495,8 +503,19 @@
                     </svg>
                   </button>
                 </div>
+                <span class="field-error" id="confirmPasswordError"></span>
               </div>
 
+            </div>
+
+            <!-- Password Guidelines Hint -->
+            <div class="password-tips">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>The password should contain special characters, numbers, and alphabets, and it must be at least 8 digits long.</span>
             </div>
 
             <!-- Update Password Button -->
