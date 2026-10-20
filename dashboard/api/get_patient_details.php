@@ -41,12 +41,22 @@ if ($patientId > 0) {
     mysqli_stmt_close($stmt);
 }
 
-// Fallback to first patient if not found
+// Fallback to first patient ONLY if no patient was requested at all
 if (!$patient) {
-    $res = mysqli_query($connection1, "SELECT * FROM `patients` ORDER BY `id` ASC LIMIT 1");
-    if ($res && mysqli_num_rows($res) > 0) {
-        $patient = mysqli_fetch_assoc($res);
+    if ($patientId <= 0 && empty($patientCode)) {
+        $res = mysqli_query($connection1, "SELECT * FROM `patients` ORDER BY `id` ASC LIMIT 1");
+        if ($res && mysqli_num_rows($res) > 0) {
+            $patient = mysqli_fetch_assoc($res);
+        }
     }
+}
+
+if (!$patient) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Patient not found'
+    ]);
+    exit();
 }
 
 // Dynamic values from patient record or clean fallback
@@ -63,21 +73,21 @@ $status = !empty($patient['status']) ? $patient['status'] : 'Ongoing';
 // 2. Fetch Appointments for this Patient from `appointments` table
 $appointments = [];
 if ($id > 0 || !empty($fullName)) {
-    $stmtAppt = mysqli_prepare($connection1, "SELECT * FROM `appointments` WHERE `patient_id` = ? OR `patient_name` = ? ORDER BY `id` DESC");
+    $stmtAppt = mysqli_prepare($connection1, "SELECT * FROM `appointments` WHERE `patient_id` = ? OR `patient_name` = ? ORDER BY `appointment_date` DESC, `id` DESC");
     if ($stmtAppt) {
         mysqli_stmt_bind_param($stmtAppt, "is", $id, $fullName);
         mysqli_stmt_execute($stmtAppt);
         $resAppt = mysqli_stmt_get_result($stmtAppt);
         while ($row = mysqli_fetch_assoc($resAppt)) {
-            $formattedDate = date('j M Y', strtotime($row['appointment_date']));
+            $formattedDate = !empty($row['appointment_date']) ? date('j M Y', strtotime($row['appointment_date'])) : '--';
             $appointments[] = [
                 'id' => intval($row['id']),
                 'appointment_id' => $row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT)),
                 'date' => $formattedDate,
-                'time' => $row['appointment_time'] ?: '8:00 AM',
-                'package' => $row['package_name'] ?: 'Gut Healing',
+                'time' => $row['appointment_time'] ?: '--',
+                'package' => $row['package_name'] ?: ($package !== '--' ? $package : 'General Consultation'),
                 'status' => ucfirst(strtolower($row['status'] ?: 'Scheduled')),
-                'status_class' => (strtolower($row['status']) === 'completed') ? 'status-completed' : 'status-scheduled',
+                'status_class' => (strtolower($row['status'] ?? '') === 'completed') ? 'status-completed' : 'status-scheduled',
                 'agenda' => $row['agenda'] ?? '',
                 'service_type' => $row['service_type'] ?? 'Consultation'
             ];
@@ -102,30 +112,93 @@ foreach ($appointments as $apptItem) {
     }
 }
 
-// 3. Health Progress Chart Data (6-week timeline)
+// 3. Dynamic Health Progress from `health_metrics` table
 $healthProgress = [
-    'dates' => ['20-26 Aug', '27-02 Sept', '03-09 Sept', '10-16 Sept', '17-23 Sept', '24-30 Sept'],
+    'dates' => [],
     'weight' => [
-        'current' => '58 kgs',
-        'values' => [72, 72, 62, 58, 58, 58],
+        'current' => '--',
+        'values' => [],
         'unit' => 'kgs'
     ],
     'abdomen_girth' => [
-        'current' => '82 cm',
-        'values' => [88, 86, 85, 84, 83.5, 82],
+        'current' => '--',
+        'values' => [],
         'unit' => 'cm'
     ],
     'blood_pressure' => [
-        'current' => '118/78 mm Hg',
-        'values' => ['128/84', '126/83', '124/82', '122/80', '120/79', '118/78'],
+        'current' => '--',
+        'values' => [],
         'unit' => 'mm Hg'
     ],
     'blood_sugar' => [
-        'current' => '92 mg/dL',
-        'values' => [108, 105, 102, 99, 96, 92],
+        'current' => '--',
+        'values' => [],
         'unit' => 'mg/dL'
     ]
 ];
+
+$chkHmTable = mysqli_query($connection1, "SHOW TABLES LIKE 'health_metrics'");
+if ($chkHmTable && mysqli_num_rows($chkHmTable) > 0 && ($id > 0 || !empty($phone))) {
+    $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+    $stmtHm = mysqli_prepare($connection1, "SELECT `id`, `weight`, `abdomen`, `bp`, `sugar`, `recorded_date` 
+        FROM `health_metrics` 
+        WHERE (`patient_id` = ? AND ? > 0) OR (`patient_phone` = ? AND ? != '') 
+        ORDER BY `recorded_date` ASC, `id` ASC");
+    if ($stmtHm) {
+        mysqli_stmt_bind_param($stmtHm, "iiss", $id, $id, $cleanPhone, $cleanPhone);
+        mysqli_stmt_execute($stmtHm);
+        $resHm = mysqli_stmt_get_result($stmtHm);
+        
+        $hmReadings = [];
+        while ($hmRow = mysqli_fetch_assoc($resHm)) {
+            $hmReadings[] = $hmRow;
+        }
+        mysqli_stmt_close($stmtHm);
+
+        if (!empty($hmReadings)) {
+            foreach ($hmReadings as $hr) {
+                $dLabel = !empty($hr['recorded_date']) ? date('d M', strtotime($hr['recorded_date'])) : '--';
+                $healthProgress['dates'][] = $dLabel;
+                $healthProgress['weight']['values'][] = ($hr['weight'] !== null && $hr['weight'] !== '') ? (float)$hr['weight'] : null;
+                $healthProgress['abdomen_girth']['values'][] = ($hr['abdomen'] !== null && $hr['abdomen'] !== '') ? (float)$hr['abdomen'] : null;
+                $healthProgress['blood_pressure']['values'][] = ($hr['bp'] !== null && $hr['bp'] !== '') ? trim($hr['bp']) : null;
+                $healthProgress['blood_sugar']['values'][] = ($hr['sugar'] !== null && $hr['sugar'] !== '') ? (float)$hr['sugar'] : null;
+            }
+
+            // Latest recorded values for "current" metric badges
+            for ($k = count($hmReadings) - 1; $k >= 0; $k--) {
+                $r = $hmReadings[$k];
+                if ($healthProgress['weight']['current'] === '--' && $r['weight'] !== null && $r['weight'] !== '') {
+                    $healthProgress['weight']['current'] = (float)$r['weight'] . ' kgs';
+                }
+                if ($healthProgress['abdomen_girth']['current'] === '--' && $r['abdomen'] !== null && $r['abdomen'] !== '') {
+                    $healthProgress['abdomen_girth']['current'] = (float)$r['abdomen'] . ' cm';
+                }
+                if ($healthProgress['blood_pressure']['current'] === '--' && $r['bp'] !== null && trim($r['bp']) !== '') {
+                    $bpVal = trim($r['bp']);
+                    $healthProgress['blood_pressure']['current'] = $bpVal . (stripos($bpVal, 'mm') === false ? ' mm Hg' : '');
+                }
+                if ($healthProgress['blood_sugar']['current'] === '--' && $r['sugar'] !== null && $r['sugar'] !== '') {
+                    $healthProgress['blood_sugar']['current'] = (float)$r['sugar'] . ' mg/dL';
+                }
+            }
+        }
+    }
+}
+
+// 4. Dynamic unread messages count from `chat_messages` table
+$unreadMessages = 0;
+$chkChat = mysqli_query($connection1, "SHOW TABLES LIKE 'chat_messages'");
+if ($chkChat && mysqli_num_rows($chkChat) > 0 && $id > 0) {
+    $stmtChat = mysqli_prepare($connection1, "SELECT COUNT(*) FROM `chat_messages` WHERE `patient_id` = ? AND `sender_type` = 'patient' AND `is_seen` = 0");
+    if ($stmtChat) {
+        mysqli_stmt_bind_param($stmtChat, "i", $id);
+        mysqli_stmt_execute($stmtChat);
+        mysqli_stmt_bind_result($stmtChat, $unreadMessages);
+        mysqli_stmt_fetch($stmtChat);
+        mysqli_stmt_close($stmtChat);
+    }
+}
 
 echo json_encode([
     'success' => true,
@@ -143,7 +216,7 @@ echo json_encode([
     'metrics' => [
         'total_appointments' => $totalItems,
         'pending_followups' => $pendingFollowups,
-        'unread_messages' => 0
+        'unread_messages' => intval($unreadMessages)
     ],
     'health_progress' => $healthProgress,
     'appointments' => $paginatedAppts,

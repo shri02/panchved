@@ -944,8 +944,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   // Book Appointment Modal Handlers (Image 4 & Image 5)
   // =========================================================================
+  function formatTime12h(timeStr) {
+    if (!timeStr) return '';
+    if (/AM|PM/i.test(timeStr)) return timeStr.trim();
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+
   function openBookAppointmentModal(patient) {
     if (!bookAppointmentModal || !modalOverlay) return;
+
     appointmentPatientId.value = patient.id;
     appointmentPackageName.value = patient.package_name || 'Gut Healing Package';
     
@@ -955,8 +969,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set defaults
     const today = new Date().toISOString().split('T')[0];
     if (appointmentDateInput) appointmentDateInput.value = today;
-    if (startTimeInput) startTimeInput.value = '10:00 AM';
-    if (endTimeInput) endTimeInput.value = '10:45 AM';
+    if (startTimeInput) startTimeInput.value = '10:00';
+    if (endTimeInput) endTimeInput.value = '10:45';
     if (consultationTypeSelect) consultationTypeSelect.value = 'Follow-up Consultation';
     if (paymentStatusSelect) paymentStatusSelect.value = 'Included in Package';
     if (appointmentAgendaInput) appointmentAgendaInput.value = '';
@@ -986,8 +1000,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const pkg = appointmentPackageName.value;
       const cType = consultationTypeSelect.value;
       const apptDate = appointmentDateInput.value;
-      const sTime = startTimeInput.value.trim() || '10:00 AM';
-      const eTime = endTimeInput.value.trim() || '10:45 AM';
+      const sTime = formatTime12h(startTimeInput.value) || '10:00 AM';
+      const eTime = formatTime12h(endTimeInput.value) || '10:45 AM';
       const payStatus = paymentStatusSelect.value;
       const agendaVal = appointmentAgendaInput.value.trim();
 

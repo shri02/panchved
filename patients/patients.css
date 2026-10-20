@@ -1080,6 +1080,22 @@
   box-shadow: 0 0 0 3px rgba(114, 63, 30, 0.18);
 }
 
+input[type="time"].form-input {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input[type="time"].form-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 .form-textarea {
   resize: vertical;
   min-height: 100px;

@@ -96,6 +96,18 @@
             </a>
           </li>
 
+          <!-- Messages -->
+          <li class="nav-item">
+            <a href="chat.html" class="nav-link" id="navChat">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </span>
+              <span class="nav-text">Messages</span>
+            </a>
+          </li>
+
           <!-- Packages -->
           <li class="nav-item">
             <a href="../packages/packages.html" class="nav-link">
@@ -197,7 +209,7 @@
           </a>
         </div>
 
-        <!-- 3 Metric Cards Overview (Image 1, 2) -->
+        <!-- 2 Metric Cards Overview -->
         <section class="patient-metrics-section" aria-label="Patient Statistics">
           <div class="patient-metrics-grid">
 
@@ -214,26 +226,10 @@
                   </svg>
                 </span>
               </div>
-              <div class="metric-value" id="metricTotalAppts">12</div>
+              <div class="metric-value" id="metricTotalAppts">--</div>
             </article>
 
-            <!-- Card 2: Pending Follow-ups -->
-            <article class="metric-card">
-              <div class="metric-header">
-                <span class="metric-label">Pending Follow-ups</span>
-                <span class="metric-icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </span>
-              </div>
-              <div class="metric-value" id="metricPendingFollowups">12</div>
-            </article>
-
-            <!-- Card 3: Unread messages -->
+            <!-- Card 2: Unread messages -->
             <article class="metric-card">
               <div class="metric-header">
                 <span class="metric-label">Unread messages</span>
@@ -246,7 +242,7 @@
                   </svg>
                 </span>
               </div>
-              <div class="metric-value" id="metricUnreadMessages">3</div>
+              <div class="metric-value" id="metricUnreadMessages">--</div>
             </article>
 
           </div>
@@ -340,7 +336,7 @@
                     </div>
                     <div>
                       <span class="widget-title">Weight</span>
-                      <div class="widget-value" id="valWeight">58 kgs</div>
+                      <div class="widget-value" id="valWeight">--</div>
                     </div>
                   </div>
                   <div class="widget-filter-dropdown">
@@ -358,43 +354,8 @@
                     <span>20</span>
                     <span>0</span>
                   </div>
-                  <div class="bars-wrapper">
-                    <!-- Bar 1 -->
-                    <div class="bar-col">
-                      <span class="bar-val">72</span>
-                      <div class="bar-fill bar-teal" style="height: 72%;"></div>
-                      <span class="bar-label">20-26 Aug</span>
-                    </div>
-                    <!-- Bar 2 -->
-                    <div class="bar-col">
-                      <span class="bar-val">72</span>
-                      <div class="bar-fill bar-teal" style="height: 72%;"></div>
-                      <span class="bar-label">27-02 Sept</span>
-                    </div>
-                    <!-- Bar 3 -->
-                    <div class="bar-col">
-                      <span class="bar-val">62</span>
-                      <div class="bar-fill bar-teal" style="height: 62%;"></div>
-                      <span class="bar-label">03-09 Sept</span>
-                    </div>
-                    <!-- Bar 4 -->
-                    <div class="bar-col">
-                      <span class="bar-val">58</span>
-                      <div class="bar-fill bar-teal" style="height: 58%;"></div>
-                      <span class="bar-label">10-16 Sept</span>
-                    </div>
-                    <!-- Bar 5 -->
-                    <div class="bar-col">
-                      <span class="bar-val">58</span>
-                      <div class="bar-fill bar-teal" style="height: 58%;"></div>
-                      <span class="bar-label">17-23 Sept</span>
-                    </div>
-                    <!-- Bar 6 -->
-                    <div class="bar-col">
-                      <span class="bar-val">58</span>
-                      <div class="bar-fill bar-teal" style="height: 58%;"></div>
-                      <span class="bar-label">24-30 Sept</span>
-                    </div>
+                  <div class="bars-wrapper" id="chartBarsWeight">
+                    <!-- Dynamically populated from health_progress API -->
                   </div>
                 </div>
               </div>
@@ -413,7 +374,7 @@
                     </div>
                     <div>
                       <span class="widget-title">Abdomen Girth</span>
-                      <div class="widget-value" id="valAbdomen">82 cm</div>
+                      <div class="widget-value" id="valAbdomen">--</div>
                     </div>
                   </div>
                   <div class="widget-filter-dropdown">
@@ -431,43 +392,8 @@
                     <span>20</span>
                     <span>0</span>
                   </div>
-                  <div class="bars-wrapper">
-                    <!-- Bar 1 -->
-                    <div class="bar-col">
-                      <span class="bar-val">88</span>
-                      <div class="bar-fill bar-magenta" style="height: 88%;"></div>
-                      <span class="bar-label">20-26 Aug</span>
-                    </div>
-                    <!-- Bar 2 -->
-                    <div class="bar-col">
-                      <span class="bar-val">86</span>
-                      <div class="bar-fill bar-magenta" style="height: 86%;"></div>
-                      <span class="bar-label">27-02 Sept</span>
-                    </div>
-                    <!-- Bar 3 -->
-                    <div class="bar-col">
-                      <span class="bar-val">85</span>
-                      <div class="bar-fill bar-magenta" style="height: 85%;"></div>
-                      <span class="bar-label">03-09 Sept</span>
-                    </div>
-                    <!-- Bar 4 -->
-                    <div class="bar-col">
-                      <span class="bar-val">84</span>
-                      <div class="bar-fill bar-magenta" style="height: 84%;"></div>
-                      <span class="bar-label">10-16 Sept</span>
-                    </div>
-                    <!-- Bar 5 -->
-                    <div class="bar-col">
-                      <span class="bar-val">83.5</span>
-                      <div class="bar-fill bar-magenta" style="height: 83.5%;"></div>
-                      <span class="bar-label">17-23 Sept</span>
-                    </div>
-                    <!-- Bar 6 -->
-                    <div class="bar-col">
-                      <span class="bar-val">82</span>
-                      <div class="bar-fill bar-magenta" style="height: 82%;"></div>
-                      <span class="bar-label">24-30 Sept</span>
-                    </div>
+                  <div class="bars-wrapper" id="chartBarsAbdomen">
+                    <!-- Dynamically populated from health_progress API -->
                   </div>
                 </div>
               </div>
@@ -483,7 +409,7 @@
                     </div>
                     <div>
                       <span class="widget-title">Blood Pressure</span>
-                      <div class="widget-value" id="valBP">118/78 mm Hg</div>
+                      <div class="widget-value" id="valBP">--</div>
                     </div>
                   </div>
                   <div class="widget-filter-dropdown">
@@ -501,43 +427,8 @@
                     <span>30</span>
                     <span>0</span>
                   </div>
-                  <div class="bars-wrapper">
-                    <!-- Bar 1 -->
-                    <div class="bar-col">
-                      <span class="bar-val">128/84</span>
-                      <div class="bar-fill bar-amber" style="height: 85%;"></div>
-                      <span class="bar-label">20-26 Aug</span>
-                    </div>
-                    <!-- Bar 2 -->
-                    <div class="bar-col">
-                      <span class="bar-val">126/83</span>
-                      <div class="bar-fill bar-amber" style="height: 84%;"></div>
-                      <span class="bar-label">27-02 Sept</span>
-                    </div>
-                    <!-- Bar 3 -->
-                    <div class="bar-col">
-                      <span class="bar-val">124/82</span>
-                      <div class="bar-fill bar-amber" style="height: 82%;"></div>
-                      <span class="bar-label">03-09 Sept</span>
-                    </div>
-                    <!-- Bar 4 -->
-                    <div class="bar-col">
-                      <span class="bar-val">122/80</span>
-                      <div class="bar-fill bar-amber" style="height: 81%;"></div>
-                      <span class="bar-label">10-16 Sept</span>
-                    </div>
-                    <!-- Bar 5 -->
-                    <div class="bar-col">
-                      <span class="bar-val">120/79</span>
-                      <div class="bar-fill bar-amber" style="height: 80%;"></div>
-                      <span class="bar-label">17-23 Sept</span>
-                    </div>
-                    <!-- Bar 6 -->
-                    <div class="bar-col">
-                      <span class="bar-val">118/78</span>
-                      <div class="bar-fill bar-amber" style="height: 78%;"></div>
-                      <span class="bar-label">24-30 Sept</span>
-                    </div>
+                  <div class="bars-wrapper" id="chartBarsBP">
+                    <!-- Dynamically populated from health_progress API -->
                   </div>
                 </div>
               </div>
@@ -553,7 +444,7 @@
                     </div>
                     <div>
                       <span class="widget-title">Blood Sugar</span>
-                      <div class="widget-value" id="valSugar">92 mg/dL</div>
+                      <div class="widget-value" id="valSugar">--</div>
                     </div>
                   </div>
                   <div class="widget-filter-dropdown">
@@ -571,43 +462,8 @@
                     <span>25</span>
                     <span>0</span>
                   </div>
-                  <div class="bars-wrapper">
-                    <!-- Bar 1 -->
-                    <div class="bar-col">
-                      <span class="bar-val">108</span>
-                      <div class="bar-fill bar-blue" style="height: 86%;"></div>
-                      <span class="bar-label">20-26 Aug</span>
-                    </div>
-                    <!-- Bar 2 -->
-                    <div class="bar-col">
-                      <span class="bar-val">105</span>
-                      <div class="bar-fill bar-blue" style="height: 84%;"></div>
-                      <span class="bar-label">27-02 Sept</span>
-                    </div>
-                    <!-- Bar 3 -->
-                    <div class="bar-col">
-                      <span class="bar-val">102</span>
-                      <div class="bar-fill bar-blue" style="height: 81%;"></div>
-                      <span class="bar-label">03-09 Sept</span>
-                    </div>
-                    <!-- Bar 4 -->
-                    <div class="bar-col">
-                      <span class="bar-val">99</span>
-                      <div class="bar-fill bar-blue" style="height: 79%;"></div>
-                      <span class="bar-label">10-16 Sept</span>
-                    </div>
-                    <!-- Bar 5 -->
-                    <div class="bar-col">
-                      <span class="bar-val">96</span>
-                      <div class="bar-fill bar-blue" style="height: 76%;"></div>
-                      <span class="bar-label">17-23 Sept</span>
-                    </div>
-                    <!-- Bar 6 -->
-                    <div class="bar-col">
-                      <span class="bar-val">92</span>
-                      <div class="bar-fill bar-blue" style="height: 73%;"></div>
-                      <span class="bar-label">24-30 Sept</span>
-                    </div>
+                  <div class="bars-wrapper" id="chartBarsSugar">
+                    <!-- Dynamically populated from health_progress API -->
                   </div>
                 </div>
               </div>
@@ -723,13 +579,13 @@
         <!-- Start Time -->
         <div class="form-group">
           <label for="startTimeInput" class="form-label">Start Time</label>
-          <input type="text" id="startTimeInput" class="form-input" placeholder="Select time" value="10:00 AM" required>
+          <input type="time" id="startTimeInput" class="form-input" value="10:00" required>
         </div>
 
         <!-- End Time -->
         <div class="form-group">
           <label for="endTimeInput" class="form-label">End Time</label>
-          <input type="text" id="endTimeInput" class="form-input" placeholder="Select Time" value="10:45 AM" required>
+          <input type="time" id="endTimeInput" class="form-input" value="10:45" required>
         </div>
 
         <!-- Payment Status -->

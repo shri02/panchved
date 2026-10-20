@@ -5,23 +5,23 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   // State
-  let currentPatientId = 1;
+  let currentPatientId = null;
   let currentPatientData = null;
   let currentApptPage = 1;
   const apptsPerPage = 3;
-  let totalApptPages = 4;
+  let totalApptPages = 1;
 
   // Read URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('id')) {
-    currentPatientId = parseInt(urlParams.get('id'), 10) || 1;
+    currentPatientId = parseInt(urlParams.get('id'), 10);
   } else if (urlParams.get('patient_id')) {
     currentPatientId = urlParams.get('patient_id');
   }
 
   // Chat Button & Link Binding
   const chatWithPatientBtn = document.getElementById('chatWithPatientBtn');
-  if (chatWithPatientBtn) {
+  if (chatWithPatientBtn && currentPatientId) {
     chatWithPatientBtn.href = `chat.html?patient_id=${currentPatientId}`;
   }
 
@@ -160,12 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   async function fetchPatientDetails() {
     try {
-      const response = await fetch(`../api/get_patient_details.php?id=${encodeURIComponent(currentPatientId)}&page=${currentApptPage}&limit=${apptsPerPage}`);
+      const idParam = currentPatientId ? `id=${encodeURIComponent(currentPatientId)}&` : '';
+      const response = await fetch(`../api/get_patient_details.php?${idParam}page=${currentApptPage}&limit=${apptsPerPage}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
       if (data.success) {
         currentPatientData = data.patient;
+        currentPatientId = data.patient.id;
+        if (chatWithPatientBtn) chatWithPatientBtn.href = `chat.html?patient_id=${currentPatientId}`;
 
         // 1. Populate Metrics
         if (metricTotalAppts) metricTotalAppts.textContent = data.metrics.total_appointments ?? 0;
@@ -179,23 +182,77 @@ document.addEventListener('DOMContentLoaded', () => {
         if (patientDetailPhone) patientDetailPhone.textContent = data.patient.phone_number || '--';
         if (patientDetailEmail) patientDetailEmail.textContent = data.patient.email || '--';
 
-        // 3. Populate Health Progress Values
-        if (data.health_progress) {
-          if (valWeight) valWeight.textContent = data.health_progress.weight?.current || '58 kgs';
-          if (valAbdomen) valAbdomen.textContent = data.health_progress.abdomen_girth?.current || '82 cm';
-          if (valBP) valBP.textContent = data.health_progress.blood_pressure?.current || '118/78 mm Hg';
-          if (valSugar) valSugar.textContent = data.health_progress.blood_sugar?.current || '92 mg/dL';
-        }
+        // 3. Populate Dynamic Health Progress Values & Bar Charts
+        renderHealthCharts(data.health_progress);
 
         // 4. Populate Appointments Table
         renderAppointmentsTable(data.appointments || []);
         updateApptPagination(data.pagination);
+      } else {
+        showToast(data.message || 'Patient details could not be loaded', 'error');
       }
     } catch (err) {
       console.error('Error fetching patient details:', err);
     } finally {
       window.hidePageLoader?.();
     }
+  }
+
+  // =========================================================================
+  // Dynamic Health Progress Charts Rendering
+  // =========================================================================
+  function renderBarWidget(containerId, dates, values, barColorClass, maxScale, unit, isBP = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!Array.isArray(values) || values.length === 0 || values.every(v => v === null || v === undefined || v === '')) {
+      container.innerHTML = '<div class="empty-chart-notice"><span>No readings recorded yet</span></div>';
+      return;
+    }
+
+    let html = '';
+    values.forEach((val, idx) => {
+      if (val === null || val === undefined || val === '') return;
+      const dateLabel = (Array.isArray(dates) && dates[idx]) ? dates[idx] : '--';
+      let numericVal = 0;
+      let displayVal = String(val);
+
+      if (isBP) {
+        const bpParts = String(val).split('/');
+        numericVal = parseFloat(bpParts[0]) || 0;
+      } else {
+        numericVal = parseFloat(val) || 0;
+      }
+
+      const heightPct = Math.min(100, Math.max(12, Math.round((numericVal / maxScale) * 100)));
+      html += `
+        <div class="bar-col">
+          <span class="bar-val">${escapeHtml(displayVal)}</span>
+          <div class="bar-fill ${barColorClass}" style="height: ${heightPct}%;"></div>
+          <span class="bar-label">${escapeHtml(dateLabel)}</span>
+        </div>
+      `;
+    });
+
+    if (!html) {
+      container.innerHTML = '<div class="empty-chart-notice"><span>No readings recorded yet</span></div>';
+    } else {
+      container.innerHTML = html;
+    }
+  }
+
+  function renderHealthCharts(hp) {
+    if (!hp) return;
+
+    if (valWeight) valWeight.textContent = hp.weight?.current || '--';
+    if (valAbdomen) valAbdomen.textContent = hp.abdomen_girth?.current || '--';
+    if (valBP) valBP.textContent = hp.blood_pressure?.current || '--';
+    if (valSugar) valSugar.textContent = hp.blood_sugar?.current || '--';
+
+    renderBarWidget('chartBarsWeight', hp.dates, hp.weight?.values, 'bar-teal', 100, 'kgs');
+    renderBarWidget('chartBarsAbdomen', hp.dates, hp.abdomen_girth?.values, 'bar-magenta', 100, 'cm');
+    renderBarWidget('chartBarsBP', hp.dates, hp.blood_pressure?.values, 'bar-amber', 150, 'mm Hg', true);
+    renderBarWidget('chartBarsSugar', hp.dates, hp.blood_sugar?.values, 'bar-blue', 125, 'mg/dL');
   }
 
   // =========================================================================
@@ -432,6 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   // Book Appointment Modal Handlers (Image 3, 4)
   // =========================================================================
+  function formatTime12h(timeStr) {
+    if (!timeStr) return '';
+    if (/AM|PM/i.test(timeStr)) return timeStr.trim();
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+
   function openBookAppointment() {
     if (!bookAppointmentModal || !modalOverlay) return;
 
@@ -445,6 +515,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const today = new Date().toISOString().split('T')[0];
     if (appointmentDateInput) appointmentDateInput.value = today;
+    if (startTimeInput) startTimeInput.value = '10:00';
+    if (endTimeInput) endTimeInput.value = '10:45';
 
     modalOverlay.classList.add('active');
     bookAppointmentModal.classList.add('open');
@@ -472,8 +544,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const pkg = appointmentPackageName.value;
       const cType = consultationTypeSelect.value;
       const apptDate = appointmentDateInput.value;
-      const sTime = startTimeInput.value.trim() || '10:00 AM';
-      const eTime = endTimeInput.value.trim() || '10:45 AM';
+      const sTime = formatTime12h(startTimeInput.value) || '10:00 AM';
+      const eTime = formatTime12h(endTimeInput.value) || '10:45 AM';
       const payStatus = paymentStatusSelect.value;
       const agendaVal = appointmentAgendaInput.value.trim();
 
