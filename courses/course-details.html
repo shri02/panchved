@@ -782,6 +782,32 @@
       confirmBtn.textContent = 'Processing...';
       confirmBtn.disabled = true;
 
+      // Process through PayU Gateway
+      if (window.PayUCheckout) {
+        try {
+          const numericAmt = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.]/g, '')) : parseFloat(amount);
+          const payuPayload = {
+            workshop_id: currentCourseId,
+            doctor_id: doctorId,
+            doctor_name: userName,
+            doctor_email: userEmail,
+            doctor_phone: userPhone,
+            amount: numericAmt || 500.00
+          };
+
+          const payuResult = await window.PayUCheckout.processPayment(payuPayload, async (unconfiguredNotice) => {
+            showToast('PayU credentials pending in App Service settings. Processing test registration...');
+            return null;
+          });
+
+          if (payuResult && payuResult.redirected) {
+            return; // Browser has redirected to PayU payment gateway
+          }
+        } catch (payuErr) {
+          console.warn('PayU Doctor Workshop gateway notice:', payuErr.message);
+        }
+      }
+
       try {
         const response = await fetch('../api/book_workshop.php', {
           method: 'POST',
@@ -1077,6 +1103,7 @@
       fetchAndPopulateUserDetails();
     }
   </script>
+  <script src="../shared/payu_checkout.js"></script>
   <script src="../shared/api_config.js"></script>
   <script src="../shared/dashboard.js"></script>
 </body>
