@@ -576,45 +576,14 @@
 
                 <div class="payment-methods-list" role="radiogroup" aria-label="Payment Method Options">
                   
-                  <!-- Option 1: Card -->
-                  <label class="payment-method-row active" for="coursesPayCard">
+                  <!-- PayU Payment Gateway -->
+                  <label class="payment-method-row active" for="coursesPayPayU">
                     <div class="payment-method-left">
-                      <input type="radio" id="coursesPayCard" name="coursesPayOption" value="card" class="payment-radio" checked>
-                      <span class="payment-label">Card</span>
+                      <input type="radio" id="coursesPayPayU" name="coursesPayOption" value="payu" class="payment-radio" checked>
+                      <span class="payment-label">PayU Payment Gateway (UPI, Cards, NetBanking, Wallets)</span>
                     </div>
                     <div class="payment-logo">
-                      <svg width="34" height="22" viewBox="0 0 36 24" fill="none" aria-label="Card Payment">
-                        <circle cx="14" cy="12" r="7" fill="#EB001B"/>
-                        <circle cx="22" cy="12" r="7" fill="#F79E1B" fill-opacity="0.85"/>
-                      </svg>
-                    </div>
-                  </label>
-
-                  <!-- Option 2: UPI -->
-                  <label class="payment-method-row" for="coursesPayUPI">
-                    <div class="payment-method-left">
-                      <input type="radio" id="coursesPayUPI" name="coursesPayOption" value="upi" class="payment-radio">
-                      <span class="payment-label">UPI</span>
-                    </div>
-                    <div class="payment-logo">
-                      <svg width="46" height="20" viewBox="0 0 54 20" fill="none" aria-label="UPI Payment">
-                        <text x="2" y="15" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="14" fill="#484831">UPI</text>
-                        <path d="M38 5l5 5-5 5M44 5l5 5-5 5" stroke="#484831" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                  </label>
-
-                  <!-- Option 3: PayPal -->
-                  <label class="payment-method-row" for="coursesPayPaypal">
-                    <div class="payment-method-left">
-                      <input type="radio" id="coursesPayPaypal" name="coursesPayOption" value="paypal" class="payment-radio">
-                      <span class="payment-label">PayPal</span>
-                    </div>
-                    <div class="payment-logo">
-                      <svg width="22" height="20" viewBox="0 0 24 24" fill="none" aria-label="PayPal Payment">
-                        <path d="M4 3h7c2.8 0 4.8 1.5 4.1 4.5-.5 2.3-2.5 4.1-5.3 4.1H7.4l-1.5 7H2L4 3z" fill="#003087"/>
-                        <path d="M7.5 7.5h7c2.8 0 4.8 1.5 4.1 4.5-.5 2.3-2.5 4.1-5.3 4.1h-2.5l-1.5 7H5.5l2-15.6z" fill="#0079C1" fill-opacity="0.85"/>
-                      </svg>
+                      <span style="font-weight: 800; font-size: 15px; color: #009933; letter-spacing: -0.5px;">Pay<span style="color: #66cc33;">U</span></span>
                     </div>
                   </label>
 
@@ -1068,7 +1037,7 @@
     // =========================================================================
     async function handleConfirmPaymentCourses() {
       const confirmBtn = document.getElementById('btnCoursesConfirmPay');
-      const selectedPayment = document.querySelector('input[name="coursesPayOption"]:checked')?.value || 'card';
+      const selectedPayment = 'PayU';
       const userName = document.getElementById('coursesUserName').textContent.trim();
       const userEmail = document.getElementById('coursesUserEmail').textContent.trim();
       const userPhone = document.getElementById('coursesUserPhone').textContent.trim();
@@ -1082,6 +1051,32 @@
         const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
         doctorId = doc.id || 0;
       } catch (_) {}
+
+      // Process through PayU Gateway
+      if (window.PayUCheckout) {
+        try {
+          const numericAmt = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.]/g, '')) : parseFloat(amount);
+          const payuPayload = {
+            workshop_id: currentCourseId,
+            doctor_id: doctorId,
+            doctor_name: userName,
+            doctor_email: userEmail,
+            doctor_phone: userPhone,
+            amount: numericAmt || 500.00
+          };
+
+          const payuResult = await window.PayUCheckout.processPayment(payuPayload, async (unconfiguredNotice) => {
+            showToast('PayU credentials pending in App Service settings. Processing test registration...');
+            return null;
+          });
+
+          if (payuResult && payuResult.redirected) {
+            return; // Browser redirected to PayU gateway
+          }
+        } catch (payuErr) {
+          console.warn('PayU Doctor Workshop gateway notice:', payuErr.message);
+        }
+      }
 
       try {
         const response = await fetch('../api/book_workshop.php', {
@@ -1363,6 +1358,7 @@
       });
     }
   </script>
+  <script src="../shared/payu_checkout.js"></script>
   <script src="../shared/api_config.js"></script>
   <script src="../shared/dashboard.js"></script>
 </body>

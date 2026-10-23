@@ -31,28 +31,39 @@ if (!function_exists('getPayUEnv')) {
 
 if (!function_exists('getPayUBaseUrl')) {
     function getPayUBaseUrl() {
-        $envUrl = getPayUEnv(['APP_URL', 'SITE_URL', 'WEBSITE_HOSTNAME', 'BASE_URL']);
-        if (!empty($envUrl)) {
+        // Priority 1: Check APP_URL / SITE_URL / BASE_URL, ignoring default Azure app service domains
+        $envUrl = getPayUEnv(['APP_URL', 'SITE_URL', 'BASE_URL']);
+        if (!empty($envUrl) && stripos($envUrl, 'azurewebsites.net') === false) {
             if (!preg_match('/^https?:\/\//i', $envUrl)) {
                 $envUrl = 'https://' . $envUrl;
             }
             return rtrim($envUrl, '/');
         }
 
-        $isHttps = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') ||
-                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
-                   (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
-        $scheme = $isHttps ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        // Priority 2: Check incoming request host from browser (if not Azure default domain or localhost)
+        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? '');
+        if (strpos($host, ',') !== false) {
+            $hostParts = explode(',', $host);
+            $host = trim($hostParts[0]);
+        }
+        if (!empty($host) && stripos($host, 'azurewebsites.net') === false && stripos($host, 'localhost') === false) {
+            $isHttps = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') ||
+                       (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
+                       (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+            $scheme = $isHttps ? 'https' : 'http';
 
-        $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-        $apiPos = strrpos($scriptPath, '/api/');
-        if ($apiPos !== false) {
-            $basePath = substr($scriptPath, 0, $apiPos);
-            return $scheme . '://' . $host . ($basePath ? '/' . ltrim($basePath, '/') : '');
+            $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+            $apiPos = strrpos($scriptPath, '/api/');
+            if ($apiPos !== false) {
+                $basePath = substr($scriptPath, 0, $apiPos);
+                return $scheme . '://' . $host . ($basePath ? '/' . ltrim($basePath, '/') : '');
+            }
+
+            return $scheme . '://' . $host;
         }
 
-        return $scheme . '://' . $host;
+        // Priority 3: Fallback explicitly to official Doctor Portal domain
+        return 'https://doctor.ocayur.com';
     }
 }
 

@@ -66,7 +66,8 @@ if ($isSuccess && $connection1 && $udf2 > 0) {
     mysqli_query($connection1, "UPDATE `workshops` SET `registrations` = `registrations` + 1 WHERE `id` = $udf2");
 }
 
-$redirectTarget = '../courses/courses.html';
+$doctorBase = getPayUBaseUrl();
+$redirectTarget = $doctorBase . '/courses/courses.html';
 ?>
 <!DOCTYPE html>
 <html lang="en">
