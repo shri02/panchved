@@ -244,10 +244,6 @@
                 href="javascript:void(0)"
                 class="forgot-password-link"
                 id="forgotPasswordLink"
-                onclick="
-                  showToast('This feature will be available soon.', 'info');
-                  return false;
-                "
                 >Forgot Password</a
               >
             </div>
@@ -292,6 +288,130 @@
 
     <!-- Notification Toast for feedback -->
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- Forgot Password Modal -->
+    <div class="auth-modal-overlay" id="forgotPasswordModal" role="dialog" aria-modal="true" aria-labelledby="fpModalTitle">
+      <div class="auth-modal-card">
+        <button type="button" class="modal-close-btn" id="fpCloseBtn" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Step 1: Request OTP -->
+        <div id="fpStepRequest">
+          <div class="modal-header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h2 class="modal-title" id="fpModalTitle">Forgot Password</h2>
+          <p class="modal-subtitle">Enter your registered phone number, Doctor ID, or email. We'll send a 6-digit OTP to your registered email.</p>
+
+          <div class="modal-alert-box alert-danger" id="fpRequestError" role="alert">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span id="fpRequestErrorText"></span>
+          </div>
+
+          <form id="fpRequestForm">
+            <div class="modal-form-group">
+              <label for="fpIdentifier" class="modal-label">Registered Phone / Email / Doctor ID</label>
+              <input type="text" id="fpIdentifier" class="modal-input" placeholder="e.g. 9876543210 or DOC000001" required autocomplete="username" />
+            </div>
+
+            <button type="submit" class="modal-btn-primary" id="fpSendOtpBtn">
+              <span class="btn-text">Send Verification Code</span>
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Verify OTP & Reset Password -->
+        <div id="fpStepVerify" style="display: none;">
+          <div class="modal-header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h2 class="modal-title">Verify & Reset Password</h2>
+          <p class="modal-subtitle">Enter the 6-digit code sent to <strong id="fpMaskedEmailText">your email</strong> and your new password.</p>
+
+          <div class="modal-alert-box alert-danger" id="fpResetError" role="alert">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span id="fpResetErrorText"></span>
+          </div>
+
+          <form id="fpResetForm">
+            <div class="modal-form-group">
+              <label for="fpOtpCode" class="modal-label">6-Digit Verification Code (OTP)</label>
+              <input type="text" id="fpOtpCode" class="modal-input modal-otp-input" maxlength="6" pattern="\d{6}" placeholder="------" required autocomplete="one-time-code" />
+            </div>
+
+            <div class="modal-form-group">
+              <label for="fpNewPassword" class="modal-label">New Password</label>
+              <div class="modal-input-pass-wrap">
+                <input type="password" id="fpNewPassword" class="modal-input" placeholder="At least 6 characters" minlength="6" required autocomplete="new-password" />
+                <button type="button" class="modal-pass-toggle" id="fpToggleNewPw" aria-label="Toggle password visibility">
+                  <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-form-group">
+              <label for="fpConfirmPassword" class="modal-label">Confirm New Password</label>
+              <div class="modal-input-pass-wrap">
+                <input type="password" id="fpConfirmPassword" class="modal-input" placeholder="Repeat new password" minlength="6" required autocomplete="new-password" />
+                <button type="button" class="modal-pass-toggle" id="fpToggleConfirmPw" aria-label="Toggle password visibility">
+                  <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="modal-btn-primary" id="fpSubmitResetBtn">
+              <span class="btn-text">Reset Password</span>
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+            </button>
+
+            <div class="modal-resend-row">
+              <a href="javascript:void(0)" class="modal-resend-link" id="fpBackToRequestBtn">← Change account</a>
+              <span id="fpResendContainer">
+                <a href="javascript:void(0)" class="modal-resend-link" id="fpResendOtpBtn">Resend code</a>
+                <span id="fpResendCountdown" style="display:none; color: #8e877b;">Resend in <strong id="fpTimerCount">60</strong>s</span>
+              </span>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="fpStepSuccess" style="display: none; text-align: center;">
+          <div class="modal-header-icon icon-success" style="margin: 0 auto 16px auto;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h2 class="modal-title">Password Reset Complete!</h2>
+          <p class="modal-subtitle">Your password has been securely updated. You can now log into your doctor portal using your new credentials.</p>
+          <button type="button" class="modal-btn-primary" id="fpSuccessDoneBtn">Return to Login</button>
+        </div>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>
