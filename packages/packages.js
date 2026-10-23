@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (packages.length === 0) {
       packagesGrid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
-          No packages found matching your criteria.
+          No programmes found matching your criteria.
         </div>
       `;
       return;

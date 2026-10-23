@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
                     </svg>
                   </span>
-                  <span>Recommend Package</span>
+                  <span>Recommend Programme</span>
                 </button>
 
                 <!-- 5. Chat with Patient -->
@@ -1109,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (recPatientName) recPatientName.textContent = patient.full_name || 'Patient';
     if (recPatientMeta) {
       const pId = patient.patient_id ? `ID: ${patient.patient_id}` : '';
-      const pPkg = patient.package_name ? `Current: ${patient.package_name}` : 'No Package Enrolled';
+      const pPkg = patient.package_name ? `Current: ${patient.package_name}` : 'No Programme Enrolled';
       recPatientMeta.textContent = `${pId} • ${pPkg}`;
     }
 
@@ -1136,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recPackagesList.innerHTML = `
       <div class="rec-loading-state" style="text-align: center; padding: 28px 16px; color: #64748b;">
-        <span class="spin-loader"></span> Loading available packages...
+        <span class="spin-loader"></span> Loading available programmes...
       </div>
     `;
 
@@ -1147,13 +1147,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.success && Array.isArray(result.packages)) {
         availableHealthPackages = result.packages;
         if (recPkgCountBadge) {
-          recPkgCountBadge.textContent = `${availableHealthPackages.length} package${availableHealthPackages.length === 1 ? '' : 's'}`;
+          recPkgCountBadge.textContent = `${availableHealthPackages.length} programme${availableHealthPackages.length === 1 ? '' : 's'}`;
         }
         renderRecommendPackagesList(availableHealthPackages);
       } else {
         recPackagesList.innerHTML = `
           <div style="text-align: center; padding: 24px; color: #64748b;">
-            <p style="margin: 0; font-size: 0.9rem;">No active health packages found in system.</p>
+            <p style="margin: 0; font-size: 0.9rem;">No active health programmes found in system.</p>
           </div>
         `;
       }
@@ -1161,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching packages for recommendation:', err);
       recPackagesList.innerHTML = `
         <div style="text-align: center; padding: 24px; color: #ef4444;">
-          <p style="margin: 0; font-size: 0.9rem;">Failed to load packages. Please check connection.</p>
+          <p style="margin: 0; font-size: 0.9rem;">Failed to load programmes. Please check connection.</p>
         </div>
       `;
     }
@@ -1173,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!packagesToRender || packagesToRender.length === 0) {
       recPackagesList.innerHTML = `
         <div style="text-align: center; padding: 28px 16px; color: #64748b;">
-          <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">No packages match your search.</p>
+          <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">No programmes match your search.</p>
         </div>
       `;
       return;
@@ -1261,7 +1261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const noteVal = recDoctorNote ? recDoctorNote.value.trim() : '';
 
       if (!pkgId && !pkgName) {
-        showToast('Please select a health package to recommend', 'error');
+        showToast('Please select a health programme to recommend', 'error');
         return;
       }
 
@@ -1298,14 +1298,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         if (result.success) {
           closeRecommendPackageModal();
-          showToast(result.message || `Package "${pkgName}" recommended successfully!`, 'success');
+          showToast(result.message || `Programme "${pkgName}" recommended successfully!`, 'success');
         } else {
-          showToast(result.message || 'Failed to recommend package', 'error');
+          showToast(result.message || 'Failed to recommend programme', 'error');
         }
       } catch (err) {
         console.error('Error submitting package recommendation:', err);
         closeRecommendPackageModal();
-        showToast(`Package "${pkgName}" recommended to patient successfully!`, 'success');
+        showToast(`Programme "${pkgName}" recommended to patient successfully!`, 'success');
       } finally {
         if (confirmRecommendBtn) {
           confirmRecommendBtn.disabled = false;
@@ -1313,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
             </svg>
-            <span>Recommend Package</span>
+            <span>Recommend Programme</span>
           `;
         }
       }
