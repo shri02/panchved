@@ -46,23 +46,24 @@ if (!function_exists('getPayUBaseUrl')) {
             $hostParts = explode(',', $host);
             $host = trim($hostParts[0]);
         }
-        if (!empty($host) && stripos($host, 'azurewebsites.net') === false && stripos($host, 'localhost') === false) {
-            $isHttps = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') ||
-                       (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
-                       (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
-            $scheme = $isHttps ? 'https' : 'http';
+        if (!empty($host)) {
+            $hostOnly = preg_replace('/:\d+$/', '', $host);
+            if (stripos($hostOnly, 'azurewebsites.net') === false && stripos($hostOnly, 'localhost') === false && $hostOnly !== '127.0.0.1') {
+                // Public domains MUST always use HTTPS so reverse proxies don't 301-redirect and drop POST bodies
+                $scheme = 'https';
 
-            $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-            $apiPos = strrpos($scriptPath, '/api/');
-            if ($apiPos !== false) {
-                $basePath = substr($scriptPath, 0, $apiPos);
-                return $scheme . '://' . $host . ($basePath ? '/' . ltrim($basePath, '/') : '');
+                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+                $apiPos = strrpos($scriptPath, '/api/');
+                if ($apiPos !== false) {
+                    $basePath = substr($scriptPath, 0, $apiPos);
+                    return $scheme . '://' . $host . ($basePath ? '/' . ltrim($basePath, '/') : '');
+                }
+
+                return $scheme . '://' . $host;
             }
-
-            return $scheme . '://' . $host;
         }
 
-        // Priority 3: Fallback explicitly to official Doctor Portal domain
+        // Priority 3: Fallback explicitly to official Doctor Portal domain (always HTTPS)
         return 'https://doctor.ocayur.com';
     }
 }
@@ -120,33 +121,54 @@ if (!function_exists('generatePayUHash')) {
 
 if (!function_exists('verifyPayUResponseHash')) {
     function verifyPayUResponseHash($postData, $salt) {
-        $receivedHash = trim((string)($postData['hash'] ?? ''));
-        if (empty($receivedHash)) {
+        $receivedHash = strtolower(trim((string)($postData['hash'] ?? '')));
+        $cleanSalt = trim((string)$salt);
+        if (empty($receivedHash) || empty($cleanSalt)) {
             return false;
         }
 
         $key = trim((string)($postData['key'] ?? ''));
         $txnid = trim((string)($postData['txnid'] ?? ''));
-        $amount = sprintf("%.2f", (float)($postData['amount'] ?? 0));
+        $status = trim((string)($postData['status'] ?? ''));
         $productinfo = trim((string)($postData['productinfo'] ?? ''));
         $firstname = trim((string)($postData['firstname'] ?? ''));
         $email = trim((string)($postData['email'] ?? ''));
-        $status = trim((string)($postData['status'] ?? ''));
         $udf1 = trim((string)($postData['udf1'] ?? ''));
         $udf2 = trim((string)($postData['udf2'] ?? ''));
         $udf3 = trim((string)($postData['udf3'] ?? ''));
         $udf4 = trim((string)($postData['udf4'] ?? ''));
         $udf5 = trim((string)($postData['udf5'] ?? ''));
+        $udf6 = trim((string)($postData['udf6'] ?? ''));
+        $udf7 = trim((string)($postData['udf7'] ?? ''));
+        $udf8 = trim((string)($postData['udf8'] ?? ''));
+        $udf9 = trim((string)($postData['udf9'] ?? ''));
+        $udf10 = trim((string)($postData['udf10'] ?? ''));
 
-        $additionalCharges = isset($postData['additionalCharges']) ? trim((string)$postData['additionalCharges']) : '';
+        $additionalCharges = trim((string)($postData['additionalCharges'] ?? ''));
 
-        if (!empty($additionalCharges)) {
-            $hashSequence = "{$additionalCharges}|{$salt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amount}|{$txnid}|{$key}";
-        } else {
-            $hashSequence = "{$salt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amount}|{$txnid}|{$key}";
+        $rawAmount = trim((string)($postData['amount'] ?? ''));
+        $formattedAmount = sprintf("%.2f", (float)$rawAmount);
+        $amountVariants = array_unique(array_filter([$rawAmount, $formattedAmount]));
+
+        foreach ($amountVariants as $amt) {
+            $sequences = [];
+
+            if (!empty($additionalCharges)) {
+                $sequences[] = "{$additionalCharges}|{$cleanSalt}|{$status}|{$udf10}|{$udf9}|{$udf8}|{$udf7}|{$udf6}|{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+                $sequences[] = "{$additionalCharges}|{$cleanSalt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+            }
+
+            $sequences[] = "{$cleanSalt}|{$status}|{$udf10}|{$udf9}|{$udf8}|{$udf7}|{$udf6}|{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+            $sequences[] = "{$cleanSalt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+
+            foreach ($sequences as $seq) {
+                $calc = strtolower(hash('sha512', $seq));
+                if (hash_equals($calc, $receivedHash)) {
+                    return true;
+                }
+            }
         }
 
-        $calculatedHash = strtolower(hash('sha512', $hashSequence));
-        return hash_equals($calculatedHash, strtolower($receivedHash));
+        return false;
     }
 }

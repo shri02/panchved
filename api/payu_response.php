@@ -17,6 +17,9 @@ if (empty($postData)) {
         parse_str($raw, $postData);
     }
 }
+if (empty($postData) && !empty($_GET)) {
+    $postData = $_GET;
+}
 
 $config = getPayUConfig();
 $salt = $config['salt'];
@@ -47,6 +50,20 @@ if (!empty($salt)) {
 $isSuccess = ($status === 'success' && $hashValid);
 $bookingCode = '#' . rand(100000, 999999);
 $formattedAmount = '₹' . number_format($amount, 2);
+
+// Log PayU callback for diagnostics
+@file_put_contents(
+    __DIR__ . '/payu_debug.log',
+    "[" . date('Y-m-d H:i:s') . "] METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN') . 
+    " HTTPS=" . (isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : 'off') . 
+    " PROTO=" . ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'none') . 
+    " POST_COUNT=" . count($_POST) . 
+    " TXNID=" . ($postData['txnid'] ?? 'empty') . 
+    " STATUS=" . ($postData['status'] ?? 'empty') . 
+    " HASH_VALID=" . ($hashValid ? 'true' : 'false') . 
+    " RAW=" . json_encode($postData) . "\n",
+    FILE_APPEND
+);
 
 if ($isSuccess && $connection1 && $udf2 > 0) {
     // Insert into workshop_bookings
@@ -117,7 +134,19 @@ $redirectTarget = $doctorBase . '/courses/courses.html';
         </svg>
       </div>
       <h1>Payment Not Completed</h1>
-      <p><?php echo htmlspecialchars(!empty($errorMsg) ? $errorMsg : 'The transaction was cancelled or declined.'); ?></p>
+      <p>
+        <?php 
+          if (empty($postData) || empty($txnid)) {
+            echo 'No payment transaction data was received from the gateway. If your payment was completed, please return to your portal.';
+          } elseif (!$hashValid && !empty($salt)) {
+            echo 'Security signature verification failed. Please contact support if your account was debited.';
+          } elseif (!empty($errorMsg)) {
+            echo htmlspecialchars($errorMsg);
+          } else {
+            echo 'The transaction was cancelled or declined.';
+          }
+        ?>
+      </p>
       <a href="javascript:history.back()" class="btn">Try Again</a>
     <?php endif; ?>
   </div>
