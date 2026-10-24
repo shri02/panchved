@@ -173,7 +173,7 @@ $redirectTarget = $doctorBase . '/courses/courses.html';
                    '<div style="font-size:12px; background:#f1f5f9; padding:10px; border-radius:6px; text-align:left;">' .
                    '• PayU Sandbox test server could not fetch salt for your merchant key.<br>' .
                    '• If you entered a Live Production Key with <code>PAYU_ENV=test</code>, PayU Sandbox cannot find it.<br>' .
-                   '• Standard PayU Sandbox credentials: Key: <code>gtKFFx</code> | Salt: <code>eCwWELxi</code>.' .
+                   '• Standard PayU Sandbox credentials: Key: <code>gtKFFx</code> | Salt: <code>4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW</code>.' .
                    '</div>';
             } else {
               echo htmlspecialchars($errorMsg);
