@@ -11,7 +11,7 @@
 */
 
 // Database server IP address or hostname
-$dbHost = "162.214.80.27";
+$dbHost = "p:162.214.80.27";
 
 // Database name
 $dbName = "jewrzsmy_panchved";
