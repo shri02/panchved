@@ -38,8 +38,10 @@ $salt = $config['salt'];
 $txnid = trim((string)($postData['txnid'] ?? ($_GET['txnid'] ?? ($_SESSION['last_payu_txnid'] ?? ''))));
 $pending = $_SESSION['payu_pending'][$txnid] ?? null;
 
+$isSimulation = (!$config['is_live'] && isset($_GET['simulate_success']) && $_GET['simulate_success'] == '1');
+
 $status = strtolower(trim((string)($postData['status'] ?? ($_GET['status'] ?? ''))));
-if (empty($status) && isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success', 'successful'])) {
+if ($isSimulation || (empty($status) && isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success', 'successful']))) {
     $status = 'success';
 }
 if (empty($status)) {
@@ -51,9 +53,15 @@ $productInfo = trim((string)($postData['productinfo'] ?? ($pending['item_title']
 $firstName = trim((string)($postData['firstname'] ?? ($pending['doctor_name'] ?? 'Doctor')));
 $email = trim((string)($postData['email'] ?? ($pending['doctor_email'] ?? '')));
 $phone = trim((string)($postData['phone'] ?? ($pending['doctor_phone'] ?? '')));
-$mihpayid = trim((string)($postData['mihpayid'] ?? ''));
-$bankRefNum = trim((string)($postData['bank_ref_num'] ?? ''));
-$errorMsg = trim((string)($postData['error_Message'] ?? ($postData['unmappedstatus'] ?? '')));
+$mihpayid = trim((string)($postData['mihpayid'] ?? ($isSimulation ? ('SIM_' . time()) : '')));
+$bankRefNum = trim((string)($postData['bank_ref_num'] ?? ($isSimulation ? ('SIM_REF_' . rand(100000, 999999)) : '')));
+$errorMsg = trim((string)(
+    $postData['error'] 
+    ?? ($postData['error_Message'] 
+    ?? ($postData['errorMessage'] 
+    ?? ($postData['field9'] 
+    ?? ($postData['unmappedstatus'] ?? ''))))
+));
 
 $udf1 = trim((string)($postData['udf1'] ?? 'doctor_workshop'));
 $udf2 = intval($postData['udf2'] ?? ($pending['workshop_id'] ?? 0)); // workshop_id
@@ -65,7 +73,7 @@ if (!empty($salt) && !empty($postData['hash'])) {
     $hashValid = verifyPayUResponseHash($postData, $salt);
 }
 if (!$hashValid && !$config['is_live']) {
-    if ($status === 'success' || (isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success']))) {
+    if ($isSimulation || $status === 'success' || (isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success']))) {
         $hashValid = true;
     }
 }
@@ -157,19 +165,41 @@ $redirectTarget = $doctorBase . '/courses/courses.html';
         </svg>
       </div>
       <h1>Payment Not Completed</h1>
-      <p>
+      <div style="font-size:14px; color:#4b5563; line-height:1.5; margin: 10px 0 20px 0;">
         <?php 
-          if (empty($postData) || empty($txnid)) {
+          if (!empty($errorMsg)) {
+            if (stripos($errorMsg, 'circuit breaker') !== false || stripos($errorMsg, 'uat-onboarding') !== false) {
+              echo '<strong style="color:#b91c1c;">PayU Sandbox Error:</strong> ' . htmlspecialchars($errorMsg) . '<br><br>' .
+                   '<div style="font-size:12px; background:#f1f5f9; padding:10px; border-radius:6px; text-align:left;">' .
+                   '• PayU Sandbox test server could not fetch salt for your merchant key.<br>' .
+                   '• If you entered a Live Production Key with <code>PAYU_ENV=test</code>, PayU Sandbox cannot find it.<br>' .
+                   '• Standard PayU Sandbox credentials: Key: <code>gtKFFx</code> | Salt: <code>eCwWELxi</code>.' .
+                   '</div>';
+            } else {
+              echo htmlspecialchars($errorMsg);
+            }
+          } elseif (empty($postData) || empty($txnid)) {
             echo 'No payment transaction data was received from the gateway. If your payment was completed, please return to your portal.';
           } elseif (!$hashValid && !empty($salt)) {
             echo 'Security signature verification failed. Please contact support if your account was debited.';
-          } elseif (!empty($errorMsg)) {
-            echo htmlspecialchars($errorMsg);
           } else {
             echo 'The transaction was cancelled or declined.';
           }
         ?>
-      </p>
+      </div>
+      <?php if (!$config['is_live'] && !empty($txnid)): ?>
+      <div style="margin: 0 0 16px 0; padding: 12px; background: #ecfdf5; border: 1px dashed #10b981; border-radius: 8px;">
+        <div style="font-size: 12px; color: #047857; margin-bottom: 8px;">Developer Sandbox Mode:</div>
+        <a href="<?php echo htmlspecialchars('payu_response.php?' . http_build_query([
+          'simulate_success' => '1',
+          'txnid' => $txnid,
+          'service' => 'doctor_workshop',
+          'amt' => sprintf('%.2f', $amount)
+        ])); ?>" class="btn" style="background: #059669; padding: 8px 14px; font-size: 12px; display: inline-block;">
+          ✓ Simulate Payment Success (Test Mode)
+        </a>
+      </div>
+      <?php endif; ?>
       <a href="javascript:history.back()" class="btn">Try Again</a>
     <?php endif; ?>
   </div>

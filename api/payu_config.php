@@ -106,6 +106,16 @@ if (!function_exists('getPayUConfig')) {
         $mode = strtolower(getPayUEnv(['PAYU_ENV', 'PAYU_MODE'], 'test'));
         $isLive = in_array($mode, ['prod', 'production', 'live']);
 
+        // In test mode, fallback to PayU official public sandbox credentials if not specified
+        if (!$isLive) {
+            if (empty($merchantKey)) {
+                $merchantKey = 'gtKFFx';
+            }
+            if (empty($salt)) {
+                $salt = 'eCwWELxi';
+            }
+        }
+
         $baseUrl = getPayUBaseUrl($clientOrigin);
 
         $defaultSuccessUrl = $baseUrl . '/api/payu_response.php';
