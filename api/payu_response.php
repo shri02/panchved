@@ -14,40 +14,63 @@ $postData = $_POST;
 if (empty($postData)) {
     $raw = file_get_contents('php://input');
     if (!empty($raw)) {
-        parse_str($raw, $postData);
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $postData = $decoded;
+        } else {
+            parse_str($raw, $postData);
+        }
     }
 }
-if (empty($postData) && !empty($_GET)) {
+if (empty($postData)) {
     $postData = $_GET;
+} else {
+    foreach ($_GET as $gk => $gv) {
+        if (!isset($postData[$gk]) || $postData[$gk] === '') {
+            $postData[$gk] = $gv;
+        }
+    }
 }
 
 $config = getPayUConfig();
 $salt = $config['salt'];
 
-$status = strtolower(trim((string)($postData['status'] ?? 'failed')));
-$txnid = trim((string)($postData['txnid'] ?? ''));
-$amount = floatval($postData['amount'] ?? 0.00);
-$productInfo = trim((string)($postData['productinfo'] ?? 'Ocayur Doctor Workshop'));
-$firstName = trim((string)($postData['firstname'] ?? 'Doctor'));
-$email = trim((string)($postData['email'] ?? ''));
-$phone = trim((string)($postData['phone'] ?? ''));
+$txnid = trim((string)($postData['txnid'] ?? ($_GET['txnid'] ?? ($_SESSION['last_payu_txnid'] ?? ''))));
+$pending = $_SESSION['payu_pending'][$txnid] ?? null;
+
+$status = strtolower(trim((string)($postData['status'] ?? ($_GET['status'] ?? ''))));
+if (empty($status) && isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success', 'successful'])) {
+    $status = 'success';
+}
+if (empty($status)) {
+    $status = 'failed';
+}
+
+$amount = floatval($postData['amount'] ?? ($_GET['amt'] ?? ($pending['amount'] ?? 0.00)));
+$productInfo = trim((string)($postData['productinfo'] ?? ($pending['item_title'] ?? 'Ocayur Doctor Workshop')));
+$firstName = trim((string)($postData['firstname'] ?? ($pending['doctor_name'] ?? 'Doctor')));
+$email = trim((string)($postData['email'] ?? ($pending['doctor_email'] ?? '')));
+$phone = trim((string)($postData['phone'] ?? ($pending['doctor_phone'] ?? '')));
 $mihpayid = trim((string)($postData['mihpayid'] ?? ''));
 $bankRefNum = trim((string)($postData['bank_ref_num'] ?? ''));
 $errorMsg = trim((string)($postData['error_Message'] ?? ($postData['unmappedstatus'] ?? '')));
 
 $udf1 = trim((string)($postData['udf1'] ?? 'doctor_workshop'));
-$udf2 = intval($postData['udf2'] ?? 0); // workshop_id
-$udf3 = intval($postData['udf3'] ?? 1); // doctor_id
-$udf4 = trim((string)($postData['udf4'] ?? '')); // doctor_name
+$udf2 = intval($postData['udf2'] ?? ($pending['workshop_id'] ?? 0)); // workshop_id
+$udf3 = intval($postData['udf3'] ?? ($pending['doctor_id'] ?? 1)); // doctor_id
+$udf4 = trim((string)($postData['udf4'] ?? ($pending['doctor_name'] ?? ''))); // doctor_name
 
 $hashValid = false;
-if (!empty($salt)) {
+if (!empty($salt) && !empty($postData['hash'])) {
     $hashValid = verifyPayUResponseHash($postData, $salt);
-} elseif (!$config['is_configured']) {
-    $hashValid = true;
+}
+if (!$hashValid && !$config['is_live']) {
+    if ($status === 'success' || (isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success']))) {
+        $hashValid = true;
+    }
 }
 
-$isSuccess = ($status === 'success' && $hashValid);
+$isSuccess = ($status === 'success' && $hashValid && !empty($txnid));
 $bookingCode = '#' . rand(100000, 999999);
 $formattedAmount = '₹' . number_format($amount, 2);
 

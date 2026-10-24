@@ -63,7 +63,8 @@ if ($amount <= 0) {
 }
 $formattedAmount = sprintf("%.2f", $amount);
 
-$config = getPayUConfig();
+$clientOrigin = trim((string)($input['origin_url'] ?? ($input['client_origin'] ?? '')));
+$config = getPayUConfig($clientOrigin);
 $txnId = 'TXN_DOC_WKS_' . date('YmdHis') . '_' . rand(1000, 9999);
 
 $nameParts = preg_split('/\s+/', trim($doctorName));
@@ -109,6 +110,30 @@ $hashParams = [
 
 $payuHash = generatePayUHash($hashParams, $config['salt']);
 
+// Save pending state in session
+$_SESSION['last_payu_txnid'] = $txnId;
+if (!isset($_SESSION['payu_pending']) || !is_array($_SESSION['payu_pending'])) {
+    $_SESSION['payu_pending'] = [];
+}
+$_SESSION['payu_pending'][$txnId] = [
+    'service_type' => 'doctor_workshop',
+    'workshop_id' => $workshopId,
+    'doctor_id' => $doctorId,
+    'doctor_name' => $doctorName,
+    'doctor_email' => $doctorEmail,
+    'doctor_phone' => $doctorPhone,
+    'amount' => $amount,
+    'item_title' => $productInfo
+];
+
+$cbParams = http_build_query([
+    'txnid' => $txnId,
+    'service' => 'doctor_workshop',
+    'amt' => $formattedAmount
+]);
+$surlWithParams = $config['success_url'] . (strpos($config['success_url'], '?') === false ? '?' : '&') . $cbParams;
+$furlWithParams = $config['failure_url'] . (strpos($config['failure_url'], '?') === false ? '?' : '&') . $cbParams;
+
 $payuPayload = [
     'key' => $config['merchant_key'],
     'txnid' => $txnId,
@@ -117,8 +142,8 @@ $payuPayload = [
     'firstname' => $firstName,
     'email' => $doctorEmail,
     'phone' => $doctorPhone,
-    'surl' => $config['success_url'],
-    'furl' => $config['failure_url'],
+    'surl' => $surlWithParams,
+    'furl' => $furlWithParams,
     'hash' => $payuHash,
     'service_provider' => 'payu_paisa',
     'udf1' => $udf1,

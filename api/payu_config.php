@@ -16,13 +16,13 @@ if (!function_exists('getPayUEnv')) {
         foreach ((array)$keys as $k) {
             $val = getenv($k);
             if ($val !== false && $val !== '') {
-                return $val;
+                return trim($val);
             }
             if (isset($_ENV[$k]) && $_ENV[$k] !== '') {
-                return $_ENV[$k];
+                return trim($_ENV[$k]);
             }
             if (isset($_SERVER[$k]) && $_SERVER[$k] !== '') {
-                return $_SERVER[$k];
+                return trim($_SERVER[$k]);
             }
         }
         return $default;
@@ -30,52 +30,83 @@ if (!function_exists('getPayUEnv')) {
 }
 
 if (!function_exists('getPayUBaseUrl')) {
-    function getPayUBaseUrl() {
-        // Priority 1: Check APP_URL / SITE_URL / BASE_URL, ignoring default Azure app service domains
+    function getPayUBaseUrl($clientOrigin = '') {
+        // Priority 1: Check explicit environment variable (APP_URL / SITE_URL / BASE_URL)
         $envUrl = getPayUEnv(['APP_URL', 'SITE_URL', 'BASE_URL']);
-        if (!empty($envUrl) && stripos($envUrl, 'azurewebsites.net') === false) {
+        if (!empty($envUrl)) {
             if (!preg_match('/^https?:\/\//i', $envUrl)) {
                 $envUrl = 'https://' . $envUrl;
             }
             return rtrim($envUrl, '/');
         }
 
-        // Priority 2: Check incoming request host from browser (if not Azure default domain or localhost)
-        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? '');
+        // Priority 2: Use client origin passed from browser if available
+        if (!empty($clientOrigin) && preg_match('/^https?:\/\//i', $clientOrigin)) {
+            $parsed = parse_url($clientOrigin);
+            if (!empty($parsed['host'])) {
+                $cScheme = $parsed['scheme'] ?? 'https';
+                $cHost = $parsed['host'] . (!empty($parsed['port']) ? ':' . $parsed['port'] : '');
+                
+                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+                $apiPos = strrpos($scriptPath, '/api/');
+                $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
+                return rtrim($cScheme . '://' . $cHost . ($baseFolder ? '/' . ltrim($baseFolder, '/') : ''), '/');
+            }
+        }
+
+        // Priority 3: Check HTTP Referer or Origin header
+        $refOrOrigin = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
+        if (!empty($refOrOrigin) && preg_match('/^https?:\/\//i', $refOrOrigin)) {
+            $parsed = parse_url($refOrOrigin);
+            if (!empty($parsed['host'])) {
+                $cScheme = $parsed['scheme'] ?? 'https';
+                $cHost = $parsed['host'] . (!empty($parsed['port']) ? ':' . $parsed['port'] : '');
+                
+                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+                $apiPos = strrpos($scriptPath, '/api/');
+                $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
+                return rtrim($cScheme . '://' . $cHost . ($baseFolder ? '/' . ltrim($baseFolder, '/') : ''), '/');
+            }
+        }
+
+        // Priority 4: Dynamic detection from server host headers
+        $azureHost = getPayUEnv(['WEBSITE_HOSTNAME']);
+        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? $azureHost);
         if (strpos($host, ',') !== false) {
             $hostParts = explode(',', $host);
             $host = trim($hostParts[0]);
         }
-        if (!empty($host)) {
-            $hostOnly = preg_replace('/:\d+$/', '', $host);
-            if (stripos($hostOnly, 'azurewebsites.net') === false && stripos($hostOnly, 'localhost') === false && $hostOnly !== '127.0.0.1') {
-                // Public domains MUST always use HTTPS so reverse proxies don't 301-redirect and drop POST bodies
-                $scheme = 'https';
-
-                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-                $apiPos = strrpos($scriptPath, '/api/');
-                if ($apiPos !== false) {
-                    $basePath = substr($scriptPath, 0, $apiPos);
-                    return $scheme . '://' . $host . ($basePath ? '/' . ltrim($basePath, '/') : '');
-                }
-
-                return $scheme . '://' . $host;
-            }
+        if (empty($host)) {
+            $host = $azureHost ?: 'localhost';
         }
 
-        // Priority 3: Fallback explicitly to official Doctor Portal domain (always HTTPS)
-        return 'https://doctor.ocayur.com';
+        $hostOnly = preg_replace('/:\d+$/', '', $host);
+        $isLocal = ($hostOnly === 'localhost' || $hostOnly === '127.0.0.1' || $hostOnly === '::1');
+
+        $isHttps = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
+                   (isset($_SERVER['HTTP_X_ARR_SSL'])) ||
+                   (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+                   !$isLocal;
+
+        $scheme = $isHttps ? 'https' : 'http';
+
+        $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        $apiPos = strrpos($scriptPath, '/api/');
+        $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
+
+        return rtrim($scheme . '://' . $host . ($baseFolder ? '/' . ltrim($baseFolder, '/') : ''), '/');
     }
 }
 
 if (!function_exists('getPayUConfig')) {
-    function getPayUConfig() {
-        $merchantKey = getPayUEnv(['PAYU_MERCHANT_KEY', 'PAYU_KEY', 'PAYU_MERCHANT_ID'], '');
-        $salt = getPayUEnv(['PAYU_SALT', 'PAYU_MERCHANT_SALT'], '');
+    function getPayUConfig($clientOrigin = '') {
+        $merchantKey = trim((string)getPayUEnv(['PAYU_MERCHANT_KEY', 'PAYU_KEY', 'PAYU_MERCHANT_ID'], ''));
+        $salt = trim((string)getPayUEnv(['PAYU_SALT', 'PAYU_MERCHANT_SALT'], ''));
         $mode = strtolower(getPayUEnv(['PAYU_ENV', 'PAYU_MODE'], 'test'));
         $isLive = in_array($mode, ['prod', 'production', 'live']);
 
-        $baseUrl = getPayUBaseUrl();
+        $baseUrl = getPayUBaseUrl($clientOrigin);
 
         $defaultSuccessUrl = $baseUrl . '/api/payu_response.php';
         $defaultFailureUrl = $baseUrl . '/api/payu_response.php';
@@ -93,6 +124,7 @@ if (!function_exists('getPayUConfig')) {
             'mode' => $isLive ? 'production' : 'test',
             'is_live' => $isLive,
             'endpoint' => $endpoint,
+            'base_url' => $baseUrl,
             'success_url' => $successUrl,
             'failure_url' => $failureUrl,
             'is_configured' => (!empty($merchantKey) && !empty($salt) && $merchantKey !== 'YOUR_PAYU_KEY' && $salt !== 'YOUR_PAYU_SALT')
@@ -113,6 +145,7 @@ if (!function_exists('generatePayUHash')) {
         $udf3 = trim((string)($params['udf3'] ?? ''));
         $udf4 = trim((string)($params['udf4'] ?? ''));
         $udf5 = trim((string)($params['udf5'] ?? ''));
+        $salt = trim((string)$salt);
 
         $hashSequence = "{$key}|{$txnid}|{$amount}|{$productinfo}|{$firstname}|{$email}|{$udf1}|{$udf2}|{$udf3}|{$udf4}|{$udf5}||||||{$salt}";
         return strtolower(hash('sha512', $hashSequence));
@@ -122,50 +155,40 @@ if (!function_exists('generatePayUHash')) {
 if (!function_exists('verifyPayUResponseHash')) {
     function verifyPayUResponseHash($postData, $salt) {
         $receivedHash = strtolower(trim((string)($postData['hash'] ?? '')));
-        $cleanSalt = trim((string)$salt);
-        if (empty($receivedHash) || empty($cleanSalt)) {
+        if (empty($receivedHash)) {
             return false;
         }
 
         $key = trim((string)($postData['key'] ?? ''));
         $txnid = trim((string)($postData['txnid'] ?? ''));
-        $status = trim((string)($postData['status'] ?? ''));
+        $rawAmount = trim((string)($postData['amount'] ?? ''));
+        $formattedAmount = sprintf("%.2f", (float)($postData['amount'] ?? 0));
+        $floatAmount = (string)(float)($postData['amount'] ?? 0);
         $productinfo = trim((string)($postData['productinfo'] ?? ''));
         $firstname = trim((string)($postData['firstname'] ?? ''));
         $email = trim((string)($postData['email'] ?? ''));
+        $status = trim((string)($postData['status'] ?? ''));
         $udf1 = trim((string)($postData['udf1'] ?? ''));
         $udf2 = trim((string)($postData['udf2'] ?? ''));
         $udf3 = trim((string)($postData['udf3'] ?? ''));
         $udf4 = trim((string)($postData['udf4'] ?? ''));
         $udf5 = trim((string)($postData['udf5'] ?? ''));
-        $udf6 = trim((string)($postData['udf6'] ?? ''));
-        $udf7 = trim((string)($postData['udf7'] ?? ''));
-        $udf8 = trim((string)($postData['udf8'] ?? ''));
-        $udf9 = trim((string)($postData['udf9'] ?? ''));
-        $udf10 = trim((string)($postData['udf10'] ?? ''));
+        $salt = trim((string)$salt);
 
-        $additionalCharges = trim((string)($postData['additionalCharges'] ?? ''));
+        $additionalCharges = isset($postData['additionalCharges']) ? trim((string)$postData['additionalCharges']) : '';
 
-        $rawAmount = trim((string)($postData['amount'] ?? ''));
-        $formattedAmount = sprintf("%.2f", (float)$rawAmount);
-        $amountVariants = array_unique(array_filter([$rawAmount, $formattedAmount]));
+        $amountFormats = array_unique([$rawAmount, $formattedAmount, $floatAmount]);
 
-        foreach ($amountVariants as $amt) {
-            $sequences = [];
-
+        foreach ($amountFormats as $amt) {
             if (!empty($additionalCharges)) {
-                $sequences[] = "{$additionalCharges}|{$cleanSalt}|{$status}|{$udf10}|{$udf9}|{$udf8}|{$udf7}|{$udf6}|{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
-                $sequences[] = "{$additionalCharges}|{$cleanSalt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+                $hashSequence = "{$additionalCharges}|{$salt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
+            } else {
+                $hashSequence = "{$salt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
             }
 
-            $sequences[] = "{$cleanSalt}|{$status}|{$udf10}|{$udf9}|{$udf8}|{$udf7}|{$udf6}|{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
-            $sequences[] = "{$cleanSalt}|{$status}||||||{$udf5}|{$udf4}|{$udf3}|{$udf2}|{$udf1}|{$email}|{$firstname}|{$productinfo}|{$amt}|{$txnid}|{$key}";
-
-            foreach ($sequences as $seq) {
-                $calc = strtolower(hash('sha512', $seq));
-                if (hash_equals($calc, $receivedHash)) {
-                    return true;
-                }
+            $calculatedHash = strtolower(hash('sha512', $hashSequence));
+            if (hash_equals($calculatedHash, $receivedHash)) {
+                return true;
             }
         }
 

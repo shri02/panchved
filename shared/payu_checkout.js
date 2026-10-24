@@ -4,6 +4,9 @@
 window.PayUCheckout = {
   async processPayment(payload, onFallback = null) {
     try {
+      payload.origin_url = window.location.origin;
+      payload.client_origin = window.location.origin;
+
       const response = await fetch('../api/payu_initiate.php', {
         method: 'POST',
         headers: {
