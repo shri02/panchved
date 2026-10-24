@@ -1,41 +1,73 @@
 /**
  * Ocayur / Panchved - PayU Client-Side Payment Gateway Connector (Doctor Portal)
  */
-window.PayUCheckout = {
-  async processPayment(payload, onFallback = null) {
-    try {
-      payload.origin_url = window.location.origin;
-      payload.client_origin = window.location.origin;
+(function(window) {
+  'use strict';
 
-      const response = await fetch('../api/payu_initiate.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+  function getInitiateEndpoint() {
+    const pathname = window.location.pathname || '';
+    if (pathname.includes('/dashboard/courses/')) {
+      return '../../api/payu_initiate.php';
+    }
+    if (pathname.includes('/courses/')) {
+      return '../api/payu_initiate.php';
+    }
+    return 'api/payu_initiate.php';
+  }
 
-      const data = await response.json().catch(() => null);
+  const PayUCheckout = {
+    async processPayment(payload, onFallback = null) {
+      try {
+        if (!payload || !payload.amount) {
+          throw new Error('Payment amount and workshop details are required.');
+        }
 
-      if (!response.ok) {
-        const err = new Error(data?.message || 'Payment initiation failed.');
-        err.data = data;
-        throw err;
-      }
+        payload.origin_url = window.location.origin;
+        payload.client_origin = window.location.origin;
 
-      if (data && data.payu_configured && data.action_url && data.params) {
+        const endpoint = getInitiateEndpoint();
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+          if (data && data.is_configured === false) {
+            console.info('PayU Notice: Credentials pending in App Service variables. Executing fallback flow:', data);
+            if (typeof onFallback === 'function') {
+              return await onFallback(data);
+            }
+          }
+          const err = new Error(data?.message || 'Payment initiation failed.');
+          err.data = data;
+          throw err;
+        }
+
+        const { action_url, params } = data;
+        if (!action_url || !params) {
+          throw new Error('Invalid payment parameters received from server.');
+        }
+
+        // Create and auto-submit hidden POST form to PayU gateway
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = data.action_url;
+        form.action = action_url;
         form.style.display = 'none';
 
-        for (const [key, value] of Object.entries(data.params)) {
+        for (const [key, value] of Object.entries(params)) {
           if (value !== undefined && value !== null) {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = key;
-            input.value = value;
+            input.value = typeof value === 'object' ? JSON.stringify(value) : String(value);
             form.appendChild(input);
           }
         }
@@ -43,20 +75,12 @@ window.PayUCheckout = {
         document.body.appendChild(form);
         form.submit();
         return { redirected: true, data };
+      } catch (err) {
+        console.error('PayU Doctor Checkout Error:', err);
+        throw err;
       }
-
-      if (data && data.payu_configured === false) {
-        console.info('PayU Notice: Test credentials pending in App Service variables. Executing fallback flow:', data);
-        if (typeof onFallback === 'function') {
-          return await onFallback(data);
-        }
-        throw new Error(data.message || 'PayU credentials not yet configured.');
-      }
-
-      return data;
-    } catch (err) {
-      console.error('PayU Doctor Checkout Error:', err);
-      throw err;
     }
-  }
-};
+  };
+
+  window.PayUCheckout = PayUCheckout;
+})(window);

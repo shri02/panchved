@@ -1,28 +1,28 @@
 <?php
 /**
- * Ocayur Doctor Portal - PayU Payment Gateway Configuration
+ * Ocayur / Panchved - PayU Payment Gateway Configuration & Hash Utilities
  * 
- * Supports Azure App Service Environment Variables (Application Settings):
- * - PAYU_MERCHANT_KEY (or PAYU_KEY)
- * - PAYU_SALT
- * - PAYU_ENV (or PAYU_MODE: 'test' / 'prod' / 'live' - defaults to 'test')
- * - PAYU_SUCCESS_URL (optional override for success callback)
- * - PAYU_FAILURE_URL (optional override for failure callback)
- * - APP_URL (optional base URL override e.g. https://doctor.ocayur.com)
+ * Reads credentials dynamically from Azure App Service Environment Variables:
+ * - PAYU_ENV: 'test' (default) or 'prod'
+ * - PAYU_MERCHANT_KEY: Test or Live Merchant Key
+ * - PAYU_SALT: Test or Live Merchant Salt
  */
 
 if (!function_exists('getPayUEnv')) {
-    function getPayUEnv($keys, $default = '') {
-        foreach ((array)$keys as $k) {
-            $val = getenv($k);
-            if ($val !== false && $val !== '') {
-                return trim($val);
+    function getPayUEnv($varNames, $default = '') {
+        if (!is_array($varNames)) {
+            $varNames = [$varNames];
+        }
+        foreach ($varNames as $name) {
+            $val = getenv($name);
+            if ($val !== false && trim((string)$val) !== '') {
+                return trim((string)$val);
             }
-            if (isset($_ENV[$k]) && $_ENV[$k] !== '') {
-                return trim($_ENV[$k]);
+            if (isset($_ENV[$name]) && trim((string)$_ENV[$name]) !== '') {
+                return trim((string)$_ENV[$name]);
             }
-            if (isset($_SERVER[$k]) && $_SERVER[$k] !== '') {
-                return trim($_SERVER[$k]);
+            if (isset($_SERVER[$name]) && trim((string)$_SERVER[$name]) !== '') {
+                return trim((string)$_SERVER[$name]);
             }
         }
         return $default;
@@ -31,22 +31,18 @@ if (!function_exists('getPayUEnv')) {
 
 if (!function_exists('getPayUBaseUrl')) {
     function getPayUBaseUrl($clientOrigin = '') {
-        // Priority 1: Check explicit environment variable (APP_URL / SITE_URL / BASE_URL)
-        $envUrl = getPayUEnv(['APP_URL', 'SITE_URL', 'BASE_URL']);
-        if (!empty($envUrl)) {
-            if (!preg_match('/^https?:\/\//i', $envUrl)) {
-                $envUrl = 'https://' . $envUrl;
-            }
-            return rtrim($envUrl, '/');
+        // Priority 1: Explicit URL override
+        $explicit = getPayUEnv(['PAYU_BASE_URL', 'APP_URL', 'SITE_URL', 'BASE_URL']);
+        if (!empty($explicit) && preg_match('/^https?:\/\//i', $explicit)) {
+            return rtrim($explicit, '/');
         }
 
-        // Priority 2: Use client origin passed from browser if available
+        // Priority 2: Client Origin passed from frontend (if valid URL)
         if (!empty($clientOrigin) && preg_match('/^https?:\/\//i', $clientOrigin)) {
             $parsed = parse_url($clientOrigin);
             if (!empty($parsed['host'])) {
                 $cScheme = $parsed['scheme'] ?? 'https';
                 $cHost = $parsed['host'] . (!empty($parsed['port']) ? ':' . $parsed['port'] : '');
-                
                 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
                 $apiPos = strrpos($scriptPath, '/api/');
                 $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
@@ -54,27 +50,12 @@ if (!function_exists('getPayUBaseUrl')) {
             }
         }
 
-        // Priority 3: Check HTTP Referer or Origin header
-        $refOrOrigin = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
-        if (!empty($refOrOrigin) && preg_match('/^https?:\/\//i', $refOrOrigin)) {
-            $parsed = parse_url($refOrOrigin);
-            if (!empty($parsed['host'])) {
-                $cScheme = $parsed['scheme'] ?? 'https';
-                $cHost = $parsed['host'] . (!empty($parsed['port']) ? ':' . $parsed['port'] : '');
-                
-                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-                $apiPos = strrpos($scriptPath, '/api/');
-                $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
-                return rtrim($cScheme . '://' . $cHost . ($baseFolder ? '/' . ltrim($baseFolder, '/') : ''), '/');
-            }
-        }
-
-        // Priority 4: Dynamic detection from server host headers
+        // Priority 3: Server HTTP Headers
         $azureHost = getPayUEnv(['WEBSITE_HOSTNAME']);
         $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? $azureHost);
         if (strpos($host, ',') !== false) {
-            $hostParts = explode(',', $host);
-            $host = trim($hostParts[0]);
+            $parts = explode(',', $host);
+            $host = trim($parts[0]);
         }
         if (empty($host)) {
             $host = $azureHost ?: 'localhost';
@@ -90,7 +71,6 @@ if (!function_exists('getPayUBaseUrl')) {
                    !$isLocal;
 
         $scheme = $isHttps ? 'https' : 'http';
-
         $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
         $apiPos = strrpos($scriptPath, '/api/');
         $baseFolder = ($apiPos !== false) ? substr($scriptPath, 0, $apiPos) : '';
@@ -104,25 +84,10 @@ if (!function_exists('getPayUConfig')) {
         $merchantKey = trim((string)getPayUEnv(['PAYU_MERCHANT_KEY', 'PAYU_KEY', 'PAYU_MERCHANT_ID'], ''));
         $salt = trim((string)getPayUEnv(['PAYU_SALT', 'PAYU_MERCHANT_SALT'], ''));
         $mode = strtolower(getPayUEnv(['PAYU_ENV', 'PAYU_MODE'], 'test'));
-        $isLive = in_array($mode, ['prod', 'production', 'live']);
-
-        // In test mode, fallback to PayU official public sandbox credentials if not specified
-        if (!$isLive) {
-            if (empty($merchantKey)) {
-                $merchantKey = 'gtKFFx';
-            }
-            if (empty($salt)) {
-                $salt = '4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW';
-            }
-        }
+        $isLive = in_array($mode, ['prod', 'production', 'live'], true);
 
         $baseUrl = getPayUBaseUrl($clientOrigin);
-
-        $defaultSuccessUrl = $baseUrl . '/api/payu_response.php';
-        $defaultFailureUrl = $baseUrl . '/api/payu_response.php';
-
-        $successUrl = getPayUEnv(['PAYU_SUCCESS_URL', 'PAYU_SURL'], $defaultSuccessUrl);
-        $failureUrl = getPayUEnv(['PAYU_FAILURE_URL', 'PAYU_FURL'], $defaultFailureUrl);
+        $defaultCallback = $baseUrl . '/api/payu_response.php';
 
         $endpoint = $isLive 
             ? 'https://secure.payu.in/_payment' 
@@ -135,13 +100,17 @@ if (!function_exists('getPayUConfig')) {
             'is_live' => $isLive,
             'endpoint' => $endpoint,
             'base_url' => $baseUrl,
-            'success_url' => $successUrl,
-            'failure_url' => $failureUrl,
-            'is_configured' => (!empty($merchantKey) && !empty($salt) && $merchantKey !== 'YOUR_PAYU_KEY' && $salt !== 'YOUR_PAYU_SALT')
+            'success_url' => $defaultCallback,
+            'failure_url' => $defaultCallback,
+            'is_configured' => (!empty($merchantKey) && !empty($salt))
         ];
     }
 }
 
+/**
+ * Generate PayU Outbound Request SHA-512 Hash
+ * Formula: sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)
+ */
 if (!function_exists('generatePayUHash')) {
     function generatePayUHash($params, $salt) {
         $key = trim((string)($params['key'] ?? ''));
@@ -162,6 +131,14 @@ if (!function_exists('generatePayUHash')) {
     }
 }
 
+/**
+ * Verify PayU Inbound Response SHA-512 Hash
+ * Formula:
+ * With additionalCharges:
+ *   sha512(additionalCharges|SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
+ * Without additionalCharges:
+ *   sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
+ */
 if (!function_exists('verifyPayUResponseHash')) {
     function verifyPayUResponseHash($postData, $salt) {
         $receivedHash = strtolower(trim((string)($postData['hash'] ?? '')));
@@ -187,6 +164,7 @@ if (!function_exists('verifyPayUResponseHash')) {
 
         $additionalCharges = isset($postData['additionalCharges']) ? trim((string)$postData['additionalCharges']) : '';
 
+        // Test multiple variations of amount representation that PayU might send
         $amountFormats = array_unique([$rawAmount, $formattedAmount, $floatAmount]);
 
         foreach ($amountFormats as $amt) {

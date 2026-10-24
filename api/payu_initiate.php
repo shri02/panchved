@@ -1,7 +1,8 @@
 <?php
 /**
- * Ocayur Doctor Portal - PayU Payment Initiation Endpoint
- * Handles workshop registration checkout for doctors.
+ * Ocayur / Panchved - PayU Payment Gateway Initiation Endpoint (Doctor Portal)
+ * 
+ * Prepares the PayU Hosted Checkout parameters & SHA-512 hash for workshop enrollments.
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -21,82 +22,134 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/payu_config.php';
 
-function sendPayUResponse($success, $message, $data = [], $statusCode = 200) {
+function sendInitiateResponse($success, $message, $data = [], $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode(array_merge([
-        'success' => $success,
+        'success' => (bool)$success,
         'message' => $message,
         'timestamp' => date('Y-m-d H:i:s')
-    ], $data));
+    ], $data), JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    sendPayUResponse(false, 'Only POST requests are allowed.', [], 405);
+    sendInitiateResponse(false, 'Only POST requests are allowed.', [], 405);
 }
 
 $rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true) ?: $_POST;
-
-$workshopId = intval($input['workshop_id'] ?? 1);
-$doctorId = intval($_SESSION['doctor_id'] ?? $input['doctor_id'] ?? 1);
-$doctorName = trim($input['doctor_name'] ?? $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor');
-$doctorEmail = trim($input['doctor_email'] ?? $_SESSION['doctor_email'] ?? $_SESSION['email'] ?? '');
-$doctorPhone = trim($input['doctor_phone'] ?? $_SESSION['doctor_phone'] ?? $_SESSION['phone_number'] ?? '');
-$amount = floatval($input['amount'] ?? 0.00);
-
-// Fetch workshop info
-$stmt = mysqli_prepare($connection1, "SELECT * FROM `workshops` WHERE `id` = ? LIMIT 1");
-mysqli_stmt_bind_param($stmt, "i", $workshopId);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$workshop = mysqli_fetch_assoc($res);
-mysqli_stmt_close($stmt);
-
-if (!$workshop) {
-    sendPayUResponse(false, 'Workshop not found.', [], 404);
+$input = json_decode($rawInput, true);
+if (!is_array($input)) {
+    $input = $_POST;
 }
-
-$workshopTitle = $workshop['title'] ?? 'Ayurveda Workshop';
-if ($amount <= 0) {
-    $amount = floatval($workshop['fee'] > 0 ? $workshop['fee'] : ($workshop['price'] ?? 500.00));
-}
-$formattedAmount = sprintf("%.2f", $amount);
 
 $clientOrigin = trim((string)($input['origin_url'] ?? ($input['client_origin'] ?? '')));
 $config = getPayUConfig($clientOrigin);
-$txnId = 'TXN_DOC_WKS_' . date('YmdHis') . '_' . rand(1000, 9999);
 
+if (!$config['is_configured']) {
+    sendInitiateResponse(false, 'PayU credentials not found. Please ensure PAYU_MERCHANT_KEY and PAYU_SALT are set in Azure App Service Configuration.', [
+        'is_configured' => false
+    ], 500);
+}
+
+$workshopId = intval($input['workshop_id'] ?? ($input['item_id'] ?? 1));
+$doctorId = intval($_SESSION['doctor_id'] ?? ($input['doctor_id'] ?? 1));
+$doctorName = trim((string)($input['doctor_name'] ?? ($_SESSION['doctor_name'] ?? ($_SESSION['full_name'] ?? 'Doctor'))));
+$doctorEmail = trim((string)($input['doctor_email'] ?? ($_SESSION['doctor_email'] ?? ($_SESSION['email'] ?? ''))));
+$doctorPhone = trim((string)($input['doctor_phone'] ?? ($_SESSION['doctor_phone'] ?? ($_SESSION['phone_number'] ?? ''))));
+$amount = isset($input['amount']) && is_numeric($input['amount']) ? (float)$input['amount'] : 0.00;
+$serviceType = strtolower(trim((string)($input['service_type'] ?? 'workshop')));
+
+// Fetch workshop details from database if available
+$workshopTitle = 'Ayurveda Workshop';
+if ($connection1 && $workshopId > 0) {
+    try {
+        if ($stmt = @mysqli_prepare($connection1, "SELECT `id`, `title`, `price`, `fee` FROM `workshops` WHERE `id` = ? LIMIT 1")) {
+            @mysqli_stmt_bind_param($stmt, "i", $workshopId);
+            @mysqli_stmt_execute($stmt);
+            $res = @mysqli_stmt_get_result($stmt);
+            if ($row = @mysqli_fetch_assoc($res)) {
+                $workshopTitle = $row['title'] ?? $workshopTitle;
+                if ($amount <= 0) {
+                    $amount = floatval(!empty($row['fee']) && $row['fee'] > 0 ? $row['fee'] : ($row['price'] ?? 500.00));
+                }
+            }
+            @mysqli_stmt_close($stmt);
+        }
+    } catch (Throwable $e) {
+        // Fallback silently if query fails
+    }
+}
+
+if ($amount <= 0) {
+    $amount = 500.00;
+}
+$formattedAmount = sprintf("%.2f", $amount);
+
+// Clean first name (PayU strictly requires letters only for firstname)
 $nameParts = preg_split('/\s+/', trim($doctorName));
 $firstName = !empty($nameParts[0]) ? preg_replace('/[^a-zA-Z]/', '', $nameParts[0]) : 'Doctor';
-if (empty($firstName)) $firstName = 'Doctor';
+if (empty($firstName)) {
+    $firstName = 'Doctor';
+}
 
-$productInfo = 'Workshop: ' . substr($workshopTitle, 0, 80);
-$udf1 = 'doctor_workshop';
+// Clean phone digits
+$cleanPhone = preg_replace('/[^\d]/', '', $doctorPhone);
+if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
+    $cleanPhone = substr($cleanPhone, 2);
+}
+
+$productInfo = 'Workshop: ' . substr(preg_replace('/[^a-zA-Z0-9\s]/', '', $workshopTitle), 0, 80);
+$txnid = 'TXN_DOC_WKS_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
+
+// Prepare UDF parameters
+$udf1 = 'workshop';
 $udf2 = (string)$workshopId;
 $udf3 = (string)$doctorId;
 $udf4 = substr($doctorName, 0, 50);
-$udf5 = json_encode(['role' => 'doctor', 'ws_id' => $workshopId]);
+$udf5 = json_encode(['role' => 'doctor', 'workshop_id' => $workshopId, 'title' => $workshopTitle]);
 
-if (!$config['is_configured']) {
-    sendPayUResponse(false, 'PayU credentials are not configured in App Service environment variables. Please add PAYU_MERCHANT_KEY and PAYU_SALT.', [
-        'payu_configured' => false,
-        'environment_keys_needed' => [
-            'PAYU_MERCHANT_KEY' => 'Your PayU Merchant Key',
-            'PAYU_SALT' => 'Your PayU Merchant Salt',
-            'PAYU_ENV' => 'test or prod'
-        ],
-        'details' => [
-            'workshop_id' => $workshopId,
-            'title' => $workshopTitle,
-            'amount' => $formattedAmount
-        ]
-    ], 200);
+// Pre-record in payu_transactions table if available
+if ($connection1) {
+    try {
+        $ins = @mysqli_prepare($connection1, "INSERT INTO `payu_transactions` 
+            (`txnid`, `service_type`, `item_id`, `item_title`, `patient_name`, `patient_email`, `patient_phone`, `amount`, `payment_method`, `payment_status`, `created_at`)
+            VALUES (?, 'workshop', ?, ?, ?, ?, ?, ?, 'PayU', 'Pending', NOW())
+            ON DUPLICATE KEY UPDATE `payment_status` = 'Pending', `amount` = VALUES(`amount`)");
+        if ($ins) {
+            $amtVal = floatval($formattedAmount);
+            $wsIdStr = (string)$workshopId;
+            @mysqli_stmt_bind_param($ins, "ssssssd",
+                $txnid, $wsIdStr, $productInfo, $doctorName, $doctorEmail, $cleanPhone, $amtVal
+            );
+            @mysqli_stmt_execute($ins);
+            @mysqli_stmt_close($ins);
+        }
+    } catch (Throwable $txErr) {
+        // Continue even if pre-recording has an issue
+    }
 }
 
+// Save pending state in session
+$_SESSION['last_payu_txnid'] = $txnid;
+if (!isset($_SESSION['payu_pending']) || !is_array($_SESSION['payu_pending'])) {
+    $_SESSION['payu_pending'] = [];
+}
+$_SESSION['payu_pending'][$txnid] = [
+    'service_type' => 'workshop',
+    'workshop_id' => $workshopId,
+    'item_id' => $workshopId,
+    'item_title' => $productInfo,
+    'doctor_id' => $doctorId,
+    'doctor_name' => $doctorName,
+    'doctor_email' => $doctorEmail,
+    'doctor_phone' => $cleanPhone,
+    'amount' => $formattedAmount
+];
+
+// Calculate hash
 $hashParams = [
     'key' => $config['merchant_key'],
-    'txnid' => $txnId,
+    'txnid' => $txnid,
     'amount' => $formattedAmount,
     'productinfo' => $productInfo,
     'firstname' => $firstName,
@@ -107,44 +160,20 @@ $hashParams = [
     'udf4' => $udf4,
     'udf5' => $udf5
 ];
+$hash = generatePayUHash($hashParams, $config['salt']);
 
-$payuHash = generatePayUHash($hashParams, $config['salt']);
-
-// Save pending state in session
-$_SESSION['last_payu_txnid'] = $txnId;
-if (!isset($_SESSION['payu_pending']) || !is_array($_SESSION['payu_pending'])) {
-    $_SESSION['payu_pending'] = [];
-}
-$_SESSION['payu_pending'][$txnId] = [
-    'service_type' => 'doctor_workshop',
-    'workshop_id' => $workshopId,
-    'doctor_id' => $doctorId,
-    'doctor_name' => $doctorName,
-    'doctor_email' => $doctorEmail,
-    'doctor_phone' => $doctorPhone,
-    'amount' => $amount,
-    'item_title' => $productInfo
-];
-
-$cbParams = http_build_query([
-    'txnid' => $txnId,
-    'service' => 'doctor_workshop',
-    'amt' => $formattedAmount
-]);
-$surlWithParams = $config['success_url'] . (strpos($config['success_url'], '?') === false ? '?' : '&') . $cbParams;
-$furlWithParams = $config['failure_url'] . (strpos($config['failure_url'], '?') === false ? '?' : '&') . $cbParams;
-
+// Build payload parameters to POST to PayU
 $payuPayload = [
     'key' => $config['merchant_key'],
-    'txnid' => $txnId,
+    'txnid' => $txnid,
     'amount' => $formattedAmount,
     'productinfo' => $productInfo,
     'firstname' => $firstName,
     'email' => $doctorEmail,
-    'phone' => $doctorPhone,
-    'surl' => $surlWithParams,
-    'furl' => $furlWithParams,
-    'hash' => $payuHash,
+    'phone' => $cleanPhone,
+    'surl' => $config['success_url'],
+    'furl' => $config['failure_url'],
+    'hash' => $hash,
     'service_provider' => 'payu_paisa',
     'udf1' => $udf1,
     'udf2' => $udf2,
@@ -153,12 +182,8 @@ $payuPayload = [
     'udf5' => $udf5
 ];
 
-sendPayUResponse(true, 'PayU payment session initialized.', [
-    'payu_configured' => true,
+sendInitiateResponse(true, 'Payment initiated successfully.', [
     'action_url' => $config['endpoint'],
-    'txnid' => $txnId,
-    'amount' => $formattedAmount,
-    'productinfo' => $productInfo,
-    'mode' => $config['mode'],
+    'txnid' => $txnid,
     'params' => $payuPayload
-], 200);
+]);

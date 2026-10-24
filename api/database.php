@@ -62,7 +62,7 @@ if ($connection1) {
 |
 */
 
-if (!$connection1)
+if (!$connection1 || (is_object($connection1) && mysqli_connect_errno()))
 {
     die(
         "Database Connection Failed: " .
@@ -87,14 +87,12 @@ if (!$connection1)
 |
 */
 
-mysqli_set_charset(
-    $connection1,
-    "utf8mb4"
-);
-
-// Standardize application & database timezone to Indian Standard Time (IST / UTC+05:30)
-date_default_timezone_set('Asia/Kolkata');
-mysqli_query($connection1, "SET time_zone = '+05:30'");
+if ($connection1 && !mysqli_connect_errno()) {
+    @mysqli_set_charset($connection1, "utf8mb4");
+    // Standardize application & database timezone to Indian Standard Time (IST / UTC+05:30)
+    date_default_timezone_set('Asia/Kolkata');
+    @mysqli_query($connection1, "SET time_zone = '+05:30'");
+}
 
 
 /*
