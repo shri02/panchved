@@ -11,16 +11,18 @@
 */
 
 // Database server IP address or hostname
-$dbHost = "p:162.214.80.27";
+$dbHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? "p:162.214.80.27"));
 
 // Database name
-$dbName = "jewrzsmy_panchved";
+$dbName = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? "jewrzsmy_panchved"));
 
 // Database username
-$dbUser = "jewrzsmy_panchveduser";
+$dbUser = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? "jewrzsmy_panchveduser"));
 
 // Database password
-$dbPass = '$hr1dhar@321';
+$dbPass = (getenv('DB_PASS') !== false && getenv('DB_PASS') !== '') 
+    ? getenv('DB_PASS') 
+    : ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? '$hr1dhar@321'));
 
 
 /*
@@ -28,22 +30,27 @@ $dbPass = '$hr1dhar@321';
 | CREATE DATABASE CONNECTION
 |--------------------------------------------------------------------------
 |
-| mysqli_connect() is used to connect PHP to MySQL.
-|
-| Parameters:
-| 1. Host Name / IP Address
-| 2. Username
-| 3. Password
-| 4. Database Name
+| Connect PHP to MySQL with support for Azure SSL and standard connections.
 |
 */
 
-$connection1 = mysqli_connect(
-    $dbHost,
-    $dbUser,
-    $dbPass,
-    $dbName
-);
+$connection1 = mysqli_init();
+if ($connection1) {
+    // Enable SSL if connecting to Azure or DB_SSL flag is set
+    if (getenv('DB_SSL') === 'true' || strpos($dbHost, 'azure.com') !== false) {
+        mysqli_ssl_set($connection1, NULL, NULL, NULL, NULL, NULL);
+        $connected = @mysqli_real_connect($connection1, $dbHost, $dbUser, $dbPass, $dbName, 3306, NULL, MYSQLI_CLIENT_SSL);
+    } else {
+        $connected = @mysqli_real_connect($connection1, $dbHost, $dbUser, $dbPass, $dbName);
+    }
+
+    if (!$connected) {
+        // Fallback to standard mysqli_connect
+        $connection1 = @mysqli_connect($dbHost, $dbUser, $dbPass, $dbName);
+    }
+} else {
+    $connection1 = @mysqli_connect($dbHost, $dbUser, $dbPass, $dbName);
+}
 
 
 /*
