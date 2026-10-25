@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms &amp; Conditions and Disclaimer - Ocayur Doctor Portal</title>
+    <meta
+      name="description"
+      content="Terms &amp; Conditions and Disclaimer for Ocayur Doctor Registration Portal."
+    />
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/favicon.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --font-family-base: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        --brand-terracotta: #723F1E;
+        --brand-terracotta-hover: #5D3318;
+        --brand-terracotta-light: #FBF2EB;
+        --brand-olive: #484831;
+        --brand-olive-hover: #373725;
+        --brand-olive-light: #F1F3EA;
+        --color-bg-page: #FAF6EE;
+        --color-card-bg: #FFFFFF;
+        --color-text-main: #25231F;
+        --color-text-muted: #5C564D;
+        --color-text-subtle: #8E877B;
+        --color-border: #ECE5D9;
+        --color-border-card: #EFE7DA;
+        --shadow-card: 0 10px 36px -10px rgba(114, 63, 30, 0.08), 0 4px 14px -4px rgba(72, 72, 49, 0.04);
+        --radius-card: 16px;
+        --radius-btn: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-family-base);
+        background-color: var(--color-bg-page);
+        color: var(--color-text-main);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Sticky Top Navigation Bar */
+      .legal-nav-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(250, 246, 238, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--color-border);
+        padding: 16px 24px;
+      }
+
+      .nav-container {
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand-logo-wrap {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+      }
+
+      .brand-logo-img {
+        height: 44px;
+        width: auto;
+        object-fit: contain;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        border-radius: var(--radius-btn);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .btn-nav-outline {
+        color: var(--brand-olive);
+        border: 1px solid var(--color-border);
+        background: #fff;
+      }
+
+      .btn-nav-outline:hover {
+        border-color: var(--brand-olive);
+        background: var(--brand-olive-light);
+      }
+
+      .btn-nav-primary {
+        background: var(--brand-terracotta);
+        color: #fff;
+        border: 1px solid var(--brand-terracotta);
+      }
+
+      .btn-nav-primary:hover {
+        background: var(--brand-terracotta-hover);
+        border-color: var(--brand-terracotta-hover);
+      }
+
+      /* Main Content Container */
+      .legal-main {
+        max-width: 960px;
+        margin: 40px auto 60px;
+        padding: 0 20px;
+        flex: 1;
+        width: 100%;
+      }
+
+      /* Header Card */
+      .document-header-card {
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border-card);
+        border-radius: var(--radius-card);
+        padding: 40px 44px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-card);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .document-header-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--brand-olive) 0%, var(--brand-terracotta) 100%);
+      }
+
+      .badge-portal {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-olive);
+        background: var(--brand-olive-light);
+        padding: 6px 14px;
+        border-radius: 30px;
+        margin-bottom: 16px;
+      }
+
+      .doc-title {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: var(--color-text-main);
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        margin-bottom: 12px;
+      }
+
+      .doc-intro {
+        font-size: 1.05rem;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+        padding-top: 8px;
+        border-top: 1px dashed var(--color-border);
+      }
+
+      /* Legal Sections List */
+      .terms-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .term-card {
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border-card);
+        border-radius: var(--radius-card);
+        padding: 28px 36px;
+        box-shadow: var(--shadow-card);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .term-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 40px -12px rgba(114, 63, 30, 0.12);
+      }
+
+      .term-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+
+      .term-number {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--brand-terracotta);
+        background: var(--brand-terracotta-light);
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .term-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--color-text-main);
+        line-height: 1.35;
+        padding-top: 2px;
+      }
+
+      .term-body {
+        font-size: 0.96rem;
+        color: var(--color-text-muted);
+        line-height: 1.7;
+        margin-left: 46px;
+      }
+
+      /* Acceptance Callout Box */
+      .acceptance-card {
+        background: linear-gradient(135deg, #FBF8F3 0%, var(--brand-terracotta-light) 100%);
+        border: 2px solid var(--brand-terracotta);
+        border-radius: var(--radius-card);
+        padding: 32px 36px;
+        margin-top: 12px;
+        box-shadow: 0 12px 32px -8px rgba(114, 63, 30, 0.15);
+      }
+
+      .acceptance-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--brand-terracotta);
+        background: #fff;
+        padding: 6px 14px;
+        border-radius: 20px;
+        margin-bottom: 14px;
+        border: 1px solid rgba(114, 63, 30, 0.2);
+      }
+
+      .acceptance-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--brand-terracotta);
+        margin-bottom: 10px;
+      }
+
+      .acceptance-body {
+        font-size: 0.98rem;
+        color: var(--color-text-main);
+        line-height: 1.65;
+        font-weight: 500;
+      }
+
+      /* Footer */
+      .legal-footer {
+        border-top: 1px solid var(--color-border);
+        background: var(--color-card-bg);
+        padding: 28px 24px;
+        text-align: center;
+        color: var(--color-text-subtle);
+        font-size: 0.88rem;
+      }
+
+      .legal-footer a {
+        color: var(--brand-terracotta);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .legal-footer a:hover {
+        text-decoration: underline;
+      }
+
+      @media print {
+        .legal-nav-header,
+        .btn-nav,
+        .legal-footer {
+          display: none !important;
+        }
+
+        body {
+          background: #fff !important;
+          color: #000 !important;
+        }
+
+        .document-header-card,
+        .term-card,
+        .acceptance-card {
+          box-shadow: none !important;
+          border: 1px solid #ccc !important;
+          page-break-inside: avoid;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .document-header-card {
+          padding: 26px 20px;
+        }
+
+        .doc-title {
+          font-size: 1.45rem;
+        }
+
+        .term-card {
+          padding: 22px 18px;
+        }
+
+        .term-body {
+          margin-left: 0;
+          margin-top: 8px;
+        }
+
+        .acceptance-card {
+          padding: 24px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Navigation Header -->
+    <header class="legal-nav-header">
+      <div class="nav-container">
+        <a href="index.html" class="brand-logo-wrap" title="Ocayur Doctor Portal">
+          <img src="assets/logo.svg" alt="Ocayur - Ayurveda Lifestyle" class="brand-logo-img" />
+        </a>
+        <div class="nav-actions">
+          <button type="button" class="btn-nav btn-nav-outline" onclick="window.print()" title="Print this document">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>Print</span>
+          </button>
+          <a href="index.html" class="btn-nav btn-nav-primary" title="Return to Doctor Portal Login">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Login</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Legal Content -->
+    <main class="legal-main">
+      <header class="document-header-card">
+        <span class="badge-portal">Doctor Registration Portal</span>
+        <h1 class="doc-title">TERMS &amp; CONDITIONS AND DISCLAIMER - DOCTOR REGISTRATION PORTAL</h1>
+        <p class="doc-intro">
+          By registering on or accessing the OCAYUR Doctor Portal (“Platform”), the undersigned doctor or healthcare practitioner (“Doctor”) agrees to the following Terms and Conditions.
+        </p>
+      </header>
+
+      <section class="terms-container" aria-label="Terms and Conditions Clauses">
+        <!-- Clause 1 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">1</span>
+            <h2 class="term-title">Eligibility and Verification</h2>
+          </div>
+          <p class="term-body">
+            The Doctor represents that they possess valid qualifications, professional registration, licences and permissions required to provide the healthcare services offered. The Doctor shall provide genuine, accurate and current documents and promptly notify OCAYUR of any expiry, suspension, cancellation or restriction affecting their professional eligibility. Profile activation is subject to verification and approval.
+          </p>
+        </article>
+
+        <!-- Clause 2 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">2</span>
+            <h2 class="term-title">Independent Professional Status</h2>
+          </div>
+          <p class="term-body">
+            Unless expressly agreed otherwise in a separate written instrument, the Doctor participates as an independent registered practitioner and not as an employee, partner or agent of OCAYUR. Nothing authorises the transfer, lending, assignment or unauthorised use of the Doctor's professional registration by OCAYUR or any other person.
+          </p>
+        </article>
+
+        <!-- Clause 3 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">3</span>
+            <h2 class="term-title">Independent Professional Responsibility</h2>
+          </div>
+          <p class="term-body">
+            The Doctor shall independently exercise professional judgment and remain responsible for consultations, clinical assessments, diagnosis or clinical opinions, diagnostic recommendations, prescriptions, treatment recommendations, lifestyle and dietary modifications, referrals, follow-up and professional records in accordance with applicable law and professional standards. Depending on the patient's condition and clinical assessment, the Doctor may recommend lifestyle changes and Ayurveda-based medicines, where appropriate and within the Doctor's qualifications and lawful scope of practice. OCAYUR facilitates access to the Platform and shall not be deemed the treating practitioner merely by facilitating access to the Doctor.
+          </p>
+        </article>
+
+        <!-- Clause 4 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">4</span>
+            <h2 class="term-title">Telemedicine and Legal Compliance</h2>
+          </div>
+          <p class="term-body">
+            The Doctor shall comply with all applicable medical, professional, ethical, telemedicine, prescription, patient-consent and recordkeeping requirements relevant to their qualifications and system of medicine. The Doctor shall recommend diagnostic investigations, in-person assessment, specialist consultation, referral or emergency care whenever professionally indicated. The Doctor shall ensure that prescriptions and treatment recommendations, including Ayurveda-based medicines, are appropriate to the patient's condition and comply with applicable law and professional standards.
+          </p>
+        </article>
+
+        <!-- Clause 5 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">5</span>
+            <h2 class="term-title">Patient Confidentiality and Data Protection</h2>
+          </div>
+          <p class="term-body">
+            The Doctor shall maintain patient confidentiality, safeguard patient records and personal information, use such information only for lawful and authorised purposes, and promptly report suspected unauthorised access or data breaches in accordance with applicable law and Platform policies.
+          </p>
+        </article>
+
+        <!-- Clause 6 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">6</span>
+            <h2 class="term-title">Accuracy and Professional Conduct</h2>
+          </div>
+          <p class="term-body">
+            The Doctor warrants that all profile details, qualifications, registration information and professional representations are accurate and not misleading. The Doctor shall maintain appropriate professional conduct and shall not make unlawful, deceptive, exaggerated or guaranteed claims concerning diagnosis, medicines, treatment or health outcomes. The Doctor shall explain relevant treatment limitations and advise patients to seek further medical evaluation wherever necessary.
+          </p>
+        </article>
+
+        <!-- Clause 7 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">7</span>
+            <h2 class="term-title">Platform Fees and No Guarantee of Income</h2>
+          </div>
+          <p class="term-body">
+            Where applicable, access to the Platform is conditional upon completion of onboarding requirements, satisfactory verification, execution of the separate Independent Associate Doctor Agreement and payment of the agreed Digital Platform Access and Administrative Services Fee. Such fee is not consideration for the transfer or use of the Doctor's professional registration. OCAYUR does not guarantee any minimum number of patient bookings, consultations, referrals or earnings.
+          </p>
+        </article>
+
+        <!-- Clause 8 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">8</span>
+            <h2 class="term-title">Profile and Intellectual Property</h2>
+          </div>
+          <p class="term-body">
+            OCAYUR may display the Doctor's approved professional details for profile, appointment and Platform-related purposes. The Doctor shall use OCAYUR's name, logo, content and other intellectual property only for authorised purposes and shall not make unauthorised representations on OCAYUR's behalf.
+          </p>
+        </article>
+
+        <!-- Clause 9 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">9</span>
+            <h2 class="term-title">Suspension, Deactivation and Removal</h2>
+          </div>
+          <p class="term-body">
+            OCAYUR may suspend, restrict, deactivate or remove the Doctor's profile or Platform access where reasonably necessary due to credential concerns, professional or patient-safety concerns, false information, confidentiality breaches, non-payment, material breach, misuse or legal or regulatory requirements. Where necessary to protect patients, prevent harm or comply with law, such action may be taken without prior notice, subject to applicable law.
+          </p>
+        </article>
+
+        <!-- Clause 10 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">10</span>
+            <h2 class="term-title">Technology Disclaimer</h2>
+          </div>
+          <p class="term-body">
+            The Platform may be affected by connectivity issues, software failures, maintenance or third-party service interruptions. OCAYUR does not guarantee uninterrupted access or any minimum number of consultations, patients or earnings. OCAYUR does not guarantee any particular clinical outcome from consultations or treatment provided by participating Doctors. This clause does not exclude liability that cannot lawfully be excluded.
+          </p>
+        </article>
+
+        <!-- Clause 11 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">11</span>
+            <h2 class="term-title">Contractual Liability and Separate Agreement</h2>
+          </div>
+          <p class="term-body">
+            The Doctor's indemnity obligations, participation term, renewal, termination, detailed fee conditions and other contractual obligations shall be governed by the separately executed Independent Associate Doctor Agreement and its applicable annexures. Nothing in these Terms transfers the Doctor's independent professional responsibilities to OCAYUR or excludes OCAYUR's own legally attributable liability.
+          </p>
+        </article>
+
+        <!-- Clause 12 -->
+        <article class="term-card">
+          <div class="term-header">
+            <span class="term-number">12</span>
+            <h2 class="term-title">Disclaimer, Amendments and Governing Law</h2>
+          </div>
+          <p class="term-body">
+            The Platform facilitates access to independent healthcare practitioners and does not guarantee any particular diagnosis, cure, recovery or treatment outcome. Depending on the patient's condition, the Doctor may recommend lifestyle changes, dietary modifications, diagnostic investigations and Ayurveda-based medicines, where clinically appropriate and within the Doctor's professional scope. Treatment suitability and outcomes may vary between patients, and Doctors shall exercise independent professional judgment and advise further evaluation or emergency care wherever necessary. OCAYUR shall not be responsible for independent clinical decisions made by a Doctor merely because the services were facilitated through the Platform; however, nothing in these Terms excludes or limits OCAYUR's own legally attributable liability, negligence, wilful misconduct or any statutory rights or liabilities that cannot lawfully be excluded. OCAYUR may revise these Terms for legitimate operational, legal or regulatory reasons and shall communicate material changes through an appropriate channel, obtaining fresh acceptance wherever legally required. These Terms shall be governed by Indian law, subject to applicable jurisdictional requirements.
+          </p>
+        </article>
+
+        <!-- Acceptance Section -->
+        <div class="acceptance-card">
+          <div class="acceptance-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Legal Confirmation</span>
+          </div>
+          <h2 class="acceptance-title">Acceptance</h2>
+          <p class="acceptance-body">
+            By clicking “I Agree &amp; Continue”, the Doctor confirms that they have read, understood and accepted these Terms and Conditions, including the Disclaimer contained herein, and undertakes to comply with applicable professional and legal requirements. Registration or submission of a profile does not guarantee activation. The separate Independent Associate Doctor Agreement, where applicable, shall be executed independently.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Page Footer -->
+    <footer class="legal-footer">
+      <p>&copy; <script>document.write(new Date().getFullYear())</script> OCAYUR Ayurveda Lifestyle. All rights reserved.</p>
+    </footer>
+  </body>
+</html>
