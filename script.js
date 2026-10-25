@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const forgotPasswordLink = document.getElementById('forgotPasswordLink');
   const termsLink = document.getElementById('termsLink');
-  const privacyLink = document.getElementById('privacyLink');
   
   const loginBtn = document.getElementById('loginBtn');
   const btnText = loginBtn.querySelector('.btn-text');
@@ -167,25 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // 4. Feature Coming Soon Handlers (Terms, Privacy)
+  // 4. Feature Handlers
   // ==========================================
   const showFeatureComingSoon = (e) => {
     if (e) e.preventDefault();
     showToast('This feature will be available soon.', 'info');
   };
 
-  if (termsLink) {
-    termsLink.addEventListener('click', showFeatureComingSoon);
-  }
-
-  if (privacyLink) {
-    privacyLink.addEventListener('click', showFeatureComingSoon);
-  }
-
-  document.querySelectorAll('.footer-link:not(#forgotPasswordLink)').forEach((link) => {
-    if (link !== termsLink && link !== privacyLink) {
-      link.addEventListener('click', showFeatureComingSoon);
-    }
+  document.querySelectorAll('.footer-link:not(#forgotPasswordLink):not(#termsLink)').forEach((link) => {
+    link.addEventListener('click', showFeatureComingSoon);
   });
 
   // ==========================================
