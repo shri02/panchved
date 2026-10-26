@@ -295,22 +295,23 @@ if ($action !== 'patients_list' && $patientIdParam > 0) {
 // STRICT: Only return patients related to this doctor (via chats, appointments, or packages)
 // ============================================================================
 $patientsList = [];
-$targetPatientId = isset($_GET['target_patient_id']) ? (int)$_GET['target_patient_id'] : (isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0);
-$escapedDocName = mysqli_real_escape_string($connection1, $docInfo['full_name'] ?? '');
+$rawDocName = trim($docInfo['full_name'] ?? '');
+$cleanDocName = trim(preg_replace('/^Dr\.?\s*/i', '', $rawDocName));
+$escapedDocName = mysqli_real_escape_string($connection1, $rawDocName);
+$escapedCleanName = mysqli_real_escape_string($connection1, $cleanDocName);
+$escapedWithDr = mysqli_real_escape_string($connection1, 'Dr. ' . $cleanDocName);
 
 $whereClauses = [];
 $whereClauses[] = "EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.doctor_id = {$doctorId} AND cm.patient_id = p.id)";
-if (!empty($escapedDocName)) {
-    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE (a.doctor_id = {$doctorId} OR a.doctor_name = '{$escapedDocName}') AND (a.patient_id = p.id OR a.patient_name = p.full_name))";
-    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE (pp.doctor_id = {$doctorId} OR pp.doctor_name = '{$escapedDocName}') AND (pp.patient_id = p.id OR pp.patient_phone = p.phone_number))";
-    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE (rp.doctor_id = {$doctorId} OR rp.doctor_name = '{$escapedDocName}') AND (rp.patient_id = p.id OR rp.patient_phone = p.phone_number))";
+if (!empty($rawDocName)) {
+    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE (a.doctor_id = {$doctorId} OR a.doctor_name = '{$escapedDocName}' OR a.doctor_name = '{$escapedCleanName}' OR a.doctor_name = '{$escapedWithDr}') AND (a.patient_id = p.id OR (a.patient_name != '' AND a.patient_name = p.full_name)))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE (pp.doctor_id = {$doctorId} OR pp.doctor_name = '{$escapedDocName}' OR pp.doctor_name = '{$escapedCleanName}' OR pp.doctor_name = '{$escapedWithDr}') AND (pp.patient_id = p.id OR (pp.patient_phone != '' AND pp.patient_phone = p.phone_number)))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE (rp.doctor_id = {$doctorId} OR rp.doctor_name = '{$escapedDocName}' OR rp.doctor_name = '{$escapedCleanName}' OR rp.doctor_name = '{$escapedWithDr}') AND (rp.patient_id = p.id OR (rp.patient_phone != '' AND rp.patient_phone = p.phone_number)))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp2 JOIN packages pkg ON (pkg.id = pp2.package_id OR pkg.package_name = pp2.package_name COLLATE utf8mb4_unicode_ci) WHERE (pp2.patient_id = p.id OR (pp2.patient_phone != '' AND pp2.patient_phone = p.phone_number)) AND (pkg.assigned_doctor IN ('{$escapedDocName}', '{$escapedCleanName}', '{$escapedWithDr}', '{$doctorId}') OR pkg.assigned_doctor_one IN ('{$escapedDocName}', '{$escapedCleanName}', '{$escapedWithDr}', '{$doctorId}') OR pkg.assigned_doctor_2 IN ('{$escapedDocName}', '{$escapedCleanName}', '{$escapedWithDr}', '{$doctorId}')))";
 } else {
-    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE a.doctor_id = {$doctorId} AND (a.patient_id = p.id OR a.patient_name = p.full_name))";
-    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE pp.doctor_id = {$doctorId} AND (pp.patient_id = p.id OR pp.patient_phone = p.phone_number))";
-    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE rp.doctor_id = {$doctorId} AND (rp.patient_id = p.id OR rp.patient_phone = p.phone_number))";
-}
-if ($targetPatientId > 0) {
-    $whereClauses[] = "p.id = {$targetPatientId}";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM appointments a WHERE a.doctor_id = {$doctorId} AND (a.patient_id = p.id OR (a.patient_name != '' AND a.patient_name = p.full_name)))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM patient_packages pp WHERE pp.doctor_id = {$doctorId} AND (pp.patient_id = p.id OR (pp.patient_phone != '' AND pp.patient_phone = p.phone_number)))";
+    $whereClauses[] = "EXISTS (SELECT 1 FROM recommended_packages rp WHERE rp.doctor_id = {$doctorId} AND (rp.patient_id = p.id OR (rp.patient_phone != '' AND rp.patient_phone = p.phone_number)))";
 }
 
 $pQuery = "SELECT id, patient_id, full_name, phone_number, package_name, status 

@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(hidePageLoader, 2500);
 
   // State
-  let activePatientId = 1;
+  let activePatientId = null;
   let allPatients = [];
   let currentMessages = [];
   let isSending = false;
@@ -115,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
       qParams.append('action', 'patients_list');
       if (currentDoctorId > 0) qParams.append('doctor_id', currentDoctorId);
       if (currentDoctorName) qParams.append('doctor_name', currentDoctorName);
-      if (activePatientId > 0) qParams.append('target_patient_id', activePatientId);
 
       const res = await fetch(`../api/chat.php?${qParams.toString()}`);
       const data = await res.json();
@@ -166,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (allPatients.length > 0) {
           // If active patient is not in list, set to first patient
-          const hasActive = allPatients.some(p => p.id === activePatientId);
+          const hasActive = activePatientId ? allPatients.some(p => p.id == activePatientId) : false;
           if (!hasActive) {
             activePatientId = allPatients[0].id;
           }
@@ -174,8 +173,18 @@ document.addEventListener('DOMContentLoaded', () => {
           // Load active conversation
           loadChatThread(activePatientId);
         } else {
-          // No patients
+          // No patients assigned to this doctor
+          activePatientId = null;
           if (activePatientName) activePatientName.textContent = 'No Patients';
+          if (activePatientIdEl) activePatientIdEl.textContent = 'ID: -';
+          if (activePatientPackage) activePatientPackage.textContent = 'Programme: -';
+          if (activePatientAvatar) activePatientAvatar.textContent = '--';
+          if (activePatientStatus) activePatientStatus.style.display = 'none';
+          if (chatTextInput) {
+            chatTextInput.disabled = true;
+            chatTextInput.placeholder = 'No patient consultations assigned yet';
+          }
+          if (btnSendMessage) btnSendMessage.disabled = true;
           if (chatMessagesContainer) {
             chatMessagesContainer.innerHTML = `
               <div class="chat-empty-state">
@@ -328,10 +337,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activePatientPackage) activePatientPackage.textContent = `Package: ${patient.package_name || 'General'}`;
         if (activePatientAvatar) activePatientAvatar.textContent = patient.initials || 'PT';
         if (activePatientStatus) {
+          activePatientStatus.style.display = '';
           activePatientStatus.textContent = patient.status || 'Ongoing';
           activePatientStatus.style.background = (patient.status && patient.status.toLowerCase() === 'completed') ? '#E3F2FD' : '#E8F5E9';
           activePatientStatus.style.color = (patient.status && patient.status.toLowerCase() === 'completed') ? '#1976D2' : '#2E7D32';
         }
+
+        if (chatTextInput) {
+          chatTextInput.disabled = false;
+          chatTextInput.placeholder = 'Type a message to patient... (Press Enter to send, Shift+Enter for new line)';
+        }
+        if (btnSendMessage) btnSendMessage.disabled = false;
 
         renderMessagesStream(currentMessages);
 
@@ -458,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. Send New Message (Doctor -> Patient)
   // =========================================================================
   async function sendMessage() {
-    if (isSending || !chatTextInput) return;
+    if (isSending || !chatTextInput || !activePatientId) return;
     const text = chatTextInput.value.trim();
     if (!text) return;
 
