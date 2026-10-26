@@ -37,23 +37,32 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $type = trim((string)($input['type'] ?? ($_GET['type'] ?? 'my_workshops')));
 
-$doctorId = intval(
-    $input['doctor_id'] ?? $input['id'] ?? $input['d_id'] ??
-    $_GET['doctor_id'] ?? $_GET['id'] ?? $_GET['d_id'] ??
-    $_SESSION['doctor_id'] ?? 0
-);
+$doctorId = 0;
+if (!empty($input['doctor_id'])) {
+    $doctorId = (int)$input['doctor_id'];
+} elseif (!empty($input['id'])) {
+    $doctorId = (int)$input['id'];
+} elseif (!empty($input['d_id'])) {
+    $doctorId = (int)$input['d_id'];
+} elseif (!empty($_GET['doctor_id'])) {
+    $doctorId = (int)$_GET['doctor_id'];
+} elseif (!empty($_GET['id'])) {
+    $doctorId = (int)$_GET['id'];
+} elseif (!empty($_GET['d_id'])) {
+    $doctorId = (int)$_GET['d_id'];
+} elseif (!empty($_SESSION['doctor_id'])) {
+    $doctorId = (int)$_SESSION['doctor_id'];
+}
 
-$email = trim((string)(
-    $input['email'] ?? $input['user_email'] ?? $input['d_email'] ?? $input['email_addr'] ??
+$rawEmail = $input['email'] ?? $input['user_email'] ?? $input['d_email'] ?? $input['email_addr'] ??
     $_GET['email'] ?? $_GET['user_email'] ?? $_GET['d_email'] ?? $_GET['email_addr'] ??
-    $_SESSION['email'] ?? ''
-));
+    ($_SESSION['email'] ?? '');
+$email = trim((string)$rawEmail);
 
-$phone = trim((string)(
-    $input['phone'] ?? $input['user_phone'] ?? $input['d_phone'] ?? $input['phone_no'] ??
+$rawPhone = $input['phone'] ?? $input['user_phone'] ?? $input['d_phone'] ?? $input['phone_no'] ??
     $_GET['phone'] ?? $_GET['user_phone'] ?? $_GET['d_phone'] ?? $_GET['phone_no'] ??
-    $_SESSION['phone_number'] ?? ''
-));
+    ($_SESSION['phone_number'] ?? '');
+$phone = trim((string)$rawPhone);
 
 function cleanPhone($phone) {
     $digits = preg_replace('/\D/', '', (string)$phone);
