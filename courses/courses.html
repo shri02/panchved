@@ -739,34 +739,26 @@
 
         let response = null;
         try {
-          response = await fetch(`../api/get_workshops.php?${params.toString()}`);
+          response = await fetch(`../api/get_my_workshops.php?${params.toString()}`);
         } catch (fetchErr) {
           console.warn('GET request error:', fetchErr);
         }
 
-        // If GET returned 404 or failed due to server routing, retry via POST body
+        // Fallback to get_workshops.php if needed
         if (!response || !response.ok) {
           try {
-            response = await fetch('../api/get_workshops.php', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                type: 'my_workshops',
-                doctor_id: docId,
-                email: docEmail,
-                phone: docPhone
-              })
-            });
+            response = await fetch(`../api/get_workshops.php?${params.toString()}`);
           } catch (postErr) {
-            console.warn('POST fallback error:', postErr);
+            console.warn('Secondary fallback error:', postErr);
           }
         }
 
         if (response && response.ok) {
           const data = await response.json();
+          console.log('[MyWorkshops Response]:', data);
+          if (data.error_caught || data.success === false) {
+            console.error('[MyWorkshops Server/SQL Issue]:', data);
+          }
           if (data.success && Array.isArray(data.workshops)) {
             myWorkshopsList = data.workshops;
             renderMyWorkshops(myWorkshopsList);

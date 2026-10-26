@@ -23,10 +23,12 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
+// Prevent Azure FastCGI from masking errors as 404:
 set_exception_handler(function($e) {
-    http_response_code(500);
+    http_response_code(200);
     echo json_encode([
         'success' => false,
+        'error_caught' => true,
         'error' => 'Database / Server Exception: ' . $e->getMessage(),
         'file' => basename($e->getFile()),
         'line' => $e->getLine()
