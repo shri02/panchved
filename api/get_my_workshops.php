@@ -148,7 +148,7 @@ try {
         $debugInfo['steps'][] = "No doctor credentials provided; returning empty bookings";
     } else {
         $whereMatch = "(" . implode(" OR ", $conditions) . ")";
-        $query = "SELECT DISTINCT w.*, b.booking_id, b.booking_date 
+        $query = "SELECT DISTINCT w.*, b.id AS booking_pk_id, b.booking_id, b.booking_date 
                   FROM `workshops` w
                   INNER JOIN `workshop_bookings` b ON w.id = b.workshop_id
                   WHERE $whereMatch

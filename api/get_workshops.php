@@ -125,7 +125,7 @@ if ($type === 'my_workshops') {
     // ONLY fetch workshops that have been registered by this doctor in workshop_bookings
     if ($doctorId > 0 || !empty($email) || !empty($phone)) {
         $cleanP = cleanPhone($phone);
-        $query = "SELECT DISTINCT w.*, b.booking_id, b.booking_date 
+        $query = "SELECT DISTINCT w.*, b.id AS booking_pk_id, b.booking_id, b.booking_date 
                   FROM `workshops` w
                   INNER JOIN `workshop_bookings` b ON w.id = b.workshop_id
                   WHERE (b.doctor_id = ? OR (b.doctor_email = ? AND ? != '') OR (b.doctor_phone = ? AND ? != '') OR (b.doctor_phone = ? AND ? != '')) 
