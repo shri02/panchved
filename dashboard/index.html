@@ -1,403 +1,322 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/favicon.png" />
-    <link rel="apple-touch-icon" href="assets/favicon.png" />
+<head>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="apple-touch-icon" href="../assets/favicon.png">
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ocayur - Doctor Portal | Login</title>
-    <meta
-      name="description"
-      content="Login to Ocayur Doctor Portal - Ayurveda Lifestyle"
-    />
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <!-- Page Loader Overlay -->
-    <div class="page-loader-overlay" id="pageLoader" role="status" aria-live="polite">
-      <div class="page-loader-card">
-        <div class="page-loader-spinner"></div>
-        <p class="page-loader-text">Loading portal...</p>
-      </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocayur - Doctor Portal | Dashboard</title>
+  <meta name="description" content="Ocayur Doctor Portal - Overview of consultations, active patients, pending follow-ups, and messages.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../shared/dashboard.css">
+</head>
+<body>
+
+  <!-- Page Loader Overlay -->
+  <div class="page-loader-overlay" id="pageLoader" role="status" aria-live="polite">
+    <div class="page-loader-card">
+      <div class="page-loader-spinner"></div>
+      <p class="page-loader-text">Loading dashboard...</p>
     </div>
+  </div>
 
-    <main class="login-page">
-      <div class="login-wrapper">
-        <!-- Brand Logo Section -->
-        <header class="brand-header">
-          <div class="logo-container">
-            <img
-              src="assets/logo.svg"
-              alt="Ocayur - Ayurveda Lifestyle"
-              class="brand-logo-img"
-              width="170"
-              height="85"
-            />
+  <div class="app-layout">
+    
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-topbar" aria-label="Mobile Navigation Bar">
+      <button class="mobile-nav-toggle" id="mobileMenuBtn" aria-label="Toggle navigation menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="mobile-brand">
+        <img src="../assets/logo.svg" alt="Ocayur Logo" class="mobile-logo-img" width="100" height="40">
+      </div>
+
+      <a href="../profile/profile.html" class="mobile-user-avatar" aria-label="Doctor Profile" title="View Doctor Profile">
+        <div class="avatar-circle small">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+      </a>
+    </header>
+
+    <!-- Sidebar Overlay for Mobile Drawer -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-brand-link" aria-label="Ocayur Home">
+          <img src="../assets/logo.svg" alt="Ocayur - Ayurveda Lifestyle" class="sidebar-logo-img" width="140" height="70">
+        </a>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <ul class="nav-list">
+          
+          <!-- Dashboard (Active) -->
+          <li class="nav-item">
+            <a href="dashboard.html" class="nav-link active" aria-current="page">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </span>
+              <span class="nav-text">Dashboard</span>
+            </a>
+          </li>
+
+          <!-- My Patients -->
+          <li class="nav-item">
+            <a href="../patients/patients.html" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </span>
+              <span class="nav-text">My Patients</span>
+            </a>
+          </li>
+
+          <!-- Messages -->
+          <li class="nav-item">
+            <a href="../patients/chat.html" class="nav-link" id="navChat">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </span>
+              <span class="nav-text">Messages</span>
+            </a>
+          </li>
+
+          <!-- Packages -->
+          <li class="nav-item">
+            <a href="../packages/packages.html" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+              </span>
+              <span class="nav-text">Programmes</span>
+            </a>
+          </li>
+
+          <!-- Appointments -->
+          <li class="nav-item">
+            <a href="../appointments/appointments.html" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <span class="nav-text">Appointments</span>
+            </a>
+          </li>
+
+          <!-- Courses -->
+          <li class="nav-item">
+            <a href="../courses/courses.html" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21.5934 13.2244C21.3144 13.0096 20.9895 12.8622 20.6442 12.7934C20.2988 12.7246 19.9422 12.7364 19.6022 12.8278L15.6797 13.7297C15.7709 13.3442 15.7738 12.943 15.6879 12.5563C15.6021 12.1695 15.4298 11.8072 15.1841 11.4965C14.9383 11.1858 14.6254 10.9347 14.2688 10.7622C13.9122 10.5896 13.5212 10.5 13.125 10.5H8.43188C8.03775 10.499 7.64733 10.5761 7.28319 10.7269C6.91904 10.8777 6.58838 11.0991 6.31031 11.3784L4.18969 13.5H1.5C1.10218 13.5 0.720644 13.658 0.43934 13.9393C0.158035 14.2206 0 14.6022 0 15L0 18.75C0 19.1478 0.158035 19.5294 0.43934 19.8107C0.720644 20.092 1.10218 20.25 1.5 20.25H11.25C11.3113 20.25 11.3724 20.2425 11.4319 20.2275L17.4319 18.7275C17.4701 18.7184 17.5075 18.7058 17.5434 18.69L21.1875 17.1394L21.2288 17.1206C21.579 16.9456 21.8789 16.6843 22.1002 16.3614C22.3215 16.0385 22.457 15.6645 22.4939 15.2747C22.5307 14.8849 22.4678 14.4922 22.3109 14.1335C22.154 13.7748 21.9084 13.4619 21.5972 13.2244H21.5934ZM1.5 15H3.75V18.75H1.5V15ZM20.5716 15.7697L17.0091 17.2866L11.1562 18.75H5.25V14.5603L7.37156 12.4397C7.51035 12.2998 7.67555 12.1889 7.85758 12.1134C8.03961 12.0379 8.23482 11.9994 8.43188 12H13.125C13.4234 12 13.7095 12.1185 13.9205 12.3295C14.1315 12.5405 14.25 12.8266 14.25 13.125C14.25 13.4234 14.1315 13.7095 13.9205 13.9205C13.7095 14.1315 13.4234 14.25 13.125 14.25H10.5C10.3011 14.25 10.1103 14.329 9.96967 14.4697C9.82902 14.6103 9.75 14.8011 9.75 15C9.75 15.1989 9.82902 15.3897 9.96967 15.5303C10.1103 15.671 10.3011 15.75 10.5 15.75H13.5C13.5565 15.7498 13.6127 15.7436 13.6678 15.7313L19.9491 14.2866L19.9781 14.2791C20.1699 14.2258 20.3745 14.2454 20.5527 14.334C20.7309 14.4226 20.87 14.5739 20.9433 14.7589C21.0167 14.9439 21.0189 15.1495 20.9498 15.3361C20.8806 15.5227 20.7449 15.6771 20.5687 15.7697H20.5716ZM15.375 9C15.5603 9.00021 15.7453 8.98516 15.9281 8.955C16.1338 9.56582 16.51 10.105 17.0124 10.5088C17.5147 10.9125 18.1222 11.164 18.763 11.2335C19.4037 11.3029 20.051 11.1875 20.6282 10.9008C21.2054 10.614 21.6884 10.168 22.0202 9.61547C22.352 9.06291 22.5186 8.42691 22.5004 7.78266C22.4821 7.1384 22.2798 6.51284 21.9173 5.97993C21.5548 5.44703 21.0473 5.02905 20.4548 4.77543C19.8623 4.52181 19.2096 4.44315 18.5737 4.54875C18.3757 3.96023 18.0192 3.43775 17.5434 3.03879C17.0676 2.63984 16.4909 2.37988 15.8769 2.28754C15.2629 2.19519 14.6353 2.27403 14.0631 2.51537C13.491 2.75672 12.9966 3.15123 12.6342 3.65547C12.2719 4.15971 12.0556 4.75414 12.0093 5.37335C11.963 5.99256 12.0885 6.61254 12.3718 7.16506C12.6552 7.71759 13.0854 8.18123 13.6153 8.50497C14.1452 8.82872 14.7541 9.00001 15.375 9ZM21 7.875C21 8.24584 20.89 8.60835 20.684 8.9167C20.478 9.22504 20.1851 9.46536 19.8425 9.60728C19.4999 9.74919 19.1229 9.78632 18.7592 9.71397C18.3955 9.64163 18.0614 9.46305 17.7992 9.20083C17.537 8.9386 17.3584 8.60451 17.286 8.2408C17.2137 7.87708 17.2508 7.50008 17.3927 7.15747C17.5346 6.81486 17.775 6.52202 18.0833 6.316C18.3916 6.10997 18.7542 6 19.125 6C19.6223 6 20.0992 6.19755 20.4508 6.54918C20.8025 6.90081 21 7.37772 21 7.875ZM15.375 3.75C15.784 3.75021 16.1818 3.88416 16.5076 4.13145C16.8334 4.37874 17.0695 4.72579 17.1797 5.11969C16.7956 5.38997 16.4721 5.73744 16.2299 6.13989C15.9878 6.54234 15.8323 6.9909 15.7734 7.45688C15.6425 7.48515 15.509 7.49961 15.375 7.5C14.8777 7.5 14.4008 7.30246 14.0492 6.95083C13.6975 6.5992 13.5 6.12228 13.5 5.625C13.5 5.12772 13.6975 4.65081 14.0492 4.29918C14.4008 3.94755 14.8777 3.75 15.375 3.75Z"/>
+                </svg>
+              </span>
+              <span class="nav-text">Workshops</span>
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+
+      <!-- Logout Button -->
+      <div class="sidebar-footer">
+        <a href="../index.html" class="logout-btn" id="logoutBtn" title="Log out of portal">
+          <span class="logout-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </span>
+          <span class="logout-text">Log out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Page Header -->
+      <header class="content-header">
+        <div class="welcome-heading">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="welcome-subtitle">Welcome Back <span id="welcomeDoctorName">Doctor</span>!</p>
+        </div>
+
+        <a href="../profile/profile.html" class="doctor-profile-card" title="View Doctor Profile">
+          <div class="avatar-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
           </div>
-        </header>
+          <div class="doctor-info">
+            <span class="doctor-name" id="headerDoctorName">Doctor</span>
+            <span class="doctor-role" id="headerDoctorRole">Ayurveda Physician</span>
+          </div>
+        </a>
+      </header>
 
-        <!-- Login Card Container -->
-        <section class="login-card" aria-labelledby="login-heading">
-          <h2 id="login-heading" class="card-title">Login</h2>
+      <!-- Dashboard Main Body -->
+      <div class="dashboard-body">
 
-          <form id="loginForm" class="login-form" novalidate>
-            <!-- Phone Number Input Field -->
-            <div class="form-group">
-              <label for="phoneNumber" class="field-label">
-                <span class="label-icon" aria-hidden="true">
-                  <!-- Phone Icon -->
-                  <svg
-                    width="17"
-                    height="17"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-                    ></path>
+        <!-- 4 Metric Overview Cards -->
+        <section class="metrics-section" aria-label="Key Performance Indicators">
+          <div class="metrics-grid">
+
+            <!-- Card 1: Today's Consultation -->
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Today's Consultation</span>
+                <span class="metric-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                   </svg>
                 </span>
-                <span class="label-text">Phone Number</span>
-                <span class="required-star" aria-hidden="true">*</span>
-              </label>
-
-              <div
-                class="input-container phone-input-container"
-                id="phoneContainer"
-              >
-                <!-- Country Code Selector -->
-                <div
-                  class="country-code-selector"
-                  id="countrySelector"
-                  tabindex="0"
-                  role="button"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                >
-                  <span class="country-code-val" id="selectedCountryCode"
-                    >+91</span
-                  >
-                  <span class="dropdown-chevron" aria-hidden="true">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
-
-                  <!-- Country Dropdown Menu -->
-                  <ul
-                    class="country-dropdown-list"
-                    id="countryList"
-                    role="listbox"
-                    aria-label="Country Code Selection"
-                  >
-                    <li role="option" class="active" data-code="+91">
-                      🇮🇳 India (+91)
-                    </li>
-                    <li role="option" data-code="+1">🇺🇸 USA (+1)</li>
-                    <li role="option" data-code="+44">🇬🇧 UK (+44)</li>
-                    <li role="option" data-code="+971">🇦🇪 UAE (+971)</li>
-                    <li role="option" data-code="+61">🇦🇺 Australia (+61)</li>
-                    <li role="option" data-code="+65">🇸🇬 Singapore (+65)</li>
-                  </ul>
-                </div>
-
-                <div class="field-divider" aria-hidden="true"></div>
-
-                <!-- Phone Number Input -->
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  class="field-input phone-input"
-                  placeholder="10-digit Phone Number"
-                  value=""
-                  maxlength="10"
-                  autocomplete="tel-national"
-                  required
-                />
               </div>
-              <span class="error-message" id="phoneError" role="alert"></span>
-            </div>
+              <div class="metric-value" id="metricTodayConsultations">0</div>
+            </article>
 
-            <!-- Password Input Field -->
-            <div class="form-group">
-              <label for="password" class="field-label">
-                <span class="label-icon" aria-hidden="true">
-                  <!-- Lock Icon -->
-                  <svg
-                    width="17"
-                    height="17"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <rect
-                      x="3"
-                      y="11"
-                      width="18"
-                      height="11"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            <!-- Card 2: Active Patients -->
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Active Patients</span>
+                <span class="metric-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                   </svg>
                 </span>
-                <span class="label-text">Password</span>
-                <span class="required-star" aria-hidden="true">*</span>
-              </label>
+              </div>
+              <div class="metric-value" id="metricActivePatients">0</div>
+            </article>
 
-              <div
-                class="input-container password-input-container"
-                id="passwordContainer"
-              >
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  class="field-input password-input"
-                  placeholder="••••••••"
-                  value=""
-                  autocomplete="current-password"
-                  required
-                />
-
-                <!-- Password Toggle Visibility Button -->
-                <button
-                  type="button"
-                  class="password-toggle-btn"
-                  id="togglePasswordBtn"
-                  aria-label="Toggle password visibility"
-                  title="Show password"
-                >
-                  <!-- Eye Off Icon (Default when hidden) -->
-                  <svg
-                    class="eye-off-icon"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                    ></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
+            <!-- Card 3: Pending Follow-ups -->
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Pending Follow-ups</span>
+                <span class="metric-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                   </svg>
-                  <!-- Eye On Icon (Shown when password revealed) -->
-                  <svg
-                    class="eye-on-icon hidden"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="12" r="3"></circle>
+                </span>
+              </div>
+              <div class="metric-value" id="metricPendingFollowups">0</div>
+            </article>
+
+            <!-- Card 4: Unread messages -->
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Unread messages</span>
+                <span class="metric-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="metric-value" id="metricUnreadMessages">0</div>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- Today's Consultation Section Card -->
+        <section class="consultation-card" aria-labelledby="consultationHeading">
+          <h2 id="consultationHeading" class="section-title">Today's Consultation</h2>
+
+          <!-- Responsive Table Wrapper -->
+          <div class="table-container">
+            <table class="consultation-table" aria-label="Today's Consultation Schedule">
+              <thead>
+                <tr>
+                  <th scope="col" class="th-patient">Patient</th>
+                  <th scope="col" class="th-time">Time</th>
+                  <th scope="col" class="th-package">Programme</th>
+                  <th scope="col" class="th-status">Status</th>
+                  <th scope="col" class="th-meeting">Meeting</th>
+                  <th scope="col" class="th-action">Action</th>
+                </tr>
+              </thead>
+              <tbody id="consultationTableBody">
+                <tr>
+                  <td colspan="6" style="text-align:center; padding: 28px 16px; color: #64748b; font-weight: 500;">
+                    No consultation
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Footer Pagination -->
+          <footer class="table-footer">
+            <span class="pagination-info" id="paginationInfo">Showing 0 of 0 items</span>
+
+            <div class="pagination-controls">
+              <span class="page-indicator" id="pageIndicator">0 of 0</span>
+              <div class="pagination-buttons">
+                <button class="pagination-btn prev-btn" id="prevPageBtn" aria-label="Previous page" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <button class="pagination-btn next-btn" id="nextPageBtn" aria-label="Next page" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
                 </button>
               </div>
-              <span
-                class="error-message"
-                id="passwordError"
-                role="alert"
-              ></span>
             </div>
+          </footer>
 
-            <!-- Forgot Password Link -->
-            <div class="forgot-password-row">
-              <a
-                href="javascript:void(0)"
-                class="forgot-password-link"
-                id="forgotPasswordLink"
-                >Forgot Password</a
-              >
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="login-submit-btn" id="loginBtn">
-              <span class="btn-text">Login</span>
-              <span class="btn-spinner hidden" aria-hidden="true"></span>
-            </button>
-
-            <!-- Terms Footer -->
-            <footer class="form-footer">
-              <p class="terms-text">
-                I agree to the
-                <a
-                  href="terms-and-conditions.html"
-                  class="footer-link"
-                  id="termsLink"
-                  >Terms &amp; Conditions</a
-                >
-              </p>
-            </footer>
-          </form>
         </section>
+
       </div>
     </main>
 
-    <!-- Notification Toast for feedback -->
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
 
-    <!-- Forgot Password Modal -->
-    <div class="auth-modal-overlay" id="forgotPasswordModal" role="dialog" aria-modal="true" aria-labelledby="fpModalTitle">
-      <div class="auth-modal-card">
-        <button type="button" class="modal-close-btn" id="fpCloseBtn" aria-label="Close modal">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-
-        <!-- Step 1: Request OTP -->
-        <div id="fpStepRequest">
-          <div class="modal-header-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-          </div>
-          <h2 class="modal-title" id="fpModalTitle">Forgot Password</h2>
-          <p class="modal-subtitle">Enter your registered phone number, Doctor ID, or email. We'll send a 6-digit OTP to your registered email.</p>
-
-          <div class="modal-alert-box alert-danger" id="fpRequestError" role="alert">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span id="fpRequestErrorText"></span>
-          </div>
-
-          <form id="fpRequestForm">
-            <div class="modal-form-group">
-              <label for="fpIdentifier" class="modal-label">Registered Phone / Email / Doctor ID</label>
-              <input type="text" id="fpIdentifier" class="modal-input" placeholder="e.g. 9876543210 or DOC000001" required autocomplete="username" />
-            </div>
-
-            <button type="submit" class="modal-btn-primary" id="fpSendOtpBtn">
-              <span class="btn-text">Send Verification Code</span>
-              <span class="btn-spinner hidden" aria-hidden="true"></span>
-            </button>
-          </form>
-        </div>
-
-        <!-- Step 2: Verify OTP & Reset Password -->
-        <div id="fpStepVerify" style="display: none;">
-          <div class="modal-header-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-          </div>
-          <h2 class="modal-title">Verify & Reset Password</h2>
-          <p class="modal-subtitle">Enter the 6-digit code sent to <strong id="fpMaskedEmailText">your email</strong> and your new password.</p>
-
-          <div class="modal-alert-box alert-danger" id="fpResetError" role="alert">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span id="fpResetErrorText"></span>
-          </div>
-
-          <form id="fpResetForm">
-            <div class="modal-form-group">
-              <label for="fpOtpCode" class="modal-label">6-Digit Verification Code (OTP)</label>
-              <input type="text" id="fpOtpCode" class="modal-input modal-otp-input" maxlength="6" pattern="\d{6}" placeholder="------" required autocomplete="one-time-code" />
-            </div>
-
-            <div class="modal-form-group">
-              <label for="fpNewPassword" class="modal-label">New Password</label>
-              <div class="modal-input-pass-wrap">
-                <input type="password" id="fpNewPassword" class="modal-input" placeholder="At least 6 characters" minlength="6" required autocomplete="new-password" />
-                <button type="button" class="modal-pass-toggle" id="fpToggleNewPw" aria-label="Toggle password visibility">
-                  <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="modal-form-group">
-              <label for="fpConfirmPassword" class="modal-label">Confirm New Password</label>
-              <div class="modal-input-pass-wrap">
-                <input type="password" id="fpConfirmPassword" class="modal-input" placeholder="Repeat new password" minlength="6" required autocomplete="new-password" />
-                <button type="button" class="modal-pass-toggle" id="fpToggleConfirmPw" aria-label="Toggle password visibility">
-                  <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" class="modal-btn-primary" id="fpSubmitResetBtn">
-              <span class="btn-text">Reset Password</span>
-              <span class="btn-spinner hidden" aria-hidden="true"></span>
-            </button>
-
-            <div class="modal-resend-row">
-              <a href="javascript:void(0)" class="modal-resend-link" id="fpBackToRequestBtn">← Change account</a>
-              <span id="fpResendContainer">
-                <a href="javascript:void(0)" class="modal-resend-link" id="fpResendOtpBtn">Resend code</a>
-                <span id="fpResendCountdown" style="display:none; color: #8e877b;">Resend in <strong id="fpTimerCount">60</strong>s</span>
-              </span>
-            </div>
-          </form>
-        </div>
-
-        <!-- Step 3: Success -->
-        <div id="fpStepSuccess" style="display: none; text-align: center;">
-          <div class="modal-header-icon icon-success" style="margin: 0 auto 16px auto;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-          </div>
-          <h2 class="modal-title">Password Reset Complete!</h2>
-          <p class="modal-subtitle">Your password has been securely updated. You can now log into your doctor portal using your new credentials.</p>
-          <button type="button" class="modal-btn-primary" id="fpSuccessDoneBtn">Return to Login</button>
-        </div>
-      </div>
-    </div>
-
-    <script src="script.js"></script>
-  </body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="../shared/api_config.js"></script>
+  <script src="../shared/dashboard.js"></script>
+</body>
 </html>
