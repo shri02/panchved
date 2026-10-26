@@ -51,16 +51,16 @@ if (!$config['is_configured']) {
     ], 500);
 }
 
-$workshopId = intval($input['workshop_id'] ?? ($input['item_id'] ?? 1));
+$serviceType = strtolower(trim((string)($input['service_type'] ?? 'workshop')));
+$workshopId = intval($input['workshop_id'] ?? ($input['item_id'] ?? ($input['id'] ?? 1)));
 $doctorId = intval($_SESSION['doctor_id'] ?? ($input['doctor_id'] ?? 1));
 $doctorName = trim((string)($input['doctor_name'] ?? ($_SESSION['doctor_name'] ?? ($_SESSION['full_name'] ?? 'Doctor'))));
 $doctorEmail = trim((string)($input['doctor_email'] ?? ($_SESSION['doctor_email'] ?? ($_SESSION['email'] ?? ''))));
 $doctorPhone = trim((string)($input['doctor_phone'] ?? ($_SESSION['doctor_phone'] ?? ($_SESSION['phone_number'] ?? ''))));
 $amount = isset($input['amount']) && is_numeric($input['amount']) ? (float)$input['amount'] : 0.00;
-$serviceType = strtolower(trim((string)($input['service_type'] ?? 'workshop')));
+$workshopTitle = trim((string)($input['workshop_title'] ?? ($input['title'] ?? 'Ayurveda Workshop')));
 
 // Fetch workshop details from database if available
-$workshopTitle = 'Ayurveda Workshop';
 if ($connection1 && $workshopId > 0) {
     try {
         if ($stmt = @mysqli_prepare($connection1, "SELECT `id`, `title`, `price`, `fee` FROM `workshops` WHERE `id` = ? LIMIT 1")) {
@@ -68,7 +68,9 @@ if ($connection1 && $workshopId > 0) {
             @mysqli_stmt_execute($stmt);
             $res = @mysqli_stmt_get_result($stmt);
             if ($row = @mysqli_fetch_assoc($res)) {
-                $workshopTitle = $row['title'] ?? $workshopTitle;
+                if (empty($input['workshop_title']) && !empty($row['title'])) {
+                    $workshopTitle = $row['title'];
+                }
                 if ($amount <= 0) {
                     $amount = floatval(!empty($row['fee']) && $row['fee'] > 0 ? $row['fee'] : ($row['price'] ?? 500.00));
                 }
@@ -81,7 +83,7 @@ if ($connection1 && $workshopId > 0) {
 }
 
 if ($amount <= 0) {
-    $amount = 500.00;
+    sendInitiateResponse(false, 'Invalid payment amount specified.', [], 400);
 }
 $formattedAmount = sprintf("%.2f", $amount);
 
@@ -98,15 +100,20 @@ if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
     $cleanPhone = substr($cleanPhone, 2);
 }
 
-$productInfo = 'Workshop: ' . substr(preg_replace('/[^a-zA-Z0-9\s]/', '', $workshopTitle), 0, 80);
-$txnid = 'TXN_DOC_WKS_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
+// Clean productInfo for PayU
+$productInfo = 'Workshop ' . substr(preg_replace('/[^a-zA-Z0-9\s]/', '', $workshopTitle), 0, 80);
+$txnid = 'TXN_WKS_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
 
 // Prepare UDF parameters
 $udf1 = 'workshop';
 $udf2 = (string)$workshopId;
 $udf3 = (string)$doctorId;
 $udf4 = substr($doctorName, 0, 50);
-$udf5 = json_encode(['role' => 'doctor', 'workshop_id' => $workshopId, 'title' => $workshopTitle]);
+$udf5 = json_encode([
+    'role' => 'doctor',
+    'workshop_id' => $workshopId,
+    'title' => $workshopTitle
+]);
 
 // Pre-record in payu_transactions table if available
 if ($connection1) {
@@ -174,7 +181,6 @@ $payuPayload = [
     'surl' => $config['success_url'],
     'furl' => $config['failure_url'],
     'hash' => $hash,
-    'service_provider' => 'payu_paisa',
     'udf1' => $udf1,
     'udf2' => $udf2,
     'udf3' => $udf3,

@@ -37,8 +37,10 @@ $txnid = trim((string)($postData['txnid'] ?? ($_GET['txnid'] ?? ($_SESSION['last
 // Look up session pending data if available
 $pending = $_SESSION['payu_pending'][$txnid] ?? null;
 
+$isSimulation = (!$config['is_live'] && isset($_GET['simulate_success']) && $_GET['simulate_success'] == '1');
+
 $status = strtolower(trim((string)($postData['status'] ?? ($_GET['status'] ?? ''))));
-if (empty($status) && isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success', 'successful'], true)) {
+if ($isSimulation || (empty($status) && isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success', 'successful'], true))) {
     $status = 'success';
 }
 
@@ -47,9 +49,15 @@ $productInfo = trim((string)($postData['productinfo'] ?? ($pending['item_title']
 $firstName = trim((string)($postData['firstname'] ?? ($pending['doctor_name'] ?? 'Doctor')));
 $email = trim((string)($postData['email'] ?? ($pending['doctor_email'] ?? '')));
 $phone = trim((string)($postData['phone'] ?? ($pending['doctor_phone'] ?? '')));
-$mihpayid = trim((string)($postData['mihpayid'] ?? ''));
-$bankRefNum = trim((string)($postData['bank_ref_num'] ?? ''));
-$errorMsg = trim((string)($postData['error_Message'] ?? ($postData['errorMessage'] ?? ($postData['error'] ?? ''))));
+$mihpayid = trim((string)($postData['mihpayid'] ?? ($isSimulation ? ('SIM_' . time()) : '')));
+$bankRefNum = trim((string)($postData['bank_ref_num'] ?? ($isSimulation ? ('SIM_REF_' . rand(100000, 999999)) : '')));
+$errorMsg = trim((string)(
+    $postData['error'] 
+    ?? ($postData['error_Message'] 
+    ?? ($postData['errorMessage'] 
+    ?? ($postData['field9'] 
+    ?? ($postData['unmappedstatus'] ?? ''))))
+));
 
 $udf1 = trim((string)($postData['udf1'] ?? ($pending['service_type'] ?? 'workshop')));
 $udf2 = trim((string)($postData['udf2'] ?? ($pending['workshop_id'] ?? '1')));
@@ -58,6 +66,7 @@ $udf4 = trim((string)($postData['udf4'] ?? ($pending['doctor_name'] ?? 'Doctor')
 $udf5 = trim((string)($postData['udf5'] ?? ''));
 
 $serviceType = !empty($udf1) ? strtolower($udf1) : 'workshop';
+$meta = json_decode($udf5, true) ?: ($pending ?? []);
 
 // Verify Hash
 $hashValid = false;
@@ -67,7 +76,7 @@ if (!empty($salt) && !empty($postData['hash'])) {
 
 // In test environment, accept simulated test bank success
 if (!$hashValid && !$config['is_live']) {
-    if ($status === 'success' || (isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success']))) {
+    if ($isSimulation || $status === 'success' || (isset($postData['unmappedstatus']) && in_array(strtolower($postData['unmappedstatus']), ['captured', 'success']))) {
         $hashValid = true;
     }
 }
@@ -75,6 +84,10 @@ if (!$hashValid && !$config['is_live']) {
 $isSuccess = ($status === 'success' && $hashValid && !empty($txnid));
 $bookingId = '#' . mt_rand(100000, 999999);
 $formattedAmount = '₹' . number_format($amount > 0 ? $amount : 0.00, 2);
+
+$doctorName = !empty($udf4) ? $udf4 : ($pending['doctor_name'] ?? 'Doctor');
+$apptDate = $meta['date'] ?? date('Y-m-d');
+$apptTime = $meta['time'] ?? '08:00 AM';
 
 mysqli_report(MYSQLI_REPORT_OFF);
 
@@ -125,6 +138,28 @@ if ($isSuccess && $connection1) {
         $wsId = intval($udf2);
         $doctorDbId = intval($udf3);
         $doctorName = !empty($udf4) ? $udf4 : $firstName;
+
+        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
+        if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
+            $cleanPhone = substr($cleanPhone, 2);
+        }
+
+        // Resolve Doctor ID if not provided or 0
+        if ($doctorDbId <= 0) {
+            $dQuery = "SELECT id FROM doctors WHERE (phone_number != '' AND (phone_number = ? OR phone_number = ?)) OR (email != '' AND email = ?) OR full_name = ? LIMIT 1";
+            if ($dStmt = @mysqli_prepare($connection1, $dQuery)) {
+                @mysqli_stmt_bind_param($dStmt, "ssss", $phone, $cleanPhone, $email, $doctorName);
+                @mysqli_stmt_execute($dStmt);
+                $dRes = @mysqli_stmt_get_result($dStmt);
+                if ($dRow = @mysqli_fetch_assoc($dRes)) {
+                    $doctorDbId = (int)$dRow['id'];
+                }
+                @mysqli_stmt_close($dStmt);
+            }
+        }
+        if ($doctorDbId <= 0) {
+            $doctorDbId = 1;
+        }
 
         $insWs = @mysqli_prepare($connection1, "INSERT INTO `workshop_bookings` 
             (`booking_id`, `workshop_id`, `doctor_id`, `doctor_name`, `doctor_email`, `doctor_phone`, `amount`, `payment_method`, `payment_status`, `booking_date`)
@@ -331,6 +366,8 @@ $redirectUrl = $baseUrl . '/courses/courses.html';
             booking_id: <?php echo json_encode($bookingId); ?>,
             title: <?php echo json_encode($productInfo); ?>,
             amount: <?php echo json_encode($amount); ?>,
+            date: <?php echo json_encode($apptDate); ?>,
+            time: <?php echo json_encode($apptTime); ?>,
             status: 'Success'
           };
           const currentList = JSON.parse(localStorage.getItem('ocayur_registered_workshops') || localStorage.getItem('panchved_registered_workshops') || '[]');
@@ -370,6 +407,21 @@ $redirectUrl = $baseUrl . '/courses/courses.html';
           <span class="receipt-label">Status</span>
           <span class="receipt-value" style="color: #dc2626;"><?php echo htmlspecialchars(ucfirst($status ?: 'Failed')); ?></span>
         </div>
+      </div>
+      <?php endif; ?>
+
+      <?php if (!$config['is_live'] && !empty($txnid)): ?>
+      <div style="margin: 16px 0 20px 0; padding: 14px; background: #ecfdf5; border: 1px dashed #10b981; border-radius: 12px; text-align: center;">
+        <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 4px;">🧪 Developer Sandbox Bypass</div>
+        <div style="font-size: 12px; color: #047857; margin-bottom: 12px;">Test full database booking fulfillment and dashboard syncing without waiting for PayU test servers:</div>
+        <a href="<?php echo htmlspecialchars('payu_response.php?' . http_build_query([
+          'simulate_success' => '1',
+          'txnid' => $txnid,
+          'service' => 'workshop',
+          'amt' => sprintf('%.2f', $amount)
+        ])); ?>" class="btn-portal" style="background: #059669; padding: 10px 18px; font-size: 13px; width: auto; display: inline-block;">
+          ✓ Complete Test Booking (Sandbox Simulation)
+        </a>
       </div>
       <?php endif; ?>
 

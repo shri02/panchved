@@ -786,8 +786,12 @@
       if (window.PayUCheckout) {
         try {
           const numericAmt = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.]/g, '')) : parseFloat(amount);
+          const wsTitle = currentWorkshopData ? (currentWorkshopData.title || currentWorkshopData.name || 'Ayurveda Workshop') : 'Ayurveda Workshop';
           const payuPayload = {
+            service_type: 'workshop',
             workshop_id: currentCourseId,
+            workshop_title: wsTitle,
+            item_id: currentCourseId,
             doctor_id: doctorId,
             doctor_name: userName,
             doctor_email: userEmail,
@@ -795,16 +799,16 @@
             amount: numericAmt || 500.00
           };
 
-          const payuResult = await window.PayUCheckout.processPayment(payuPayload, async (unconfiguredNotice) => {
-            showToast('PayU credentials pending in App Service settings. Processing test registration...');
-            return null;
-          });
-
-          if (payuResult && payuResult.redirected) {
+          const res = await window.PayUCheckout.processPayment(payuPayload);
+          if (res && res.redirected) {
             return; // Browser has redirected to PayU payment gateway
           }
         } catch (payuErr) {
-          console.warn('PayU Doctor Workshop gateway notice:', payuErr.message);
+          console.error('PayU Doctor Workshop Error:', payuErr);
+          showToast(payuErr.message || 'Payment initiation failed. Please try again.');
+          confirmBtn.textContent = 'Confirm Payment';
+          confirmBtn.disabled = false;
+          return;
         }
       }
 
