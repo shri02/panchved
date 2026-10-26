@@ -18,6 +18,22 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
 }
 
+// Enable full error and mysqli exception reporting
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+set_exception_handler(function($e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Database / Server Exception: ' . $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ]);
+    exit();
+});
+
 require_once __DIR__ . '/database.php';
 
 // Support JSON body, POST, and GET parameters
