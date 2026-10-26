@@ -11,7 +11,7 @@
 */
 
 // Database server IP address or hostname
-$dbHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? "p:162.214.80.27"));
+$dbHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? "162.214.80.27"));
 
 // Database name
 $dbName = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? "jewrzsmy_panchved"));
