@@ -712,34 +712,79 @@
     // =========================================================================
     async function loadMyWorkshops() {
       try {
-        let doctorParams = '';
+        let doc = {};
         try {
-          const doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || '{}');
-          const params = new URLSearchParams();
-          params.append('type', 'my_workshops');
-          if (doc.id) params.append('doctor_id', doc.id);
-          if (doc.email) params.append('email', doc.email);
-          if (doc.phone_number || doc.phone) params.append('phone', doc.phone_number || doc.phone);
-          doctorParams = '?' + params.toString();
-        } catch (_) {
-          doctorParams = '?type=my_workshops';
+          doc = JSON.parse((localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor')) || (localStorage.getItem('ocayur_user') || localStorage.getItem('panchved_user')) || '{}');
+        } catch (_) {}
+
+        const docId = doc.id || doc.doctor_id || 0;
+        const docEmail = doc.email || '';
+        const docPhone = doc.phone_number || doc.phone || '';
+
+        // Build clean query params (using both standard and aliases)
+        const params = new URLSearchParams();
+        params.append('type', 'my_workshops');
+        if (docId) {
+          params.append('doctor_id', docId);
+          params.append('id', docId);
+        }
+        if (docEmail) {
+          params.append('email', docEmail);
+          params.append('user_email', docEmail);
+        }
+        if (docPhone) {
+          params.append('phone', docPhone);
+          params.append('user_phone', docPhone);
         }
 
-        const response = await fetch(`../api/get_workshops.php${doctorParams}`);
-        if (response.ok) {
+        let response = null;
+        try {
+          response = await fetch(`../api/get_workshops.php?${params.toString()}`);
+        } catch (fetchErr) {
+          console.warn('GET request error:', fetchErr);
+        }
+
+        // If GET returned 404 or failed due to server routing, retry via POST body
+        if (!response || !response.ok) {
+          try {
+            response = await fetch('../api/get_workshops.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                type: 'my_workshops',
+                doctor_id: docId,
+                email: docEmail,
+                phone: docPhone
+              })
+            });
+          } catch (postErr) {
+            console.warn('POST fallback error:', postErr);
+          }
+        }
+
+        if (response && response.ok) {
           const data = await response.json();
           if (data.success && Array.isArray(data.workshops)) {
             myWorkshopsList = data.workshops;
             renderMyWorkshops(myWorkshopsList);
-          } else {
-            renderMyWorkshops([]);
+            return;
           }
+        }
+
+        // Local cache fallback if registered in current session
+        const localRegistered = JSON.parse(localStorage.getItem('ocayur_registered_workshops') || localStorage.getItem('panchved_registered_workshops') || '[]');
+        if (Array.isArray(localRegistered) && localRegistered.length > 0) {
+          renderMyWorkshops(localRegistered);
         } else {
           renderMyWorkshops([]);
         }
       } catch (err) {
         console.warn('Could not fetch dynamic My Workshops:', err);
-        renderMyWorkshops([]);
+        const localRegistered = JSON.parse(localStorage.getItem('ocayur_registered_workshops') || localStorage.getItem('panchved_registered_workshops') || '[]');
+        renderMyWorkshops(Array.isArray(localRegistered) ? localRegistered : []);
       }
     }
 

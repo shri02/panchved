@@ -20,10 +20,40 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 
 require_once __DIR__ . '/database.php';
 
-$type = trim($_GET['type'] ?? 'my_workshops');
-$doctorId = intval($_GET['doctor_id'] ?? $_SESSION['doctor_id'] ?? 0);
-$email = trim($_GET['email'] ?? $_SESSION['email'] ?? '');
-$phone = trim($_GET['phone'] ?? $_SESSION['phone_number'] ?? '');
+// Support JSON body, POST, and GET parameters
+$input = [];
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $decoded = json_decode($rawInput, true);
+        if (is_array($decoded)) {
+            $input = $decoded;
+        }
+    }
+    if (empty($input)) {
+        $input = $_POST;
+    }
+}
+
+$type = trim((string)($input['type'] ?? ($_GET['type'] ?? 'my_workshops')));
+
+$doctorId = intval(
+    $input['doctor_id'] ?? $input['id'] ?? $input['d_id'] ??
+    $_GET['doctor_id'] ?? $_GET['id'] ?? $_GET['d_id'] ??
+    $_SESSION['doctor_id'] ?? 0
+);
+
+$email = trim((string)(
+    $input['email'] ?? $input['user_email'] ?? $input['d_email'] ?? $input['email_addr'] ??
+    $_GET['email'] ?? $_GET['user_email'] ?? $_GET['d_email'] ?? $_GET['email_addr'] ??
+    $_SESSION['email'] ?? ''
+));
+
+$phone = trim((string)(
+    $input['phone'] ?? $input['user_phone'] ?? $input['d_phone'] ?? $input['phone_no'] ??
+    $_GET['phone'] ?? $_GET['user_phone'] ?? $_GET['d_phone'] ?? $_GET['phone_no'] ??
+    $_SESSION['phone_number'] ?? ''
+));
 
 function cleanPhone($phone) {
     $digits = preg_replace('/\D/', '', (string)$phone);
