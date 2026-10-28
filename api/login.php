@@ -61,31 +61,7 @@ if (empty($phoneInput) || empty($passwordInput)) {
 
 $cleanPhoneNum = cleanPhone($phoneInput);
 
-// 1. Check if user is an Admin or Patient attempting to access the Doctor portal
-$userQuery = "SELECT id, username, full_name, email, phone_number, password_hash, role, status FROM `users` WHERE `phone_number` = ? OR `phone_number` = ? OR `email` = ? OR `username` = ? LIMIT 1";
-$stmtUser = mysqli_prepare($connection1, $userQuery);
-$userFromUsers = null;
-if ($stmtUser) {
-    mysqli_stmt_bind_param($stmtUser, "ssss", $phoneInput, $cleanPhoneNum, $phoneInput, $phoneInput);
-    mysqli_stmt_execute($stmtUser);
-    $userRes = mysqli_stmt_get_result($stmtUser);
-    $userFromUsers = mysqli_fetch_assoc($userRes);
-    mysqli_stmt_close($stmtUser);
-}
-
-if ($userFromUsers) {
-    $uRole = strtolower(trim((string)($userFromUsers['role'] ?? '')));
-    // Strictly reject Admin or Patient users from logging in to Doctor portal without leaking role
-    if ($uRole === 'admin' || $uRole === 'super admin' || $uRole === 'patient') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid credentials. Please check your credentials.'
-        ]);
-        exit();
-    }
-}
-
-// 2. Look up doctor from `doctors` table by registered phone number, email or doctorid
+// 1. Look up doctor strictly from `doctors` table by registered phone number, email or doctorid
 $docQuery = "SELECT * FROM `doctors` WHERE `phone_number` = ? OR `phone_number` = ? OR `email` = ? OR `doctorid` = ? LIMIT 1";
 $stmtDoc = mysqli_prepare($connection1, $docQuery);
 mysqli_stmt_bind_param($stmtDoc, "ssss", $phoneInput, $cleanPhoneNum, $phoneInput, $phoneInput);
@@ -96,80 +72,40 @@ mysqli_stmt_close($stmtDoc);
 
 // If no doctor record found directly in `doctors` table
 if (!$doctor) {
-    // Only allow if user is specifically registered with role 'Doctor' in `users` table
-    if ($userFromUsers && strtolower(trim((string)($userFromUsers['role'] ?? ''))) === 'doctor') {
-        $pwMatch = password_verify($passwordInput, $userFromUsers['password_hash']) || ($userFromUsers['password_hash'] === $passwordInput);
-        if (!$pwMatch) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid credentials. Please check your credentials.'
-            ]);
-            exit();
-        }
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid credentials. Please check your credentials.'
+    ]);
+    exit();
+}
 
-        // Try to match linked doctor record
-        $findDoc = mysqli_query($connection1, "SELECT * FROM `doctors` WHERE `email` = '" . mysqli_real_escape_string($connection1, $userFromUsers['email']) . "' OR `phone_number` = '" . mysqli_real_escape_string($connection1, $userFromUsers['phone_number']) . "' LIMIT 1");
-        if ($findDoc && mysqli_num_rows($findDoc) > 0) {
-            $doctor = mysqli_fetch_assoc($findDoc);
-        } else {
-            $doctor = [
-                'id' => $userFromUsers['id'],
-                'doctorid' => 'DOC' . str_pad($userFromUsers['id'], 6, '0', STR_PAD_LEFT),
-                'full_name' => $userFromUsers['full_name'],
-                'date_of_birth' => '1990-01-01',
-                'phone_number' => $userFromUsers['phone_number'],
-                'gender' => 'Male',
-                'email' => $userFromUsers['email'],
-                'years_of_experience' => 5,
-                'expertise' => 'Doctor',
-                'area' => 'General Practice',
-                'registration_number' => 'REG1234',
-                'hpr_registration_number' => 'HPR1234',
-                'status' => $userFromUsers['status'] ?? 'Active'
-            ];
-        }
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid credentials. Please check your credentials.'
-        ]);
-        exit();
-    }
-} else {
-    // 3. Doctor found in `doctors` table - check account status
-    if (isset($doctor['status']) && strtolower($doctor['status']) === 'inactive') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Your doctor account is inactive. Please contact the administrator.'
-        ]);
-        exit();
-    }
+// 2. Doctor found in `doctors` table - check account status
+if (isset($doctor['status']) && strtolower($doctor['status']) === 'inactive') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Your doctor account is inactive. Please contact the administrator.'
+    ]);
+    exit();
+}
 
-    // Verify password against `doctors` password column and linked `users` table
-    $storedPassword = (string)($doctor['password'] ?? '');
-    $passwordValid = false;
+// 3. Verify password strictly against `doctors` password column
+$storedPassword = (string)($doctor['password'] ?? '');
+$passwordValid = false;
 
-    if ($storedPassword !== '') {
-        if ($passwordInput === $storedPassword) {
-            $passwordValid = true;
-        } elseif (strlen($storedPassword) >= 60 && password_verify($passwordInput, $storedPassword)) {
-            $passwordValid = true;
-        }
+if ($storedPassword !== '') {
+    if ($passwordInput === $storedPassword) {
+        $passwordValid = true;
+    } elseif (strlen($storedPassword) >= 60 && password_verify($passwordInput, $storedPassword)) {
+        $passwordValid = true;
     }
+}
 
-    if (!$passwordValid && $userFromUsers && strtolower(trim((string)($userFromUsers['role'] ?? ''))) === 'doctor') {
-        if (password_verify($passwordInput, $userFromUsers['password_hash']) || $userFromUsers['password_hash'] === $passwordInput) {
-            $passwordValid = true;
-        }
-    }
-
-    if (!$passwordValid) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid credentials. Please check your credentials.'
-        ]);
-        exit();
-    }
+if (!$passwordValid) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid credentials. Please check your credentials.'
+    ]);
+    exit();
 }
 
 // Format doctor dates for UI
