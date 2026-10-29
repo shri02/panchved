@@ -634,11 +634,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
+  // =========================================================================
   // View Prescription Modal Handlers (Image 1)
   // =========================================================================
   const viewPrescriptionModal = document.getElementById('viewPrescriptionModal');
   const closePrescriptionModalBtn = document.getElementById('closePrescriptionModalBtn');
   const viewPrescriptionLink = document.getElementById('viewPrescriptionLink');
+
+  const rxHistoryBar = document.getElementById('rxHistoryBar');
+  const rxHistorySelect = document.getElementById('rxHistorySelect');
+  const rxPrintBtn = document.getElementById('rxPrintBtn');
+  const rxAddNewBtn = document.getElementById('rxAddNewBtn');
+  const rxEmptyState = document.getElementById('rxEmptyState');
+  const rxContentContainer = document.getElementById('rxContentContainer');
+  const rxCreatePrescriptionBtn = document.getElementById('rxCreatePrescriptionBtn');
 
   const rxPatientName = document.getElementById('rxPatientName');
   const rxPatientGender = document.getElementById('rxPatientGender');
@@ -653,6 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const rxDoctorSpec = document.getElementById('rxDoctorSpec');
   const rxDate = document.getElementById('rxDate');
   const rxTime = document.getElementById('rxTime');
+  const rxDateTime = document.getElementById('rxDateTime');
   const rxDoctorPhone = document.getElementById('rxDoctorPhone');
   const rxDoctorEmail = document.getElementById('rxDoctorEmail');
 
@@ -687,11 +697,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const notes = item.notes ? String(item.notes).trim() : '';
 
         const meta = [];
-        if (sev) meta.push(`Severity: ${sev}`);
-        if (notes) meta.push(`Notes: ${notes}`);
+        if (sev) meta.push('Severity: ' + sev);
+        if (notes) meta.push('Notes: ' + notes);
 
         if (meta.length > 0) {
-          return name ? `${name} (${meta.join(', ')})` : meta.join(', ');
+          return name ? name + ' (' + meta.join(', ') + ')' : meta.join(', ');
         }
         return name || '';
       }).filter(Boolean);
@@ -706,10 +716,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const sev = rawSev ? (rawSev.charAt(0).toUpperCase() + rawSev.slice(1)) : '';
       const notes = list.notes ? String(list.notes).trim() : '';
       const meta = [];
-      if (sev) meta.push(`Severity: ${sev}`);
-      if (notes) meta.push(`Notes: ${notes}`);
+      if (sev) meta.push('Severity: ' + sev);
+      if (notes) meta.push('Notes: ' + notes);
       if (meta.length > 0) {
-        return name ? `${name} (${meta.join(', ')})` : meta.join(', ');
+        return name ? name + ' (' + meta.join(', ') + ')' : meta.join(', ');
       }
       return name || '--';
     }
@@ -717,55 +727,100 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(symptomsData);
   }
 
-  async function openPrescriptionModal() {
+  async function openPrescriptionModal(selectedRxId = null) {
     if (!viewPrescriptionModal || !modalOverlay) return;
 
     try {
-      const response = await fetch(`../api/get_prescription.php?patient_id=${encodeURIComponent(currentPatientId)}`);
+      const pId = currentPatientId || currentPatientData?.id || '';
+      const url = '../api/get_prescription.php?patient_id=' + encodeURIComponent(pId) + (selectedRxId ? '&prescription_id=' + encodeURIComponent(selectedRxId) : '');
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.prescription) {
+        const hasPrescriptions = data.has_prescriptions && data.prescription;
+
+        if (hasPrescriptions) {
           const rx = data.prescription;
+          if (rxContentContainer) rxContentContainer.style.display = 'block';
+          if (rxDateTime) rxDateTime.style.display = 'block';
+          if (rxEmptyState) rxEmptyState.style.display = 'none';
+          if (rxHistoryBar) rxHistoryBar.style.display = 'flex';
+
+          // Populate History Dropdown if records available
+          if (rxHistorySelect && Array.isArray(data.prescriptions_list) && data.prescriptions_list.length > 0) {
+            rxHistorySelect.innerHTML = data.prescriptions_list.map(item => 
+              '<option value="' + item.id + '" ' + (item.id === rx.id ? 'selected' : '') + '>' +
+                escapeHtml(item.date) + (item.time ? ' (' + escapeHtml(item.time) + ')' : '') + ' - ' + escapeHtml(item.diagnosis || 'Consultation') +
+              '</option>'
+            ).join('');
+          }
+
+          if (rxAddNewBtn) {
+            rxAddNewBtn.href = '../appointments/add-prescription.html?patient_id=' + encodeURIComponent(pId);
+          }
+
           if (rxPatientName) rxPatientName.textContent = rx.patient_name || currentPatientData?.full_name || '--';
           if (rxPatientGender) rxPatientGender.textContent = rx.gender || currentPatientData?.gender || '--';
           if (rxPatientAge) rxPatientAge.textContent = rx.age || currentPatientData?.age || '--';
-          if (rxMedicalHistory) rxMedicalHistory.textContent = rx.medical_history || '--';
+          if (rxMedicalHistory) rxMedicalHistory.textContent = rx.medical_history || 'None recorded';
           if (rxSymptoms) rxSymptoms.textContent = formatClinicalSymptoms(rx.symptoms);
-          if (rxDiagnosis) rxDiagnosis.textContent = rx.diagnosis ? `${rx.diagnosis}${rx.diagnosis_duration ? ' (Duration : ' + rx.diagnosis_duration + ')' : ''}` : '--';
-          if (rxExamFindings) rxExamFindings.textContent = rx.examination_findings || '--';
+          if (rxDiagnosis) rxDiagnosis.textContent = rx.diagnosis ? rx.diagnosis + (rx.diagnosis_duration ? ' (Duration : ' + rx.diagnosis_duration + ')' : '') : '--';
+          if (rxExamFindings) rxExamFindings.textContent = rx.examination_findings || 'None recorded';
           if (rxDoctorNotes) rxDoctorNotes.textContent = rx.notes || '--';
           if (rxDoctorName) rxDoctorName.textContent = rx.doctor_name || 'Doctor';
           if (rxDoctorSpec) rxDoctorSpec.textContent = rx.doctor_specialty || 'Ayurvedic Medicine';
           const dateVal = rx.date || '';
           if (rxDate) rxDate.textContent = (dateVal && !dateVal.includes('-0001') && dateVal !== '00/00/0000') ? dateVal : new Date().toLocaleDateString('en-GB');
           if (rxTime) rxTime.textContent = rx.time || '--';
-          if (rxDoctorPhone) rxDoctorPhone.textContent = rx.doctor_phone || rx.phone || '--';
-          if (rxDoctorEmail) rxDoctorEmail.textContent = rx.doctor_email || rx.email || rx.support_email || '--';
+          if (rxDoctorPhone) rxDoctorPhone.textContent = rx.doctor_phone || '--';
+          if (rxDoctorEmail) rxDoctorEmail.textContent = rx.doctor_email || '--';
 
           // Medications Table
           if (rxMedicationRows) {
             if (Array.isArray(rx.medications) && rx.medications.length > 0) {
               let medHtml = '';
               rx.medications.forEach(m => {
-                medHtml += `
-                  <div class="rx-med-row-grid">
-                    <span class="rx-med-cell rx-med-name">${escapeHtml(m.medication || m.name || '--')}</span>
-                    <span class="rx-med-cell rx-med-dose">${escapeHtml(m.dose || '--')}</span>
-                    <span class="rx-med-cell rx-med-freq">${escapeHtml(m.frequency || '--')}</span>
-                    <span class="rx-med-cell rx-med-dur">${escapeHtml(m.duration || '--')}</span>
-                    <span class="rx-med-cell rx-med-rem">${escapeHtml(m.remarks || '--')}</span>
-                  </div>
-                `;
+                medHtml += 
+                  '<div class="rx-med-row-grid">' +
+                    '<span class="rx-med-cell rx-med-name">' + escapeHtml(m.medication || m.name || '--') + '</span>' +
+                    '<span class="rx-med-cell rx-med-dose">' + escapeHtml(m.dose || '--') + '</span>' +
+                    '<span class="rx-med-cell rx-med-freq">' + escapeHtml(m.frequency || '--') + '</span>' +
+                    '<span class="rx-med-cell rx-med-dur">' + escapeHtml(m.duration || '--') + '</span>' +
+                    '<span class="rx-med-cell rx-med-rem">' + escapeHtml(m.remarks || '--') + '</span>' +
+                  '</div>';
               });
               rxMedicationRows.innerHTML = medHtml;
             } else {
-              rxMedicationRows.innerHTML = '<div style="padding: 12px; color: #64748b; text-align: center;">No medications listed.</div>';
+              rxMedicationRows.innerHTML = '<div style="padding: 14px; color: #64748b; text-align: center;">No medications prescribed for this consultation.</div>';
             }
           }
+        } else {
+          // No prescription found for this patient: show clean helpful empty state
+          if (rxContentContainer) rxContentContainer.style.display = 'none';
+        if (rxDateTime) rxDateTime.style.display = 'none';
+          if (rxHistoryBar) rxHistoryBar.style.display = 'none';
+          if (rxEmptyState) rxEmptyState.style.display = 'block';
+          if (rxCreatePrescriptionBtn) {
+            rxCreatePrescriptionBtn.href = '../appointments/add-prescription.html?patient_id=' + encodeURIComponent(pId);
+          }
+        }
+      } else {
+        if (rxContentContainer) rxContentContainer.style.display = 'none';
+        if (rxDateTime) rxDateTime.style.display = 'none';
+        if (rxHistoryBar) rxHistoryBar.style.display = 'none';
+        if (rxEmptyState) rxEmptyState.style.display = 'block';
+        if (rxCreatePrescriptionBtn) {
+          rxCreatePrescriptionBtn.href = '../appointments/add-prescription.html?patient_id=' + encodeURIComponent(currentPatientId || '');
         }
       }
     } catch (err) {
       console.warn('Could not load dynamic prescription:', err);
+      if (rxContentContainer) rxContentContainer.style.display = 'none';
+        if (rxDateTime) rxDateTime.style.display = 'none';
+      if (rxHistoryBar) rxHistoryBar.style.display = 'none';
+      if (rxEmptyState) rxEmptyState.style.display = 'block';
+      if (rxCreatePrescriptionBtn) {
+        rxCreatePrescriptionBtn.href = '../appointments/add-prescription.html?patient_id=' + encodeURIComponent(currentPatientId || '');
+      }
     }
 
     modalOverlay.classList.add('active');
@@ -779,6 +834,22 @@ document.addEventListener('DOMContentLoaded', () => {
       modalOverlay.classList.remove('active');
       viewPrescriptionModal.setAttribute('aria-hidden', 'true');
     }
+  }
+
+  // Hook up history select switch and print
+  if (rxHistorySelect) {
+    rxHistorySelect.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      if (selectedId) {
+        openPrescriptionModal(selectedId);
+      }
+    });
+  }
+
+  if (rxPrintBtn) {
+    rxPrintBtn.addEventListener('click', () => {
+      window.print();
+    });
   }
 
   if (viewPrescriptionLink) {
