@@ -20,12 +20,27 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/database.php';
 
-$patientId = intval($_GET['patient_id'] ?? $_GET['id'] ?? 1);
+$patientId = intval($_GET['patient_id'] ?? $_GET['id'] ?? 0);
 $appointmentId = intval($_GET['appointment_id'] ?? 0);
 $prescriptionId = intval($_GET['prescription_id'] ?? 0);
 
+// If only appointment_id provided, resolve patientId
+if ($patientId <= 0 && $appointmentId > 0) {
+    $apStmt = mysqli_prepare($connection1, "SELECT `patient_id` FROM `appointments` WHERE `id` = ? LIMIT 1");
+    if ($apStmt) {
+        mysqli_stmt_bind_param($apStmt, "i", $appointmentId);
+        mysqli_stmt_execute($apStmt);
+        $apRes = mysqli_stmt_get_result($apStmt);
+        if ($apRow = mysqli_fetch_assoc($apRes)) {
+            $patientId = intval($apRow['patient_id']);
+        }
+        mysqli_stmt_close($apStmt);
+    }
+}
+
 // 1. Fetch Patient Info from `patients` table to ensure 100% dynamic patient data
 $patientInfo = [
+    'id' => $patientId,
     'full_name' => 'Patient',
     'gender' => '--',
     'age' => '--'
@@ -38,6 +53,7 @@ if ($patientId > 0) {
         mysqli_stmt_execute($pStmt);
         $pRes = mysqli_stmt_get_result($pStmt);
         if ($pRow = mysqli_fetch_assoc($pRes)) {
+            $patientInfo['id'] = intval($pRow['id']);
             $patientInfo['full_name'] = $pRow['full_name'] ?: 'Patient';
             $patientInfo['gender'] = $pRow['gender'] ?: '--';
             $pAge = intval($pRow['age'] ?: 0);
@@ -52,23 +68,57 @@ if ($patientId > 0) {
     }
 }
 
-// 2. Query `prescriptions` table directly from MySQL
+// 2. Fetch all prescription records list for this patient to support consultation switching
+$allPrescriptions = [];
+if ($patientId > 0) {
+    $listStmt = mysqli_prepare($connection1, "SELECT `id`, `prescription_code`, `prescription_date`, `prescription_time`, `diagnosis`, `diagnosis_duration`, `doctor_name` FROM `prescriptions` WHERE `patient_id` = ? ORDER BY `id` DESC");
+    if ($listStmt) {
+        mysqli_stmt_bind_param($listStmt, "i", $patientId);
+        mysqli_stmt_execute($listStmt);
+        $lRes = mysqli_stmt_get_result($listStmt);
+        while ($lRow = mysqli_fetch_assoc($lRes)) {
+            $formattedDate = $lRow['prescription_date'];
+            if (!empty($lRow['prescription_date']) && $lRow['prescription_date'] !== '0000-00-00') {
+                $ts = strtotime($lRow['prescription_date']);
+                if ($ts && $ts > 0) {
+                    $formattedDate = date('d/m/Y', $ts);
+                }
+            }
+            $allPrescriptions[] = [
+                'id' => intval($lRow['id']),
+                'prescription_code' => $lRow['prescription_code'] ?: ('RX-' . str_pad($lRow['id'], 3, '0', STR_PAD_LEFT)),
+                'date' => $formattedDate,
+                'time' => $lRow['prescription_time'] ?: '',
+                'diagnosis' => $lRow['diagnosis'] ?: 'General Consultation',
+                'diagnosis_duration' => $lRow['diagnosis_duration'] ?: '',
+                'doctor_name' => $lRow['doctor_name'] ?: 'Doctor'
+            ];
+        }
+        mysqli_stmt_close($listStmt);
+    }
+}
+
+// 3. Query specific `prescriptions` record from MySQL
 $rxRecord = null;
 
 if ($prescriptionId > 0) {
     $rxStmt = mysqli_prepare($connection1, "SELECT * FROM `prescriptions` WHERE `id` = ? LIMIT 1");
-    mysqli_stmt_bind_param($rxStmt, "i", $prescriptionId);
-    mysqli_stmt_execute($rxStmt);
-    $rxRes = mysqli_stmt_get_result($rxStmt);
-    $rxRecord = mysqli_fetch_assoc($rxRes);
-    mysqli_stmt_close($rxStmt);
+    if ($rxStmt) {
+        mysqli_stmt_bind_param($rxStmt, "i", $prescriptionId);
+        mysqli_stmt_execute($rxStmt);
+        $rxRes = mysqli_stmt_get_result($rxStmt);
+        $rxRecord = mysqli_fetch_assoc($rxRes);
+        mysqli_stmt_close($rxStmt);
+    }
 } elseif ($appointmentId > 0) {
     $rxStmt = mysqli_prepare($connection1, "SELECT * FROM `prescriptions` WHERE `appointment_id` = ? ORDER BY `id` DESC LIMIT 1");
-    mysqli_stmt_bind_param($rxStmt, "i", $appointmentId);
-    mysqli_stmt_execute($rxStmt);
-    $rxRes = mysqli_stmt_get_result($rxStmt);
-    $rxRecord = mysqli_fetch_assoc($rxRes);
-    mysqli_stmt_close($rxStmt);
+    if ($rxStmt) {
+        mysqli_stmt_bind_param($rxStmt, "i", $appointmentId);
+        mysqli_stmt_execute($rxStmt);
+        $rxRes = mysqli_stmt_get_result($rxStmt);
+        $rxRecord = mysqli_fetch_assoc($rxRes);
+        mysqli_stmt_close($rxStmt);
+    }
 }
 
 if (!$rxRecord && $patientId > 0) {
@@ -82,7 +132,7 @@ if (!$rxRecord && $patientId > 0) {
     }
 }
 
-// 3. Fallback: check `appointments` table for JSON prescription
+// 4. Fallback: check `appointments` table for JSON prescription
 if (!$rxRecord && $patientId > 0) {
     $aStmt = mysqli_prepare($connection1, "SELECT `prescription`, `notes`, `appointment_date`, `appointment_time`, `doctor_name` 
                                            FROM `appointments` 
@@ -117,14 +167,24 @@ if (!$rxRecord && $patientId > 0) {
     }
 }
 
-// 4. Default Medication Setup if not in record
-$defaultMedications = [];
+// If no prescription found at all, return has_prescriptions: false with patient details
+if (!$rxRecord) {
+    echo json_encode([
+        'success' => true,
+        'has_prescriptions' => false,
+        'prescription' => null,
+        'prescriptions_list' => [],
+        'patient_info' => $patientInfo,
+        'message' => 'No prescriptions have been issued for this patient yet.'
+    ]);
+    exit();
+}
 
 // Parse medications JSON from database
-$medications = $defaultMedications;
-if ($rxRecord && !empty($rxRecord['medications'])) {
+$medications = [];
+if (!empty($rxRecord['medications'])) {
     $parsedMeds = json_decode($rxRecord['medications'], true);
-    if (is_array($parsedMeds) && count($parsedMeds) > 0) {
+    if (is_array($parsedMeds)) {
         $medications = $parsedMeds;
     }
 }
@@ -158,6 +218,18 @@ if (!empty($symptomsData) && is_string($symptomsData)) {
     }
 }
 
+// Resolve real doctor contact info if placeholder was stored
+$docPhone = $rxRecord['doctor_phone'] ?? '';
+$docEmail = $rxRecord['doctor_email'] ?? '';
+$docId = intval($rxRecord['doctor_id'] ?? 0);
+if ($docId > 0 && (empty($docPhone) || $docPhone === '+91 7896543210' || empty($docEmail) || $docEmail === 'ocayursupport@gmail.com')) {
+    $docQ = mysqli_query($connection1, "SELECT `phone_number`, `email` FROM `doctors` WHERE `id` = {$docId} LIMIT 1");
+    if ($docQ && $dRow = mysqli_fetch_assoc($docQ)) {
+        if (!empty($dRow['phone_number'])) $docPhone = $dRow['phone_number'];
+        if (!empty($dRow['email'])) $docEmail = $dRow['email'];
+    }
+}
+
 // Construct final dynamic prescription response
 $responsePrescription = [
     'id' => intval($rxRecord['id'] ?? 0),
@@ -168,22 +240,23 @@ $responsePrescription = [
     'patient_name' => $rxRecord['patient_name'] ?? $patientInfo['full_name'],
     'gender' => $patientInfo['gender'],
     'age' => $patientInfo['age'],
-    'medical_history' => $rxRecord['medical_history'] ?? '',
+    'medical_history' => $rxRecord['medical_history'] ?? 'None recorded',
     'symptoms' => $symptomsData,
-    'diagnosis' => $rxRecord['diagnosis'] ?? '',
+    'diagnosis' => $rxRecord['diagnosis'] ?? 'General Consultation',
     'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? '',
     'medications' => $medications,
-    'examination_findings' => $rxRecord['examination_findings'] ?? '',
+    'examination_findings' => $rxRecord['examination_findings'] ?? 'None recorded',
     'notes' => $rxRecord['notes'] ?? '',
     'doctor_name' => $rxRecord['doctor_name'] ?? 'Doctor',
     'doctor_specialty' => $rxRecord['doctor_specialty'] ?? 'Ayurvedic Medicine',
-    'doctor_phone' => $rxRecord['doctor_phone'] ?? '',
-    'doctor_email' => $rxRecord['doctor_email'] ?? ''
+    'doctor_phone' => $docPhone ?: '+91 7896543210',
+    'doctor_email' => $docEmail ?: 'care@ocayur.com'
 ];
 
 echo json_encode([
     'success' => true,
-    'prescription' => $responsePrescription
+    'has_prescriptions' => true,
+    'prescription' => $responsePrescription,
+    'prescriptions_list' => $allPrescriptions
 ]);
 ?>
-

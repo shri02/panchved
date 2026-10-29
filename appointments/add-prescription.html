@@ -466,10 +466,21 @@
 
       if (btnSubmitPrescription && toast) {
         btnSubmitPrescription.addEventListener('click', async () => {
-          const diagnosisName = document.getElementById('diagnosisName')?.value.trim() || 'Migraine';
-          const diagnosisDuration = document.getElementById('diagnosisDuration')?.value.trim() || '3 months';
-          const examinationFindings = document.getElementById('examinationFindings')?.value.trim() || 'Abdomen Feels Distended';
-          const doctorNotes = document.getElementById('doctorNotes')?.value.trim() || 'Gandbush ( Cow Ghee + Triphala Powder )';
+          const diagnosisNameInput = document.getElementById('diagnosisName');
+          const diagnosisDurationInput = document.getElementById('diagnosisDuration');
+          const examinationFindingsInput = document.getElementById('examinationFindings');
+          const doctorNotesInput = document.getElementById('doctorNotes');
+
+          const diagnosisName = diagnosisNameInput?.value.trim() || '';
+          const diagnosisDuration = diagnosisDurationInput?.value.trim() || '';
+          const examinationFindings = examinationFindingsInput?.value.trim() || '';
+          const doctorNotes = doctorNotesInput?.value.trim() || '';
+
+          if (!diagnosisName) {
+            alert('Please enter a diagnosis name before submitting.');
+            diagnosisNameInput?.focus();
+            return;
+          }
 
           // Gather symptoms
           const symptoms = [];
@@ -477,11 +488,14 @@
             const symSelect = box.querySelector('select[id^="symptomSelect"]');
             const sevSelect = box.querySelector('select[id^="severitySelect"]');
             const noteInput = box.querySelector('[id^="symptomNotes"]');
-            symptoms.push({
-              symptom: symSelect?.value || 'Constipation',
-              severity: sevSelect?.value || 'Moderate',
-              notes: noteInput?.value || ''
-            });
+            const symVal = symSelect?.value;
+            if (symVal) {
+              symptoms.push({
+                symptom: symVal,
+                severity: sevSelect?.value || 'Moderate',
+                notes: noteInput?.value.trim() || ''
+              });
+            }
           });
 
           // Gather medications
@@ -490,24 +504,27 @@
             medicationTableBody.querySelectorAll('tr').forEach(tr => {
               const inputs = tr.querySelectorAll('input');
               if (inputs.length >= 5) {
-                const medName = inputs[0].value.trim() || 'TAB MEENTOACID (TABLET)';
-                const medDose = inputs[1].value.trim() || '1 TABLET';
-                const medFreq = inputs[2].value.trim() || '1-0-1 BEFORE MEAL';
-                const medDur = inputs[3].value.trim() || '10 DAYS';
-                const medRem = inputs[4].value.trim() || 'TAKE 1 TABLET - TWICE A DAY, BEFORE BREAKFAST AND BEFORE DINNER FOR 10 DAYS';
+                const medName = inputs[0].value.trim();
+                const medDose = inputs[1].value.trim();
+                const medFreq = inputs[2].value.trim();
+                const medDur = inputs[3].value.trim();
+                const medRem = inputs[4].value.trim();
 
-                medications.push({
-                  medication: medName,
-                  dose: medDose,
-                  frequency: medFreq,
-                  duration: medDur,
-                  remarks: medRem
-                });
+                if (medName) {
+                  medications.push({
+                    medication: medName,
+                    dose: medDose,
+                    frequency: medFreq,
+                    duration: medDur,
+                    remarks: medRem
+                  });
+                }
               }
             });
           }
 
-
+          btnSubmitPrescription.disabled = true;
+          btnSubmitPrescription.textContent = 'Saving...';
 
           try {
             const response = await fetch('../api/save_prescription.php', {
@@ -526,19 +543,27 @@
             });
 
             const resData = await response.json();
-          } catch (e) {
-            console.warn('Prescription submit error (fallback local):', e);
-          }
-
-          toast.classList.add('show');
-          setTimeout(() => {
-            toast.classList.remove('show');
-            if (patientId) {
-              window.location.href = `../patients/patient-details.html?id=${patientId}`;
+            if (resData.success) {
+              toast.classList.add('show');
+              setTimeout(() => {
+                toast.classList.remove('show');
+                if (patientId) {
+                  window.location.href = `../patients/patient-details.html?id=${encodeURIComponent(patientId)}`;
+                } else {
+                  window.location.href = 'appointments.html?tab=history';
+                }
+              }, 1500);
             } else {
-              window.location.href = 'appointments.html?tab=history';
+              alert(resData.message || 'Could not save prescription. Please check the inputs.');
+              btnSubmitPrescription.disabled = false;
+              btnSubmitPrescription.textContent = 'Add Prescription';
             }
-          }, 1500);
+          } catch (e) {
+            console.error('Prescription submit error:', e);
+            alert('A network error occurred while saving the prescription. Please try again.');
+            btnSubmitPrescription.disabled = false;
+            btnSubmitPrescription.textContent = 'Add Prescription';
+          }
         });
       }
     });

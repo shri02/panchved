@@ -25,9 +25,10 @@ $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: $_POST;
 
 $patientId = intval($input['patient_id'] ?? 0);
-$appointmentId = intval($input['appointment_id'] ?? 0);
+$rawAppointmentId = trim(strval($input['appointment_id'] ?? ''));
+$appointmentId = intval($rawAppointmentId);
 $patientName = trim($input['patient_name'] ?? '');
-$diagnosis = trim($input['diagnosis_name'] ?? $input['diagnosis'] ?? 'Migraine');
+$diagnosis = trim($input['diagnosis_name'] ?? $input['diagnosis'] ?? '');
 $diagnosisDuration = trim($input['diagnosis_duration'] ?? $input['duration'] ?? '');
 $symptoms = $input['symptoms'] ?? [];
 $medications = $input['medications'] ?? [];
@@ -35,10 +36,76 @@ $examinationFindings = trim($input['examination_findings'] ?? '');
 $notes = trim($input['notes'] ?? '');
 $medicalHistory = trim($input['medical_history'] ?? '');
 
-// Doctor Info
-$doctorId = $_SESSION['doctor_id'] ?? $_SESSION['user_id'] ?? 1;
-$doctorName = $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? 'Doctor';
+if (empty($diagnosis)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Diagnosis is required to issue a prescription.'
+    ]);
+    exit();
+}
+
+// Resolve exact appointment record by numeric id or alphanumeric code
+$targetAppt = null;
+if ($appointmentId > 0) {
+    $aStmt = mysqli_prepare($connection1, "SELECT `id`, `patient_id`, `doctor_id`, `doctor_name` FROM `appointments` WHERE `id` = ? LIMIT 1");
+    if ($aStmt) {
+        mysqli_stmt_bind_param($aStmt, "i", $appointmentId);
+        mysqli_stmt_execute($aStmt);
+        $res = mysqli_stmt_get_result($aStmt);
+        $targetAppt = mysqli_fetch_assoc($res);
+        mysqli_stmt_close($aStmt);
+    }
+}
+if (!$targetAppt && !empty($rawAppointmentId)) {
+    $aStmt = mysqli_prepare($connection1, "SELECT `id`, `patient_id`, `doctor_id`, `doctor_name` FROM `appointments` WHERE `appointment_id` = ? LIMIT 1");
+    if ($aStmt) {
+        mysqli_stmt_bind_param($aStmt, "s", $rawAppointmentId);
+        mysqli_stmt_execute($aStmt);
+        $res = mysqli_stmt_get_result($aStmt);
+        $targetAppt = mysqli_fetch_assoc($res);
+        mysqli_stmt_close($aStmt);
+    }
+}
+
+if ($targetAppt) {
+    $appointmentId = intval($targetAppt['id']);
+    if ($patientId <= 0 && !empty($targetAppt['patient_id'])) {
+        $patientId = intval($targetAppt['patient_id']);
+    }
+}
+
+// Doctor Info - dynamically resolve from session, appointment, or doctors table
+$doctorId = $_SESSION['doctor_id'] ?? $_SESSION['user_id'] ?? ($targetAppt['doctor_id'] ?? 1);
+$doctorName = $_SESSION['doctor_name'] ?? $_SESSION['full_name'] ?? ($targetAppt['doctor_name'] ?? 'Doctor');
 $doctorArea = $_SESSION['doctor_area'] ?? 'Ayurvedic Medicine';
+$doctorPhone = '+91 7896543210';
+$doctorEmail = 'care@ocayur.com';
+
+if ($doctorId > 0) {
+    $dStmt = mysqli_prepare($connection1, "SELECT `full_name`, `expertise`, `area`, `phone_number`, `email` FROM `doctors` WHERE `id` = ? LIMIT 1");
+    if ($dStmt) {
+        mysqli_stmt_bind_param($dStmt, "i", $doctorId);
+        mysqli_stmt_execute($dStmt);
+        $dRes = mysqli_stmt_get_result($dStmt);
+        if ($dRow = mysqli_fetch_assoc($dRes)) {
+            if (!empty($dRow['full_name']) && ($doctorName === 'Doctor' || empty($doctorName))) {
+                $doctorName = $dRow['full_name'];
+            }
+            if (!empty($dRow['area'])) {
+                $doctorArea = $dRow['area'];
+            } elseif (!empty($dRow['expertise'])) {
+                $doctorArea = $dRow['expertise'];
+            }
+            if (!empty($dRow['phone_number'])) {
+                $doctorPhone = $dRow['phone_number'];
+            }
+            if (!empty($dRow['email'])) {
+                $doctorEmail = $dRow['email'];
+            }
+        }
+        mysqli_stmt_close($dStmt);
+    }
+}
 
 // If patient info not provided, fetch from DB
 if ($patientId > 0 && empty($patientName)) {
@@ -58,6 +125,24 @@ if (empty($patientName)) {
     $patientName = 'Patient';
 }
 
+// Sanitize medications list: only keep rows where a medication name is entered
+$cleanMedications = [];
+if (is_array($medications)) {
+    foreach ($medications as $med) {
+        $mName = trim($med['medication'] ?? $med['name'] ?? '');
+        if (!empty($mName)) {
+            $cleanMedications[] = [
+                'medication' => $mName,
+                'dose' => trim($med['dose'] ?? ''),
+                'frequency' => trim($med['frequency'] ?? ''),
+                'duration' => trim($med['duration'] ?? ''),
+                'remarks' => trim($med['remarks'] ?? '')
+            ];
+        }
+    }
+}
+$medications = $cleanMedications;
+
 // Format structured prescription object
 $prescriptionData = [
     'date' => date('d/m/Y'),
@@ -73,15 +158,15 @@ $prescriptionData = [
     'medications' => $medications,
     'examination_findings' => $examinationFindings,
     'notes' => $notes,
-    'phone' => '+91 7896543210',
-    'support_email' => 'ocayursupport@gmail.com'
+    'phone' => $doctorPhone,
+    'support_email' => $doctorEmail
 ];
 
 $prescriptionJson = json_encode($prescriptionData, JSON_UNESCAPED_UNICODE);
 
 // Build human-readable text prescription summary
 $prescriptionTextLines = [];
-$prescriptionTextLines[] = "DIAGNOSIS: {$diagnosis} ({$diagnosisDuration})";
+$prescriptionTextLines[] = "DIAGNOSIS: {$diagnosis}" . (!empty($diagnosisDuration) ? " ({$diagnosisDuration})" : "");
 if (!empty($medications)) {
     $medStrings = [];
     foreach ($medications as $med) {
@@ -107,7 +192,7 @@ if (!empty($notes)) {
 
 $prescriptionText = implode("\n", $prescriptionTextLines);
 
-// 1. Insert or Update `prescriptions` table in MySQL
+// 1. Insert into `prescriptions` table in MySQL
 $symptomsStr = is_array($symptoms) ? json_encode($symptoms, JSON_UNESCAPED_UNICODE) : strval($symptoms);
 $medicationsStr = json_encode($medications, JSON_UNESCAPED_UNICODE);
 $rxCode = 'RX-' . date('ymd') . '-' . strtoupper(substr(md5(uniqid()), 0, 4));
@@ -116,18 +201,19 @@ $timeNow = date('h:i A');
 
 $rxStmt = mysqli_prepare($connection1, "INSERT INTO `prescriptions` 
     (`prescription_code`, `patient_id`, `patient_name`, `doctor_id`, `doctor_name`, `doctor_specialty`, `doctor_phone`, `doctor_email`, `appointment_id`, `prescription_date`, `prescription_time`, `medical_history`, `symptoms`, `diagnosis`, `diagnosis_duration`, `medications`, `examination_findings`, `notes`) 
-    VALUES (?, ?, ?, ?, ?, ?, '+91 7896543210', 'ocayursupport@gmail.com', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 if ($rxStmt) {
-    mysqli_stmt_bind_param($rxStmt, "sisisssissssssss", 
+    mysqli_stmt_bind_param($rxStmt, "sisissssissssssss", 
         $rxCode, $patientId, $patientName, $doctorId, $doctorName, $doctorArea,
+        $doctorPhone, $doctorEmail,
         $appointmentId, $today, $timeNow, $medicalHistory, $symptomsStr, $diagnosis, $diagnosisDuration, $medicationsStr, $examinationFindings, $notes
     );
     mysqli_stmt_execute($rxStmt);
     mysqli_stmt_close($rxStmt);
 }
 
-// 2. Update appointment if appointment_id given, or insert a new record
+// 2. Update appointment if appointment_id given, or link latest patient appointment
 $saved = false;
 if ($appointmentId > 0) {
     $stmt = mysqli_prepare($connection1, "UPDATE `appointments` SET `prescription` = ?, `notes` = ? WHERE `id` = ?");

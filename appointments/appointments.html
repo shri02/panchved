@@ -432,7 +432,7 @@
 
       function renderHistoryRow(item) {
         const patientLink = item.patient_id ? `../patients/patient-details.html?id=${item.patient_id}` : '#';
-        const prescriptionUrl = `add-prescription.html?patient_id=${item.patient_id || 1}&appointment_id=${encodeURIComponent(item.appointment_id || '')}`;
+        const prescriptionUrl = `add-prescription.html?patient_id=${item.patient_id || 1}&appointment_id=${encodeURIComponent(item.appointment_id || '')}&id=${item.id || ''}`;
         const calculatedDuration = calculateDurationFromTime(item.time, item.duration);
         return `
           <tr>
