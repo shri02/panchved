@@ -29,6 +29,36 @@ function cleanPhone($phone) {
     return $digits;
 }
 
+// Helper: detect client IP address
+function getClientIpAddress() {
+    $ipKeys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+    foreach ($ipKeys as $key) {
+        if (!empty($_SERVER[$key])) {
+            $ipList = explode(',', $_SERVER[$key]);
+            $ip = trim($ipList[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+}
+
+// Helper: record login timing into login_logs
+function recordLoginLog($conn, $userType, $userId, $identifier, $name, $phone, $email, $status = 'Success') {
+    if (!$conn) return false;
+    $clientIp = getClientIpAddress();
+    $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+    $query = "INSERT INTO `login_logs` (`user_type`, `user_id`, `identifier`, `name`, `phone`, `email`, `ip_address`, `user_agent`, `status`, `login_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    if ($stmt = @mysqli_prepare($conn, $query)) {
+        mysqli_stmt_bind_param($stmt, "sisssssss", $userType, $userId, $identifier, $name, $phone, $email, $clientIp, $userAgent, $status);
+        @mysqli_stmt_execute($stmt);
+        @mysqli_stmt_close($stmt);
+        return true;
+    }
+    return false;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
@@ -124,6 +154,15 @@ $_SESSION['doctor_id'] = $doctor['id'];
 $_SESSION['doctor_code'] = $doctor['doctorid'] ?? ('DOC' . str_pad($doctor['id'], 6, '0', STR_PAD_LEFT));
 $_SESSION['doctor_profile'] = $doctor;
 $_SESSION['role'] = 'Doctor';
+
+// 5. Log login timing into `login_logs`
+$docCode = $doctor['doctorid'] ?? ('DOC' . str_pad($doctor['id'], 6, '0', STR_PAD_LEFT));
+recordLoginLog($connection1, 'Doctor', (int)$doctor['id'], $docCode, $doctor['full_name'], $doctor['phone_number'], $doctor['email'], 'Success');
+
+// Update last_login if column exists in doctors table
+if (!empty($doctor['id'])) {
+    @mysqli_query($connection1, "UPDATE `doctors` SET `last_login` = NOW() WHERE `id` = " . (int)$doctor['id']);
+}
 
 // Remove sensitive password before returning JSON
 unset($doctor['password']);
