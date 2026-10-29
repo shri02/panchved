@@ -20,6 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 // Ensure table exists as defined in schema.sql
 $createTableSql = "CREATE TABLE IF NOT EXISTS `recommended_packages` (
@@ -184,6 +185,33 @@ mysqli_stmt_bind_param(
 $executed = mysqli_stmt_execute($recInsertStmt);
 if ($executed) {
     $newRecommendationId = mysqli_insert_id($connection1);
+
+    $actor = getCurrentActor('Doctor');
+    $docId = $actor['user_id'] ?: ($doctorId ?: null);
+    $docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
+
+    recordActivity(
+        $connection1,
+        'Package',
+        'package.recommended',
+        "Dr. {$docName} recommended package '{$finalPackageName}' to {$patientName}",
+        'Package',
+        $packageDbId,
+        $finalPackageName,
+        [
+            'recommendation_id' => $newRecommendationId,
+            'package_id' => $packageDbId,
+            'package_name' => $finalPackageName,
+            'patient_id' => $patientDbId,
+            'patient_name' => $patientName,
+            'doctor_id' => $docId,
+            'doctor_name' => $docName,
+            'recommendation_note' => $customNote
+        ],
+        'Doctor',
+        $docId,
+        $docName
+    );
     mysqli_stmt_close($recInsertStmt);
 
     echo json_encode([

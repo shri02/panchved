@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 function cleanPhone($phone) {
     $digits = preg_replace('/\D/', '', $phone);
@@ -160,6 +161,25 @@ try {
     mysqli_stmt_execute($updateUser);
     mysqli_stmt_close($updateUser);
 } catch (Throwable $e) {}
+
+$docDisplayName = $doctor['full_name'] ?? 'Doctor';
+recordActivity(
+    $connection1,
+    'Auth',
+    'auth.password_changed',
+    "Dr. {$docDisplayName} changed their password",
+    'Doctor',
+    $docId,
+    $docDisplayName,
+    [
+        'doctor_id' => $docId,
+        'email' => $doctor['email'] ?? null,
+        'phone_number' => $doctor['phone_number'] ?? null
+    ],
+    'Doctor',
+    $docId,
+    $docDisplayName
+);
 
 echo json_encode([
     'success' => true,

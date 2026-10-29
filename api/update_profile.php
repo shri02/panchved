@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 function cleanPhone($phone) {
     $digits = preg_replace('/\D/', '', $phone);
@@ -232,6 +233,26 @@ if (!empty($doctorId)) {
         $updatedDoc['date_of_birth_display'] = date('d/m/Y', $timestamp);
         $_SESSION['doctor_profile'] = $updatedDoc;
     }
+
+    recordActivity(
+        $connection1,
+        'Profile',
+        'profile.updated',
+        "Dr. {$fullName} updated their profile details",
+        'Doctor',
+        $doctorId,
+        $fullName,
+        [
+            'phone' => $phone,
+            'email' => $email,
+            'expertise' => $expertise,
+            'area' => $area,
+            'years_of_experience' => $yoe
+        ],
+        'Doctor',
+        $doctorId,
+        $fullName
+    );
 
     echo json_encode([
         'success' => true,

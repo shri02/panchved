@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true) ?: $_POST;
@@ -61,6 +62,33 @@ if ($insertStmt) {
 
 // Increment workshop registration count
 mysqli_query($connection1, "UPDATE `workshops` SET `registrations` = `registrations` + 1 WHERE `id` = $workshopId");
+
+// Audit log
+$actor = getCurrentActor('Doctor');
+$docId = $actor['user_id'] ?: ($doctorId ?: null);
+$docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
+
+recordActivity(
+    $connection1,
+    'Workshop',
+    'workshop.booked',
+    "Dr. {$docName} registered for workshop: {$workshopTitle} (Booking: {$bookingCode}, Fee: ₹" . number_format($amount, 2) . ")",
+    'Workshop',
+    $workshopId,
+    $workshopTitle,
+    [
+        'booking_id' => $bookingCode,
+        'workshop_id' => $workshopId,
+        'workshop_title' => $workshopTitle,
+        'doctor_id' => $docId,
+        'doctor_name' => $docName,
+        'amount' => $amount,
+        'payment_method' => $paymentMethod
+    ],
+    'Doctor',
+    $docId,
+    $docName
+);
 
 echo json_encode([
     'success' => true,

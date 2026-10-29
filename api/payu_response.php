@@ -12,6 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/payu_config.php';
+require_once __DIR__ . '/activity_logger.php';
 
 $postData = $_POST;
 if (empty($postData)) {
@@ -125,6 +126,28 @@ if ($connection1 && !empty($txnid)) {
             @mysqli_stmt_execute($insTx);
             @mysqli_stmt_close($insTx);
         }
+        recordActivity(
+            $connection1,
+            'Billing',
+            $isSuccess ? 'payment.success' : 'payment.failed',
+            ($isSuccess ? 'Payment received' : 'Payment failed') . " for {$productInfo} (Amount: ₹" . number_format($amount, 2) . ", Txn: {$txnid})",
+            'Workshop',
+            intval($udf2) ?: null,
+            $productInfo,
+            [
+                'txnid' => $txnid,
+                'mihpayid' => $mihpayid,
+                'amount' => $amount,
+                'status' => $pStatus,
+                'product' => $productInfo,
+                'doctor_name' => $docName,
+                'email' => $email,
+                'phone' => $phone
+            ],
+            'Doctor',
+            intval($udf3) ?: null,
+            $docName
+        );
     } catch (Throwable $txErr) {
         error_log('PayU Txn Log Error: ' . $txErr->getMessage());
     }
@@ -173,6 +196,26 @@ if ($isSuccess && $connection1) {
         if ($wsId > 0) {
             @mysqli_query($connection1, "UPDATE `workshops` SET `registrations` = `registrations` + 1, `enrolled` = `enrolled` + 1 WHERE `id` = $wsId");
         }
+
+        recordActivity(
+            $connection1,
+            'Workshop',
+            'workshop.booked',
+            "Dr. {$doctorName} registered for workshop: {$productInfo} via PayU (Booking: {$bookingId})",
+            'Workshop',
+            $wsId,
+            $productInfo,
+            [
+                'booking_id' => $bookingId,
+                'workshop_id' => $wsId,
+                'amount' => $amount,
+                'txnid' => $txnid,
+                'payment_status' => 'Success'
+            ],
+            'Doctor',
+            $doctorDbId,
+            $doctorName
+        );
     } catch (Throwable $fulfillErr) {
         error_log('PayU Booking Fulfillment Error: ' . $fulfillErr->getMessage());
     }

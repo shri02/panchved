@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: $_POST;
@@ -142,6 +143,32 @@ if ($stmt) {
         if ($patientId > 0) {
             mysqli_query($connection1, "UPDATE `patients` SET `total_appointments` = `total_appointments` + 1 WHERE `id` = {$patientId}");
         }
+
+        // Audit log
+        recordActivity(
+            $connection1,
+            'Consultation',
+            'consultation.booked',
+            "Dr. {$doctorName} scheduled consultation {$appointmentCode} with {$patientName} on {$appointmentDate} at {$combinedTime}",
+            'Consultation',
+            $insertedId,
+            $appointmentCode,
+            [
+                'appointment_id' => $appointmentCode,
+                'patient_id' => $patientId,
+                'patient_name' => $patientName,
+                'doctor_id' => $doctorId,
+                'doctor_name' => $doctorName,
+                'appointment_date' => $appointmentDate,
+                'appointment_time' => $combinedTime,
+                'duration' => $duration,
+                'package_name' => $packageName,
+                'consultation_type' => $consultationType
+            ],
+            'Doctor',
+            $doctorId,
+            $doctorName
+        );
 
         // Format date e.g. "23 Sep 2026"
         $dateFormatted = date('j M Y', strtotime($appointmentDate));

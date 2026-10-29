@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: $_POST;
@@ -40,6 +41,25 @@ if ($appointmentId <= 0) {
     exit();
 }
 
+$appCode = '';
+$pName = '';
+$dName = '';
+$dId = 0;
+
+$chk = mysqli_prepare($connection1, "SELECT `appointment_id`, `patient_name`, `doctor_name`, `doctor_id` FROM `appointments` WHERE `id` = ? LIMIT 1");
+if ($chk) {
+    mysqli_stmt_bind_param($chk, "i", $appointmentId);
+    mysqli_stmt_execute($chk);
+    mysqli_stmt_bind_result($chk, $fCode, $fPName, $fDName, $fDId);
+    if (mysqli_stmt_fetch($chk)) {
+        $appCode = (string)$fCode;
+        $pName = (string)$fPName;
+        $dName = (string)$fDName;
+        $dId = (int)$fDId;
+    }
+    mysqli_stmt_close($chk);
+}
+
 $stmt = mysqli_prepare($connection1, "UPDATE `appointments` SET `status` = ? WHERE `id` = ?");
 if ($stmt) {
     mysqli_stmt_bind_param($stmt, "si", $newStatus, $appointmentId);
@@ -47,6 +67,28 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 
     if ($executed) {
+        $actor = getCurrentActor('Doctor');
+        $docId = $actor['user_id'] ?: ($dId ?: null);
+        $docName = $actor['user_name'] ?: ($dName ?: 'Doctor');
+
+        recordActivity(
+            $connection1,
+            'Consultation',
+            'consultation.status_changed',
+            "Updated consultation " . ($appCode ?: "#{$appointmentId}") . " (Patient: {$pName}) status to {$newStatus}",
+            'Consultation',
+            $appointmentId,
+            $appCode ?: "#{$appointmentId}",
+            [
+                'appointment_id' => $appCode,
+                'patient_name' => $pName,
+                'new_status' => $newStatus
+            ],
+            'Doctor',
+            $docId,
+            $docName
+        );
+
         echo json_encode([
             'success' => true,
             'message' => "Appointment status updated to {$newStatus} successfully!",

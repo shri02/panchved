@@ -20,6 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 // Support both FormData (multipart/form-data) and JSON payloads
 $rawInput = file_get_contents('php://input');
@@ -198,6 +199,31 @@ $patientPortalJsonDir = __DIR__ . '/../../panchved-patient/uploads/diets';
 if (is_dir($patientPortalJsonDir)) {
     @file_put_contents($patientPortalJsonDir . '/diets_data.json', json_encode($allDiets, JSON_PRETTY_PRINT));
 }
+
+$actor = getCurrentActor('Doctor');
+$docId = $actor['user_id'] ?: ($doctorId ?: null);
+$docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
+
+recordActivity(
+    $connection1,
+    'Diet',
+    'diet.assigned',
+    "Dr. {$docName} assigned diet plan to {$patientName}" . (!empty($originalFileName) ? " (File: {$originalFileName})" : ""),
+    'Diet',
+    $patientId,
+    $patientName,
+    [
+        'patient_id' => $patientId,
+        'patient_name' => $patientName,
+        'doctor_id' => $docId,
+        'doctor_name' => $docName,
+        'has_pdf' => !empty($uploadedPdfFileName),
+        'file_name' => $originalFileName
+    ],
+    'Doctor',
+    $docId,
+    $docName
+);
 
 echo json_encode([
     'success' => true,

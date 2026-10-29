@@ -19,6 +19,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/activity_logger.php';
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: $_POST;
@@ -165,6 +166,32 @@ if (!$saved && $patientId > 0) {
         mysqli_stmt_close($insStmt);
     }
 }
+
+$actor = getCurrentActor('Doctor');
+$docId = $actor['user_id'] ?: ($doctorId ?: null);
+$docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
+
+recordActivity(
+    $connection1,
+    'Prescription',
+    'prescription.saved',
+    "Dr. {$docName} saved prescription {$rxCode} for {$patientName} (Diagnosis: {$diagnosis})",
+    'Prescription',
+    $appointmentId ?: $patientId,
+    $rxCode,
+    [
+        'prescription_code' => $rxCode,
+        'patient_id' => $patientId,
+        'patient_name' => $patientName,
+        'doctor_id' => $docId,
+        'doctor_name' => $docName,
+        'diagnosis' => $diagnosis,
+        'appointment_id' => $appointmentId
+    ],
+    'Doctor',
+    $docId,
+    $docName
+);
 
 echo json_encode([
     'success' => true,
