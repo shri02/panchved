@@ -47,11 +47,14 @@ function getClientIpAddress() {
 // Helper: record login timing into login_logs
 function recordLoginLog($conn, $userType, $userId, $identifier, $name, $phone, $email, $status = 'Success') {
     if (!$conn) return false;
+    date_default_timezone_set('Asia/Kolkata');
+    @mysqli_query($conn, "SET time_zone = '+05:30'");
     $clientIp = getClientIpAddress();
     $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
-    $query = "INSERT INTO `login_logs` (`user_type`, `user_id`, `identifier`, `name`, `phone`, `email`, `ip_address`, `user_agent`, `status`, `login_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    $loginTime = date('Y-m-d H:i:s');
+    $query = "INSERT INTO `login_logs` (`user_type`, `user_id`, `identifier`, `name`, `phone`, `email`, `ip_address`, `user_agent`, `status`, `login_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     if ($stmt = @mysqli_prepare($conn, $query)) {
-        mysqli_stmt_bind_param($stmt, "sisssssss", $userType, $userId, $identifier, $name, $phone, $email, $clientIp, $userAgent, $status);
+        mysqli_stmt_bind_param($stmt, "sissssssss", $userType, $userId, $identifier, $name, $phone, $email, $clientIp, $userAgent, $status, $loginTime);
         @mysqli_stmt_execute($stmt);
         @mysqli_stmt_close($stmt);
         return true;
