@@ -216,7 +216,7 @@ if ($resData) {
             'complaint' => $agenda,
             'status' => $status,
             'meet_link' => 'https://meet.google.com',
-            'prescription_url' => 'add-prescription.html?patient_id=' . intval($row['patient_id'] ?: 1) . '&appointment_id=' . urlencode($row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT)))
+            'prescription_url' => 'add-prescription.html?patient_id=' . intval($row['patient_id'] ?: 1) . '&appointment_id=' . urlencode($row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT))) . '&id=' . intval($row['id'])
         ];
     }
     if ($stmtData) {

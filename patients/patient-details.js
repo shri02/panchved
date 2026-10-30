@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   </span>
                   <span>Change Status</span>
                 </button>
-                <a href="../appointments/add-prescription.html?patient_id=${currentPatientId}&appointment_id=${appt.id}" class="appt-dropdown-item">
+                <a href="../appointments/add-prescription.html?patient_id=${currentPatientId}&appointment_id=${appt.appointment_id}&id=${appt.id}" class="appt-dropdown-item">
                   <span class="appt-dropdown-item-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"></path>

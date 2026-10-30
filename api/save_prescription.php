@@ -25,8 +25,11 @@ $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: $_POST;
 
 $patientId = intval($input['patient_id'] ?? 0);
+// appointment_db_id: numeric PK sent directly (preferred, avoids string-parse ambiguity)
+$appointmentDbId = intval($input['appointment_db_id'] ?? 0);
 $rawAppointmentId = trim(strval($input['appointment_id'] ?? ''));
-$appointmentId = intval($rawAppointmentId);
+// If numeric PK provided directly, use it; otherwise parse from alphanumeric code
+$appointmentId = ($appointmentDbId > 0) ? $appointmentDbId : intval($rawAppointmentId);
 $patientName = trim($input['patient_name'] ?? '');
 $diagnosis = trim($input['diagnosis_name'] ?? $input['diagnosis'] ?? '');
 $diagnosisDuration = trim($input['diagnosis_duration'] ?? $input['duration'] ?? '');

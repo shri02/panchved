@@ -361,8 +361,28 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Read query params
       const urlParams = new URLSearchParams(window.location.search);
-      const patientId = urlParams.get('patient_id') || urlParams.get('id') || 1;
-      const appointmentId = urlParams.get('appointment_id') || 0;
+      let patientId = parseInt(urlParams.get('patient_id') || '0', 10);
+      let appointmentId = urlParams.get('appointment_id') || '';
+      let appointmentDbId = parseInt(urlParams.get('appointment_db_id') || '0', 10);
+
+      // Support 'id' param: could be appointment DB id or patient id depending on caller
+      const idParam = parseInt(urlParams.get('id') || '0', 10);
+      if (idParam > 0) {
+        if (urlParams.has('patient_id') || appointmentId) {
+          // If patient_id or appointment_id is present, id is the appointment DB ID
+          if (appointmentDbId <= 0) appointmentDbId = idParam;
+        } else if (patientId <= 0) {
+          // If only ?id=X is present, id is the patient_id
+          patientId = idParam;
+        }
+      }
+
+      // If appointment_id is numeric, treat as appointmentDbId
+      if (/^\d+$/.test(appointmentId) && appointmentDbId <= 0) {
+        appointmentDbId = parseInt(appointmentId, 10);
+      }
+
+      if (patientId <= 0) patientId = 1;
 
       // Dynamic Add Symptom
       const btnAddSymptom = document.getElementById('btnAddSymptom');
@@ -533,6 +553,7 @@
               body: JSON.stringify({
                 patient_id: patientId,
                 appointment_id: appointmentId,
+                appointment_db_id: appointmentDbId,
                 diagnosis_name: diagnosisName,
                 diagnosis_duration: diagnosisDuration,
                 examination_findings: examinationFindings,
