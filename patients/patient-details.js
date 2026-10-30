@@ -741,11 +741,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   function openSelectAppointmentModal() {
     const pId = currentPatientId || currentPatientData?.id || '';
-    const generalUrl = `../appointments/add-prescription.html?patient_id=${encodeURIComponent(pId)}`;
 
-    // If patient has no appointments, proceed directly to add-prescription.html
+    // If patient has no appointments, they CANNOT issue a prescription
     if (!currentPatientAppointments || currentPatientAppointments.length === 0) {
-      window.location.href = generalUrl;
+      showToast('Cannot issue prescription: This patient has no appointments. Please book or schedule an appointment first.', 'error');
       return;
     }
 
@@ -784,10 +783,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </a>
         `;
       }).join('');
-    }
-
-    if (btnIssueGeneralPrescription) {
-      btnIssueGeneralPrescription.href = generalUrl;
     }
 
     // Close view prescription modal if open, open appointment selection modal
