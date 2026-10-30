@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let currentPatientId = null;
   let currentPatientData = null;
+  let currentPatientAppointments = [];
   let currentApptPage = 1;
   const apptsPerPage = 3;
   let totalApptPages = 1;
@@ -184,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Populate Dynamic Health Progress Values & Bar Charts
         renderHealthCharts(data.health_progress);
+
+        // Store all appointments for prescription selection
+        currentPatientAppointments = data.all_appointments || data.appointments || [];
 
         // 4. Populate Appointments Table
         renderAppointmentsTable(data.appointments || []);
@@ -648,6 +652,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const rxEmptyState = document.getElementById('rxEmptyState');
   const rxContentContainer = document.getElementById('rxContentContainer');
   const rxCreatePrescriptionBtn = document.getElementById('rxCreatePrescriptionBtn');
+  const selectApptModal = document.getElementById('selectApptModal');
+  const closeSelectApptModalBtn = document.getElementById('closeSelectApptModalBtn');
+  const selectApptList = document.getElementById('selectApptList');
+  const btnIssueGeneralPrescription = document.getElementById('btnIssueGeneralPrescription');
 
   const rxPatientName = document.getElementById('rxPatientName');
   const rxPatientGender = document.getElementById('rxPatientGender');
@@ -725,6 +733,82 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     return String(symptomsData);
+  }
+
+
+  // =========================================================================
+  // Appointment Selection for Prescription Modal Flow
+  // =========================================================================
+  function openSelectAppointmentModal() {
+    const pId = currentPatientId || currentPatientData?.id || '';
+    const generalUrl = `../appointments/add-prescription.html?patient_id=${encodeURIComponent(pId)}`;
+
+    // If patient has no appointments, proceed directly to add-prescription.html
+    if (!currentPatientAppointments || currentPatientAppointments.length === 0) {
+      window.location.href = generalUrl;
+      return;
+    }
+
+    // Populate appointment choices in selectApptModal
+    if (selectApptList) {
+      selectApptList.innerHTML = currentPatientAppointments.map(appt => {
+        const apptId = appt.appointment_id || ('APT-' + appt.id);
+        const apptDate = appt.date || '--';
+        const apptTime = appt.time || '--';
+        const apptPackage = appt.package || 'General Consultation';
+        const statusClass = (appt.status || '').toLowerCase() === 'completed' ? 'status-completed' : 'status-scheduled';
+        const prescriptionLink = `../appointments/add-prescription.html?patient_id=${encodeURIComponent(pId)}&appointment_id=${encodeURIComponent(apptId)}&id=${encodeURIComponent(appt.id)}`;
+
+        return `
+          <a href="${prescriptionLink}" class="select-appt-card" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.2s ease;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <strong style="font-size: 14px; color: #1e293b;">${escapeHtml(apptId)}</strong>
+                <span class="status-badge ${statusClass}" style="font-size: 11px; padding: 2px 8px;">${escapeHtml(appt.status || 'Scheduled')}</span>
+              </div>
+              <div style="font-size: 13px; color: #475569;">
+                <span>📅 ${escapeHtml(apptDate)}</span>
+                <span style="margin: 0 6px; color: #cbd5e1;">•</span>
+                <span>⏰ ${escapeHtml(apptTime)}</span>
+              </div>
+              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                📋 ${escapeHtml(apptPackage)}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; color: #0d9488; font-size: 13px; font-weight: 600;">
+              <span>Select</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    if (btnIssueGeneralPrescription) {
+      btnIssueGeneralPrescription.href = generalUrl;
+    }
+
+    // Close view prescription modal if open, open appointment selection modal
+    if (viewPrescriptionModal) {
+      viewPrescriptionModal.classList.remove('open');
+      viewPrescriptionModal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (selectApptModal && modalOverlay) {
+      modalOverlay.classList.add('active');
+      selectApptModal.classList.add('open');
+      selectApptModal.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeSelectAppointmentModal() {
+    if (selectApptModal && modalOverlay) {
+      selectApptModal.classList.remove('open');
+      selectApptModal.setAttribute('aria-hidden', 'true');
+      modalOverlay.classList.remove('active');
+    }
   }
 
   async function openPrescriptionModal(selectedRxId = null) {
@@ -852,6 +936,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (rxCreatePrescriptionBtn) {
+    rxCreatePrescriptionBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSelectAppointmentModal();
+    });
+  }
+
+  if (rxAddNewBtn) {
+    rxAddNewBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSelectAppointmentModal();
+    });
+  }
+
+  if (closeSelectApptModalBtn) {
+    closeSelectApptModalBtn.addEventListener('click', closeSelectAppointmentModal);
+  }
+
   if (viewPrescriptionLink) {
     viewPrescriptionLink.addEventListener('click', (e) => {
       e.preventDefault();
@@ -868,6 +970,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeBookAppointment();
       closeSuccessModal();
       closePrescriptionModal();
+      closeSelectAppointmentModal();
     });
   }
 
@@ -877,6 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeBookAppointment();
       closeSuccessModal();
       closePrescriptionModal();
+      closeSelectAppointmentModal();
     }
   });
 

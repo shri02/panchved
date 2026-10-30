@@ -220,6 +220,7 @@ echo json_encode([
     ],
     'health_progress' => $healthProgress,
     'appointments' => $paginatedAppts,
+    'all_appointments' => $appointments,
     'pagination' => [
         'current_page' => $page,
         'total_pages' => $totalPages,
