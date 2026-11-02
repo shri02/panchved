@@ -52,9 +52,31 @@ $types = '';
 
 // 1. Doctor Filter
 if ($doctorId > 0) {
-    $whereClauses[] = "(`a`.`doctor_id` = ? OR `a`.`doctor_id` IS NULL OR `a`.`doctor_id` = 0)";
-    $params[] = $doctorId;
-    $types .= 'i';
+    $currentDocName = '';
+    if ($stmtDoc = mysqli_prepare($connection1, "SELECT full_name FROM doctors WHERE id = ? OR doctorid = ? LIMIT 1")) {
+        $docIdStr = (string)$doctorId;
+        mysqli_stmt_bind_param($stmtDoc, "is", $doctorId, $docIdStr);
+        mysqli_stmt_execute($stmtDoc);
+        $resDoc = mysqli_stmt_get_result($stmtDoc);
+        if ($rowDoc = mysqli_fetch_assoc($resDoc)) {
+            $currentDocName = trim($rowDoc['full_name']);
+        }
+        mysqli_stmt_close($stmtDoc);
+    }
+
+    if (!empty($currentDocName)) {
+        $cleanDocName = trim(preg_replace('/\s+/', ' ', preg_replace('/^dr\.?\s+/i', '', $currentDocName)));
+        $docLike = '%' . $cleanDocName . '%';
+        $whereClauses[] = "(`a`.`doctor_id` = ? OR `a`.`doctor_name` = ? OR `a`.`doctor_name` LIKE ? OR `a`.`doctor_id` IS NULL OR `a`.`doctor_id` = 0)";
+        $params[] = $doctorId;
+        $params[] = $currentDocName;
+        $params[] = $docLike;
+        $types .= 'iss';
+    } else {
+        $whereClauses[] = "(`a`.`doctor_id` = ? OR `a`.`doctor_id` IS NULL OR `a`.`doctor_id` = 0)";
+        $params[] = $doctorId;
+        $types .= 'i';
+    }
 }
 
 // 2. Tab Condition (Upcoming after present time vs History in past)
