@@ -18,9 +18,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/database.php';
-require_once __DIR__ . '/activity_logger.php';
-
 function sendMeetResponse($success, $message, $data = [], $code = 200) {
     http_response_code($code);
     echo json_encode(array_merge([
@@ -31,52 +28,69 @@ function sendMeetResponse($success, $message, $data = [], $code = 200) {
     exit();
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-    sendMeetResponse(false, 'Only POST requests are allowed.', [], 405);
-}
-
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
-if (!is_array($input)) {
-    $input = $_POST;
-}
-
-$targetId = intval($input['id'] ?? ($input['appointment_db_id'] ?? 0));
-$appointmentCode = trim((string)($input['appointment_id'] ?? ($input['appointment_code'] ?? '')));
-$rawMeetLink = trim((string)($input['meet_link'] ?? ($input['meeting_link'] ?? ($input['link'] ?? ''))));
-
-if ($targetId <= 0 && empty($appointmentCode)) {
-    sendMeetResponse(false, 'Missing appointment ID.', [], 400);
-}
-
-// Clean and normalize link format
-$cleanMeetLink = '';
-if (!empty($rawMeetLink)) {
-    $cleanMeetLink = $rawMeetLink;
-    if (!preg_match('/^https?:\/\//i', $cleanMeetLink)) {
-        $cleanMeetLink = 'https://' . $cleanMeetLink;
+// Convert any PHP warnings/notices into ErrorException so try-catch catches everything cleanly
+set_error_handler(function($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) {
+        return false;
     }
-}
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
 
-// Ensure database connection
-if (!$connection1) {
-    sendMeetResponse(false, 'Database connection unavailable.', [], 500);
-}
+try {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        sendMeetResponse(false, 'Only POST requests are allowed.', [], 405);
+    }
 
-// Resolve appointment details
-$appDbId = 0;
-$appCode = '';
-$patientName = '';
-$doctorName = '';
-$doctorId = 0;
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    if (!is_array($input)) {
+        $input = $_POST;
+    }
 
-$chkQuery = "SELECT id, appointment_id, patient_name, doctor_name, doctor_id FROM appointments WHERE " . ($targetId > 0 ? "id = ?" : "appointment_id = ?") . " LIMIT 1";
-if ($chkStmt = mysqli_prepare($connection1, $chkQuery)) {
+    $targetId = intval($input['id'] ?? ($input['appointment_db_id'] ?? 0));
+    $appointmentCode = trim((string)($input['appointment_id'] ?? ($input['appointment_code'] ?? '')));
+    $rawMeetLink = trim((string)($input['meet_link'] ?? ($input['meeting_link'] ?? ($input['link'] ?? ''))));
+
+    if ($targetId <= 0 && empty($appointmentCode)) {
+        sendMeetResponse(false, 'Missing appointment ID.', [], 400);
+    }
+
+    // Clean and normalize link format
+    $cleanMeetLink = '';
+    if (!empty($rawMeetLink)) {
+        $cleanMeetLink = $rawMeetLink;
+        if (!preg_match('/^https?:\/\//i', $cleanMeetLink)) {
+            $cleanMeetLink = 'https://' . $cleanMeetLink;
+        }
+    }
+
+    require_once __DIR__ . '/database.php';
+    require_once __DIR__ . '/activity_logger.php';
+
+    // Ensure database connection
+    if (!isset($connection1) || !$connection1) {
+        sendMeetResponse(false, 'Database connection unavailable.', [], 500);
+    }
+
+    // Resolve appointment details
+    $appDbId = 0;
+    $appCode = '';
+    $patientName = '';
+    $doctorName = '';
+    $doctorId = 0;
+
+    $chkQuery = "SELECT id, appointment_id, patient_name, doctor_name, doctor_id FROM appointments WHERE " . ($targetId > 0 ? "id = ?" : "appointment_id = ?") . " LIMIT 1";
+    $chkStmt = mysqli_prepare($connection1, $chkQuery);
+    if (!$chkStmt) {
+        throw new mysqli_sql_exception(mysqli_error($connection1), mysqli_errno($connection1));
+    }
+
     if ($targetId > 0) {
         mysqli_stmt_bind_param($chkStmt, "i", $targetId);
     } else {
         mysqli_stmt_bind_param($chkStmt, "s", $appointmentCode);
     }
+    
     mysqli_stmt_execute($chkStmt);
     $res = mysqli_stmt_get_result($chkStmt);
     if ($row = mysqli_fetch_assoc($res)) {
@@ -87,65 +101,81 @@ if ($chkStmt = mysqli_prepare($connection1, $chkQuery)) {
         $doctorId = (int)$row['doctor_id'];
     }
     mysqli_stmt_close($chkStmt);
-}
 
-if ($appDbId <= 0 && empty($appCode)) {
-    sendMeetResponse(false, 'Appointment not found in database.', [], 404);
-}
+    if ($appDbId <= 0 && empty($appCode)) {
+        sendMeetResponse(false, 'Appointment not found in database.', [], 404);
+    }
 
-// Ensure meet_link column exists
-$colCheck = @mysqli_query($connection1, "SHOW COLUMNS FROM appointments LIKE 'meet_link'");
-if ($colCheck && mysqli_num_rows($colCheck) === 0) {
-    @mysqli_query($connection1, "ALTER TABLE appointments ADD COLUMN `meet_link` VARCHAR(255) NULL DEFAULT NULL AFTER `agenda`");
-}
+    // Update meet link
+    $upQuery = "UPDATE appointments SET meet_link = ?, updated_at = NOW() WHERE id = ?";
+    $upStmt = mysqli_prepare($connection1, $upQuery);
+    if (!$upStmt) {
+        throw new mysqli_sql_exception(mysqli_error($connection1), mysqli_errno($connection1));
+    }
 
-// Update meet link
-$upQuery = "UPDATE appointments SET meet_link = ?, updated_at = NOW() WHERE id = ?";
-$upStmt = mysqli_prepare($connection1, $upQuery);
-if (!$upStmt) {
-    sendMeetResponse(false, 'Failed to prepare update query: ' . mysqli_error($connection1), [], 500);
-}
+    mysqli_stmt_bind_param($upStmt, "si", $cleanMeetLink, $appDbId);
+    $executed = mysqli_stmt_execute($upStmt);
+    mysqli_stmt_close($upStmt);
 
-mysqli_stmt_bind_param($upStmt, "si", $cleanMeetLink, $appDbId);
-$executed = mysqli_stmt_execute($upStmt);
-$affected = mysqli_stmt_affected_rows($upStmt);
-mysqli_stmt_close($upStmt);
+    if (!$executed) {
+        throw new mysqli_sql_exception('Failed to execute meet link update statement.');
+    }
 
-if (!$executed) {
-    sendMeetResponse(false, 'Database update failed: ' . mysqli_error($connection1), [], 500);
-}
+    // Record activity (safely wrapped so log failure never breaks primary action)
+    try {
+        if (function_exists('getCurrentActor') && function_exists('recordActivity')) {
+            $actor = getCurrentActor('Doctor');
+            $docId = $actor['user_id'] ?: ($doctorId ?: null);
+            $docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
 
-// Record activity
-$actor = getCurrentActor('Doctor');
-$docId = $actor['user_id'] ?: ($doctorId ?: null);
-$docName = $actor['user_name'] ?: ($doctorName ?: 'Doctor');
+            $actionDesc = !empty($cleanMeetLink)
+                ? "Doctor {$docName} updated Google Meet link for consultation " . ($appCode ?: "#{$appDbId}") . " (Patient: {$patientName})"
+                : "Doctor {$docName} cleared Google Meet link for consultation " . ($appCode ?: "#{$appDbId}");
 
-$actionDesc = !empty($cleanMeetLink)
-    ? "Doctor {$docName} updated Google Meet link for consultation " . ($appCode ?: "#{$appDbId}") . " (Patient: {$patientName})"
-    : "Doctor {$docName} cleared Google Meet link for consultation " . ($appCode ?: "#{$appDbId}");
+            recordActivity(
+                $connection1,
+                'Consultation',
+                'consultation.meet_link_updated',
+                $actionDesc,
+                'Consultation',
+                $appDbId,
+                $appCode ?: "#{$appDbId}",
+                [
+                    'appointment_id' => $appCode,
+                    'patient_name' => $patientName,
+                    'meet_link' => $cleanMeetLink
+                ],
+                'Doctor',
+                $docId,
+                $docName
+            );
+        }
+    } catch (Throwable $logEx) {
+        error_log("Meet link activity logging notice: " . $logEx->getMessage());
+    }
 
-recordActivity(
-    $connection1,
-    'Consultation',
-    'consultation.meet_link_updated',
-    $actionDesc,
-    'Consultation',
-    $appDbId,
-    $appCode ?: "#{$appDbId}",
-    [
+    sendMeetResponse(true, !empty($cleanMeetLink) ? 'Meeting link saved successfully!' : 'Meeting link cleared.', [
         'appointment_id' => $appCode,
-        'patient_name' => $patientName,
-        'meet_link' => $cleanMeetLink
-    ],
-    'Doctor',
-    $docId,
-    $docName
-);
+        'id' => $appDbId,
+        'meet_link' => $cleanMeetLink,
+        'has_meet_link' => !empty($cleanMeetLink)
+    ]);
 
-sendMeetResponse(true, !empty($cleanMeetLink) ? 'Meeting link saved successfully!' : 'Meeting link cleared.', [
-    'appointment_id' => $appCode,
-    'id' => $appDbId,
-    'meet_link' => $cleanMeetLink,
-    'has_meet_link' => !empty($cleanMeetLink)
-]);
-
+} catch (mysqli_sql_exception $e) {
+    sendMeetResponse(false, 'Database Error: ' . $e->getMessage(), [
+        'error_type' => 'mysqli_sql_exception',
+        'sqlstate' => method_exists($e, 'getSqlState') ? $e->getSqlState() : null,
+        'error_code' => $e->getCode(),
+        'error_details' => $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ], 500);
+} catch (Throwable $e) {
+    sendMeetResponse(false, 'Server Error: ' . $e->getMessage(), [
+        'error_type' => get_class($e),
+        'error_code' => $e->getCode(),
+        'error_details' => $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ], 500);
+}
