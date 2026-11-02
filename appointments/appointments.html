@@ -316,7 +316,8 @@
 
   </div>
 
-  <script src="../shared/api_config.js">
+  <script src="../shared/api_config.js"></script>
+  <script>
     window.confirmDeletePrescription = async function(id, apptCode, patientName) {
       const confirmed = confirm(`Are you sure you want to remove the prescription for consultation ${apptCode || '#' + id} (${patientName || 'Patient'})?`);
       if (!confirmed) return;
@@ -330,8 +331,12 @@
         const data = await res.json();
         if (data.success) {
           alert('Prescription removed successfully!');
-          if (typeof fetchAppointments === 'function') {
-            fetchAppointments('history', historyPage, searchQuery);
+          if (typeof window.reloadAppointments === 'function') {
+            window.reloadAppointments();
+          } else if (typeof window.fetchAppointments === 'function') {
+            window.fetchAppointments('history');
+          } else {
+            window.location.reload();
           }
         } else {
           alert(data.message || 'Could not remove prescription. Please try again.');
@@ -341,7 +346,6 @@
         alert('Network error while removing prescription.');
       }
     };
-
   </script>
   <script src="../shared/dashboard.js"></script>
   <script>
@@ -696,6 +700,14 @@
         }
       }
 
+      // Expose reload functions to window so modals can refresh the table
+      window.reloadAppointments = function() {
+        const q = searchInput ? searchInput.value.trim() : searchQuery;
+        const page = (currentTab === 'upcoming') ? upcomingPage : historyPage;
+        fetchAppointments(currentTab, page, q);
+      };
+      window.fetchAppointments = fetchAppointments;
+
       // Initial check URL hash/param
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('tab') === 'history' || window.location.hash === '#history') {
@@ -778,11 +790,12 @@
         const data = await res.json();
         if (data.success) {
           closeMeetModal();
-          const d = new Date();
-          const pad = n => String(n).padStart(2, '0');
-          const clientNow = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-          if (typeof fetchAppointments === 'function') {
-            fetchAppointments(currentTab, currentTab === 'upcoming' ? upcomingPage : historyPage, searchQuery);
+          if (typeof window.reloadAppointments === 'function') {
+            window.reloadAppointments();
+          } else if (typeof window.fetchAppointments === 'function') {
+            window.fetchAppointments();
+          } else {
+            window.location.reload();
           }
         } else {
           alert(data.message || 'Failed to update meeting link');
