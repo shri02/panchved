@@ -384,6 +384,16 @@
 
       if (patientId <= 0) patientId = 1;
 
+      const isEditMode = (urlParams.get('mode') === 'edit');
+      const pageTitleEl = document.querySelector('.page-title');
+      const welcomeSubEl = document.querySelector('.welcome-subtitle');
+
+      if (isEditMode) {
+        document.title = 'Ocayur - Edit Prescription';
+        if (pageTitleEl) pageTitleEl.textContent = 'Edit Prescription';
+        if (welcomeSubEl) welcomeSubEl.textContent = 'Update prescription, symptoms, diagnosis, and medications.';
+      }
+
       const diagnosisNameInput = document.getElementById('diagnosisName');
       const diagnosisDurationInput = document.getElementById('diagnosisDuration');
       const examinationFindingsInput = document.getElementById('examinationFindings');
@@ -534,10 +544,9 @@
             const rx = data.prescription;
 
             // Update UI for Edit Mode
-            const pageHeading = document.querySelector('.page-main-heading');
-            if (pageHeading) pageHeading.textContent = 'Edit Prescription';
-            const pageSub = document.querySelector('.page-sub-heading');
-            if (pageSub) pageSub.textContent = `Update prescription details for ${rx.patient_name || 'Patient'} (${appointmentId ? 'Consultation: ' + appointmentId : ''})`;
+            document.title = 'Ocayur - Edit Prescription';
+            if (pageTitleEl) pageTitleEl.textContent = 'Edit Prescription';
+            if (welcomeSubEl) welcomeSubEl.textContent = `Update prescription details for ${rx.patient_name || 'Patient'} (${appointmentId ? 'Consultation: ' + appointmentId : ''})`;
             if (btnSubmitPrescription) btnSubmitPrescription.textContent = 'Update Prescription';
 
             // Prefill diagnosis & notes
@@ -583,15 +592,8 @@
       loadExistingPrescription();
 
       // Submit Prescription Action with Backend Integration
-      const btnSubmitPrescription = document.getElementById('btnSubmitPrescription');
-      const toast = document.getElementById('prescriptionToast');
-
       if (btnSubmitPrescription && toast) {
         btnSubmitPrescription.addEventListener('click', async () => {
-          const diagnosisNameInput = document.getElementById('diagnosisName');
-          const diagnosisDurationInput = document.getElementById('diagnosisDuration');
-          const examinationFindingsInput = document.getElementById('examinationFindings');
-          const doctorNotesInput = document.getElementById('doctorNotes');
 
           const diagnosisName = diagnosisNameInput?.value.trim() || '';
           const diagnosisDuration = diagnosisDurationInput?.value.trim() || '';
@@ -679,13 +681,13 @@
             } else {
               alert(resData.message || 'Could not save prescription. Please check the inputs.');
               btnSubmitPrescription.disabled = false;
-              btnSubmitPrescription.textContent = 'Add Prescription';
+              btnSubmitPrescription.textContent = (isEditMode || btnSubmitPrescription.textContent.includes('Update')) ? 'Update Prescription' : 'Add Prescription';
             }
           } catch (e) {
             console.error('Prescription submit error:', e);
             alert('A network error occurred while saving the prescription. Please try again.');
             btnSubmitPrescription.disabled = false;
-            btnSubmitPrescription.textContent = 'Add Prescription';
+            btnSubmitPrescription.textContent = (isEditMode || btnSubmitPrescription.textContent.includes('Update')) ? 'Update Prescription' : 'Add Prescription';
           }
         });
       }
