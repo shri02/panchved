@@ -977,17 +977,67 @@ input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
 /* ==========================================================================
    PRESCRIPTION MODAL STYLES (Matching Patient Consultation Page Exactly)
    ========================================================================== */
-.prescription-modal-box {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
-  max-width: 720px;
-  width: 92%;
-  padding: 32px 36px;
-  position: relative;
-  max-height: 90vh;
-  overflow-y: auto;
-  margin: 0 auto;
+#viewPrescriptionModal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 92% !important;
+  max-width: 760px !important;
+  max-height: 88vh !important;
+  overflow-y: auto !important;
+  background-color: #ffffff !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3) !important;
+  z-index: 1050 !important;
+  padding: 28px 36px 36px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border: none !important;
+}
+
+#viewPrescriptionModal.open {
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#viewPrescriptionModal .rx-close-btn {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  z-index: 20 !important;
+  padding: 0 !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+#viewPrescriptionModal .rx-close-btn:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.rx-history-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 10px 16px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  margin-top: 4px !important;
+  margin-bottom: 22px !important;
+  margin-right: 38px !important;
 }
 
 .prescription-top-header {
@@ -1076,29 +1126,77 @@ input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
 
 /* Medication Columns/Table Grid */
 .rx-medication-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 0.9fr 1.1fr 0.9fr 2fr;
-  gap: 14px;
   background-color: #f8fafc;
-  padding: 16px;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border-radius: 10px;
   margin-bottom: 22px;
   border: 1px solid #f1f5f9;
 }
 
-.rx-med-col-header {
+.rx-med-table-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.1fr 1fr 1.8fr;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.rx-med-th {
   color: #0284c7;
   font-size: 12.5px;
   font-weight: 700;
-  margin-bottom: 6px;
+  letter-spacing: 0.2px;
 }
 
-.rx-med-col-val {
+.rx-med-table-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.1fr 1fr 1.8fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf2f7;
+  align-items: baseline;
+  font-size: 12px;
   color: #0f172a;
-  font-size: 11.5px;
-  font-weight: 700;
+}
+
+.rx-med-table-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rx-med-td {
   line-height: 1.4;
+  word-break: break-word;
+}
+
+.rx-med-name-text {
+  font-weight: 700;
+  color: #0f172a;
   text-transform: uppercase;
+}
+
+.rx-med-mobile-label {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .rx-med-table-header {
+    display: none;
+  }
+  .rx-med-table-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .rx-med-mobile-label {
+    display: inline-block;
+    color: #0284c7;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 6px;
+  }
 }
 
 .rx-findings-section {

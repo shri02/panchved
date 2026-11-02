@@ -873,32 +873,44 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (meds.length > 0) {
-              rxMedGrid.innerHTML = meds.map(med => {
-                const medNameHtml = escapeHtml(med.medication || med.name || '--').replace(/\((.*?)\)/, '<br>($1)');
+              let medHtml = `
+                <div class="rx-med-table-header">
+                  <span class="rx-med-th">Medication:</span>
+                  <span class="rx-med-th">Dose:</span>
+                  <span class="rx-med-th">Frequency:</span>
+                  <span class="rx-med-th">Duration:</span>
+                  <span class="rx-med-th">Remarks:</span>
+                </div>
+              `;
+              meds.forEach(med => {
+                const medNameHtml = escapeHtml(med.medication || med.name || '--').replace(/\((.*?)\)/, '<br><small style="color: #64748b; font-weight: normal;">($1)</small>');
                 const freqHtml = escapeHtml(med.frequency || '--').replace('BEFORE', '<br>BEFORE');
-                return `
-                  <div class="rx-med-col">
-                    <p class="rx-med-col-header">Medication:</p>
-                    <p class="rx-med-col-val">${medNameHtml}</p>
-                  </div>
-                  <div class="rx-med-col">
-                    <p class="rx-med-col-header">Dose:</p>
-                    <p class="rx-med-col-val">${escapeHtml(med.dose || '--')}</p>
-                  </div>
-                  <div class="rx-med-col">
-                    <p class="rx-med-col-header">Frequency:</p>
-                    <p class="rx-med-col-val">${freqHtml}</p>
-                  </div>
-                  <div class="rx-med-col">
-                    <p class="rx-med-col-header">Duration:</p>
-                    <p class="rx-med-col-val">${escapeHtml(med.duration || '--')}</p>
-                  </div>
-                  <div class="rx-med-col">
-                    <p class="rx-med-col-header">Remarks:</p>
-                    <p class="rx-med-col-val">${escapeHtml(med.remarks || '--')}</p>
+                medHtml += `
+                  <div class="rx-med-table-row">
+                    <div class="rx-med-td">
+                      <span class="rx-med-mobile-label">Medication:</span>
+                      <strong class="rx-med-name-text">${medNameHtml}</strong>
+                    </div>
+                    <div class="rx-med-td">
+                      <span class="rx-med-mobile-label">Dose:</span>
+                      <span>${escapeHtml(med.dose || '--')}</span>
+                    </div>
+                    <div class="rx-med-td">
+                      <span class="rx-med-mobile-label">Frequency:</span>
+                      <span>${freqHtml}</span>
+                    </div>
+                    <div class="rx-med-td">
+                      <span class="rx-med-mobile-label">Duration:</span>
+                      <span>${escapeHtml(med.duration || '--')}</span>
+                    </div>
+                    <div class="rx-med-td">
+                      <span class="rx-med-mobile-label">Remarks:</span>
+                      <span>${escapeHtml(med.remarks || '--')}</span>
+                    </div>
                   </div>
                 `;
-              }).join('');
+              });
+              rxMedGrid.innerHTML = medHtml;
             } else {
               rxMedGrid.innerHTML = '<div style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 22px 14px; color: #64748b; font-style: italic;">No medications prescribed for this consultation.</div>';
             }
