@@ -30,12 +30,11 @@ try {
     require_once __DIR__ . '/database.php';
 
     if (!isset($connection1) || !$connection1) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Database connection unavailable.'
-        ]);
-        exit();
+        throw new mysqli_sql_exception('Database connection unavailable.');
     }
+
+    // Enable strict MySQL exception reporting
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
     $patientId = intval($_GET['id'] ?? 0);
     $patientCode = trim($_GET['patient_id'] ?? '');
@@ -44,18 +43,22 @@ try {
     $patient = null;
     if ($patientId > 0) {
         $stmt = mysqli_prepare($connection1, "SELECT * FROM `patients` WHERE `id` = ? LIMIT 1");
-        mysqli_stmt_bind_param($stmt, "i", $patientId);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        $patient = mysqli_fetch_assoc($res);
-        mysqli_stmt_close($stmt);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $patientId);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $patient = mysqli_fetch_assoc($res);
+            mysqli_stmt_close($stmt);
+        }
     } elseif (!empty($patientCode)) {
         $stmt = mysqli_prepare($connection1, "SELECT * FROM `patients` WHERE `patient_id` = ? LIMIT 1");
-        mysqli_stmt_bind_param($stmt, "s", $patientCode);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        $patient = mysqli_fetch_assoc($res);
-        mysqli_stmt_close($stmt);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "s", $patientCode);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $patient = mysqli_fetch_assoc($res);
+            mysqli_stmt_close($stmt);
+        }
     }
 
     // Fallback to first patient ONLY if no patient was requested at all
@@ -69,10 +72,11 @@ try {
     }
 
     if (!$patient) {
+        http_response_code(404);
         echo json_encode([
             'success' => false,
             'message' => 'Patient record not found.'
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
         exit();
     }
 
@@ -137,7 +141,7 @@ try {
         }
     }
 
-    // 3. Dynamic Health Progress from `health_metrics` table
+    // 3. Dynamic Health Progress from `health_metrics` table (safely guarded)
     $healthProgress = [
         'dates' => [],
         'weight' => [
@@ -162,58 +166,67 @@ try {
         ]
     ];
 
-    $chkHmTable = mysqli_query($connection1, "SHOW TABLES LIKE 'health_metrics'");
-    if ($chkHmTable && mysqli_num_rows($chkHmTable) > 0 && ($id > 0 || !empty($phone))) {
-        $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
-        $stmtHm = mysqli_prepare($connection1, "SELECT `id`, `weight`, `abdomen`, `bp`, `sugar`, `recorded_date` 
-            FROM `health_metrics` 
-            WHERE (`patient_id` = ? AND ? > 0) OR (`patient_phone` = ? AND ? != '') 
-            ORDER BY `recorded_date` ASC, `id` ASC");
-        if ($stmtHm) {
-            mysqli_stmt_bind_param($stmtHm, "iiss", $id, $id, $cleanPhone, $cleanPhone);
-            mysqli_stmt_execute($stmtHm);
-            $resHm = mysqli_stmt_get_result($stmtHm);
-            
-            $hmReadings = [];
-            while ($hmRow = mysqli_fetch_assoc($resHm)) {
-                $hmReadings[] = $hmRow;
-            }
-            mysqli_stmt_close($stmtHm);
-
-            if (!empty($hmReadings)) {
-                foreach ($hmReadings as $hr) {
-                    $dLabel = !empty($hr['recorded_date']) ? date('d M', strtotime($hr['recorded_date'])) : '--';
-                    $healthProgress['dates'][] = $dLabel;
-                    $healthProgress['weight']['values'][] = !empty($hr['weight']) ? floatval($hr['weight']) : null;
-                    $healthProgress['abdomen_girth']['values'][] = !empty($hr['abdomen']) ? floatval($hr['abdomen']) : null;
-                    $healthProgress['blood_pressure']['values'][] = !empty($hr['bp']) ? floatval($hr['bp']) : null;
-                    $healthProgress['blood_sugar']['values'][] = !empty($hr['sugar']) ? floatval($hr['sugar']) : null;
+    try {
+        $chkHmTable = mysqli_query($connection1, "SHOW TABLES LIKE 'health_metrics'");
+        if ($chkHmTable && mysqli_num_rows($chkHmTable) > 0 && ($id > 0 || !empty($phone))) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+            $stmtHm = mysqli_prepare($connection1, "SELECT `id`, `weight`, `abdomen`, `bp`, `sugar`, `recorded_date` 
+                FROM `health_metrics` 
+                WHERE (`patient_id` = ? AND ? > 0) OR (`patient_phone` = ? AND ? != '') 
+                ORDER BY `recorded_date` ASC, `id` ASC");
+            if ($stmtHm) {
+                mysqli_stmt_bind_param($stmtHm, "iiss", $id, $id, $cleanPhone, $cleanPhone);
+                mysqli_stmt_execute($stmtHm);
+                $resHm = mysqli_stmt_get_result($stmtHm);
+                
+                $hmReadings = [];
+                while ($hmRow = mysqli_fetch_assoc($resHm)) {
+                    $hmReadings[] = $hmRow;
                 }
+                mysqli_stmt_close($stmtHm);
 
-                $lastReading = end($hmReadings);
-                if (!empty($lastReading['weight'])) $healthProgress['weight']['current'] = $lastReading['weight'];
-                if (!empty($lastReading['abdomen'])) $healthProgress['abdomen_girth']['current'] = $lastReading['abdomen'];
-                if (!empty($lastReading['bp'])) $healthProgress['blood_pressure']['current'] = $lastReading['bp'];
-                if (!empty($lastReading['sugar'])) $healthProgress['blood_sugar']['current'] = $lastReading['sugar'];
+                if (!empty($hmReadings)) {
+                    foreach ($hmReadings as $hr) {
+                        $dLabel = !empty($hr['recorded_date']) ? date('d M', strtotime($hr['recorded_date'])) : '--';
+                        $healthProgress['dates'][] = $dLabel;
+                        $healthProgress['weight']['values'][] = !empty($hr['weight']) ? floatval($hr['weight']) : null;
+                        $healthProgress['abdomen_girth']['values'][] = !empty($hr['abdomen']) ? floatval($hr['abdomen']) : null;
+                        $healthProgress['blood_pressure']['values'][] = !empty($hr['bp']) ? floatval($hr['bp']) : null;
+                        $healthProgress['blood_sugar']['values'][] = !empty($hr['sugar']) ? floatval($hr['sugar']) : null;
+                    }
+
+                    $lastReading = end($hmReadings);
+                    if (!empty($lastReading['weight'])) $healthProgress['weight']['current'] = $lastReading['weight'];
+                    if (!empty($lastReading['abdomen'])) $healthProgress['abdomen_girth']['current'] = $lastReading['abdomen'];
+                    if (!empty($lastReading['bp'])) $healthProgress['blood_pressure']['current'] = $lastReading['bp'];
+                    if (!empty($lastReading['sugar'])) $healthProgress['blood_sugar']['current'] = $lastReading['sugar'];
+                }
             }
         }
+    } catch (Throwable $hmEx) {
+        error_log("Notice: health metrics lookup: " . $hmEx->getMessage());
     }
 
-    // 4. Dynamic Unread Messages from `chat_messages` table
+    // 4. Dynamic Unread Messages from `chat_messages` table (safely guarded)
     $unreadMessages = 0;
-    $chkChatTable = mysqli_query($connection1, "SHOW TABLES LIKE 'chat_messages'");
-    if ($chkChatTable && mysqli_num_rows($chkChatTable) > 0 && ($id > 0 || !empty($phone))) {
-        $stmtChat = mysqli_prepare($connection1, "SELECT COUNT(*) as unread FROM `chat_messages` WHERE ((`sender_id` = ? AND `sender_type` = 'patient') OR (`patient_phone` = ? AND ? != '')) AND `is_read` = 0");
-        if ($stmtChat) {
-            $cPhone = !empty($cleanPhone) ? $cleanPhone : '';
-            mysqli_stmt_bind_param($stmtChat, "iss", $id, $cPhone, $cPhone);
-            mysqli_stmt_execute($stmtChat);
-            $resChat = mysqli_stmt_get_result($stmtChat);
-            if ($rowChat = mysqli_fetch_assoc($resChat)) {
-                $unreadMessages = intval($rowChat['unread'] ?? 0);
+    try {
+        $chkChatTable = mysqli_query($connection1, "SHOW TABLES LIKE 'chat_messages'");
+        if ($chkChatTable && mysqli_num_rows($chkChatTable) > 0 && ($id > 0 || !empty($phone))) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+            $stmtChat = mysqli_prepare($connection1, "SELECT COUNT(*) as unread FROM `chat_messages` WHERE ((`sender_id` = ? AND `sender_type` = 'patient') OR (`patient_phone` = ? AND ? != '')) AND `is_read` = 0");
+            if ($stmtChat) {
+                $cPhone = !empty($cleanPhone) ? $cleanPhone : '';
+                mysqli_stmt_bind_param($stmtChat, "iss", $id, $cPhone, $cPhone);
+                mysqli_stmt_execute($stmtChat);
+                $resChat = mysqli_stmt_get_result($stmtChat);
+                if ($rowChat = mysqli_fetch_assoc($resChat)) {
+                    $unreadMessages = intval($rowChat['unread'] ?? 0);
+                }
+                mysqli_stmt_close($stmtChat);
             }
-            mysqli_stmt_close($stmtChat);
         }
+    } catch (Throwable $chatEx) {
+        error_log("Notice: chat unread lookup: " . $chatEx->getMessage());
     }
 
     echo json_encode([
