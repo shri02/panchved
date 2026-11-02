@@ -185,7 +185,8 @@ $query = "SELECT
             a.service_type,
             a.status,
             a.agenda,
-            a.doctor_name
+            a.doctor_name,
+            COALESCE(a.meet_link, '') AS meet_link
           FROM `appointments` a
           LEFT JOIN `patients` p ON (a.patient_id = p.id OR a.patient_name = p.full_name)
           ORDER BY 
@@ -225,7 +226,8 @@ if ($stmt) {
                 'package_name' => $row['package_name'] ?: 'Stresscare',
                 'status' => $status,
                 'status_class' => $statusClass,
-                'meeting_link' => 'https://meet.google.com/abc-xyz-pqrs',
+                'meeting_link' => !empty($row['meet_link']) ? trim($row['meet_link']) : '',
+                'has_meeting_link' => !empty($row['meet_link']),
                 'agenda' => $row['agenda'] ?: 'General Consultation'
             ];
         }

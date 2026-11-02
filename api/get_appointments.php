@@ -147,7 +147,8 @@ $dataQuery = "SELECT
                 `a`.`agenda`,
                 `a`.`status`,
                 `a`.`notes`,
-                `a`.`doctor_name`
+                `a`.`doctor_name`,
+                COALESCE(`a`.`meet_link`, '') AS `meet_link`
               FROM `appointments` `a`
               LEFT JOIN `patients` `p` ON (`a`.`patient_id` = `p`.`id` OR `a`.`patient_name` = `p`.`full_name`)
               {$whereSql}
@@ -237,7 +238,8 @@ if ($resData) {
             'agenda' => $agenda,
             'complaint' => $agenda,
             'status' => $status,
-            'meet_link' => 'https://meet.google.com',
+            'meet_link' => !empty($row['meet_link']) ? trim($row['meet_link']) : '',
+            'has_meet_link' => !empty($row['meet_link']),
             'prescription_url' => 'add-prescription.html?patient_id=' . intval($row['patient_id'] ?: 1) . '&appointment_id=' . urlencode($row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT))) . '&id=' . intval($row['id'])
         ];
     }

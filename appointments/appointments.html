@@ -404,6 +404,34 @@
       function renderUpcomingRow(item) {
         const patientLink = item.patient_id ? `../patients/patient-details.html?id=${item.patient_id}` : '#';
         const calculatedDuration = calculateDurationFromTime(item.time, item.duration);
+        const hasMeet = Boolean(item.meet_link && String(item.meet_link).trim() !== '');
+        const meetAction = hasMeet ? `
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <a href="${escapeHtml(item.meet_link)}" target="_blank" rel="noopener noreferrer" class="meet-link" aria-label="Join Google Meet for ${escapeHtml(item.patient_name)}" title="${escapeHtml(item.meet_link)}">
+              meet.google...
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+            <button type="button" class="btn-edit-meet" onclick="openMeetModal(${item.id}, '${escapeHtml(item.appointment_id)}', '${escapeHtml(item.meet_link)}', '${escapeHtml(item.patient_name)}')" title="Edit meeting link" style="background: none; border: 1px solid #e2e8f0; cursor: pointer; color: #64748b; padding: 4px 6px; display: inline-flex; align-items: center; border-radius: 6px; font-size: 0.75rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </div>
+        ` : `
+          <button type="button" class="btn-add-meet" onclick="openMeetModal(${item.id}, '${escapeHtml(item.appointment_id)}', '', '${escapeHtml(item.patient_name)}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600; color: #0284c7; background: #f0f9ff; border: 1px dashed #7dd3fc; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>+ Add Meet</span>
+          </button>
+        `;
+
         return `
           <tr>
             <td class="cell-id">${escapeHtml(item.appointment_id)}</td>
@@ -416,16 +444,7 @@
             <td>${escapeHtml(item.time)}</td>
             <td class="cell-agenda cell-complaint" title="${escapeHtml(item.complaint || item.agenda || '')}">${escapeHtml(item.complaint || item.agenda || '')}</td>
             <td class="cell-duration">${escapeHtml(calculatedDuration)}</td>
-            <td>
-              <a href="${escapeHtml(item.meet_link)}" target="_blank" rel="noopener noreferrer" class="meet-link" aria-label="Join Google Meet for ${escapeHtml(item.patient_name)}">
-                meet.google...
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </a>
-            </td>
+            <td>${meetAction}</td>
           </tr>
         `;
       }
@@ -638,5 +657,96 @@
       }
     });
   </script>
+
+  <!-- Modal: Set / Update Google Meet Link -->
+  <div class="meet-modal-backdrop" id="meetModalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
+    <div class="meet-modal-card" style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); overflow: hidden;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 10l5-5v14l-5-5"></path>
+              <rect x="2" y="6" width="13" height="12" rx="2"></rect>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0f172a;" id="meetModalTitle">Set Meeting Link</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #64748b;" id="meetModalSubtitle">Consultation</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMeetModal()" style="background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; padding: 4px; line-height: 1;">&times;</button>
+      </div>
+      <form id="meetLinkForm" onsubmit="handleMeetLinkSubmit(event)" style="padding: 24px;">
+        <input type="hidden" id="meetAppointmentDbId" value="">
+        <input type="hidden" id="meetAppointmentCode" value="">
+        <div style="margin-bottom: 18px;">
+          <label for="meetLinkInput" style="display: block; font-size: 0.88rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Google Meet Link</label>
+          <input type="url" id="meetLinkInput" placeholder="https://meet.google.com/abc-defg-hij" required style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.92rem; outline: none;">
+          <p style="margin: 6px 0 0; font-size: 0.78rem; color: #64748b;">Paste your Google Meet link here. It will immediately show on the patient's portal.</p>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" onclick="closeMeetModal()" style="padding: 9px 16px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; font-size: 0.88rem; cursor: pointer;">Cancel</button>
+          <button type="submit" id="meetSubmitBtn" style="padding: 9px 20px; border-radius: 8px; border: none; background: #723F1E; color: #ffffff; font-weight: 600; font-size: 0.88rem; cursor: pointer;">Save Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    window.openMeetModal = function(id, code, link, patientName) {
+      const modal = document.getElementById('meetModalBackdrop');
+      if (!modal) return;
+      document.getElementById('meetAppointmentDbId').value = id || '';
+      document.getElementById('meetAppointmentCode').value = code || '';
+      document.getElementById('meetLinkInput').value = link || '';
+      document.getElementById('meetModalTitle').textContent = link ? 'Update Meeting Link' : 'Set Meeting Link';
+      document.getElementById('meetModalSubtitle').textContent = `Consultation: ${code} (${patientName || 'Patient'})`;
+      modal.style.display = 'flex';
+      setTimeout(() => document.getElementById('meetLinkInput')?.focus(), 100);
+    };
+
+    window.closeMeetModal = function() {
+      const modal = document.getElementById('meetModalBackdrop');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.handleMeetLinkSubmit = async function(e) {
+      e.preventDefault();
+      const id = document.getElementById('meetAppointmentDbId').value;
+      const code = document.getElementById('meetAppointmentCode').value;
+      const link = document.getElementById('meetLinkInput').value.trim();
+      const btn = document.getElementById('meetSubmitBtn');
+      const origText = btn.textContent;
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const res = await fetch('../api/update_meet_link.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ id: id, appointment_id: code, meet_link: link })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeMeetModal();
+          const d = new Date();
+          const pad = n => String(n).padStart(2, '0');
+          const clientNow = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+          if (typeof fetchAppointments === 'function') {
+            fetchAppointments(currentTab, currentTab === 'upcoming' ? upcomingPage : historyPage, searchQuery);
+          }
+        } else {
+          alert(data.message || 'Failed to update meeting link');
+        }
+      } catch (err) {
+        alert('Error saving meeting link: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    };
+  </script>
 </body>
+
 </html>
