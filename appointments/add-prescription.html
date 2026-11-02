@@ -384,6 +384,121 @@
 
       if (patientId <= 0) patientId = 1;
 
+      const diagnosisNameInput = document.getElementById('diagnosisName');
+      const diagnosisDurationInput = document.getElementById('diagnosisDuration');
+      const examinationFindingsInput = document.getElementById('examinationFindings');
+      const doctorNotesInput = document.getElementById('doctorNotes');
+      const btnSubmitPrescription = document.getElementById('btnSubmitPrescription');
+      const toast = document.getElementById('prescriptionToast');
+
+      // Helper to add a symptom box
+      function addSymptomBox(sName = '', sSev = 'Moderate', sNotes = '') {
+        symptomCount++;
+        const symptomBox = document.createElement('div');
+        symptomBox.className = 'symptom-box-item';
+        symptomBox.id = `symptomItem-${symptomCount}`;
+        
+        const standardSymptoms = [
+          'Headache', 'Insomnia', 'Anxiety', 'Acidity', 'Constipation', 'Joint Pain', 'Fatigue'
+        ];
+        let optionsHtml = '<option value="" disabled hidden>Select symptom</option>';
+        let matched = false;
+        standardSymptoms.forEach(opt => {
+          const isSel = (opt.toLowerCase() === (sName || '').toLowerCase());
+          if (isSel) matched = true;
+          optionsHtml += `<option value="${opt}" ${isSel ? 'selected' : ''}>${opt}</option>`;
+        });
+        if (sName && !matched) {
+          optionsHtml += `<option value="${escapeHtml(sName)}" selected>${escapeHtml(sName)}</option>`;
+        }
+
+        const sevOptions = ['Mild', 'Moderate', 'Severe'];
+        let sevHtml = '';
+        sevOptions.forEach(sv => {
+          const isSel = (sv.toLowerCase() === (sSev || '').toLowerCase());
+          sevHtml += `<option value="${sv}" ${isSel ? 'selected' : ''}>${sv}</option>`;
+        });
+
+        symptomBox.innerHTML = `
+          <div class="symptom-box-header">
+            <h3 class="symptom-box-title">Symptom ${symptomCount}</h3>
+            <button type="button" class="btn-remove-symptom" aria-label="Remove Symptom ${symptomCount}" onclick="this.closest('.symptom-box-item').remove()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="form-grid-2col">
+            <div class="form-field-group">
+              <label class="field-label" for="symptomSelect-${symptomCount}">Symptom <span class="required-star" aria-hidden="true">*</span></label>
+              <div class="select-wrapper">
+                <select class="form-select-control" id="symptomSelect-${symptomCount}" required>
+                  ${optionsHtml}
+                </select>
+                <span class="select-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="form-field-group">
+              <label class="field-label" for="severitySelect-${symptomCount}">Severity <span class="required-star" aria-hidden="true">*</span></label>
+              <div class="select-wrapper">
+                <select class="form-select-control" id="severitySelect-${symptomCount}" required>
+                  ${sevHtml}
+                </select>
+                <span class="select-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="form-field-group">
+            <label class="field-label" for="symptomNotes-${symptomCount}">Notes</label>
+            <textarea class="form-textarea-control" id="symptomNotes-${symptomCount}" placeholder="Enter notes" rows="2">${escapeHtml(sNotes)}</textarea>
+          </div>
+        `;
+        symptomsList.appendChild(symptomBox);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // Helper to add medication row
+      function addMedicationRow(name = '', dose = '', freq = '', dur = '', remarks = '') {
+        if (!medicationTableBody) return;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <input type="text" class="medication-input" placeholder="Enter medicine name" aria-label="Medicine Name" value="${escapeHtml(name)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input" placeholder="Enter dose" aria-label="Dose" value="${escapeHtml(dose)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input" placeholder="Enter frequency" aria-label="Frequency" value="${escapeHtml(freq)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input" placeholder="Enter Duration" aria-label="Duration" value="${escapeHtml(dur)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input" placeholder="Add Remark" aria-label="Remark" value="${escapeHtml(remarks)}">
+          </td>
+        `;
+        medicationTableBody.appendChild(row);
+      }
+
       // Dynamic Add Symptom
       const btnAddSymptom = document.getElementById('btnAddSymptom');
       const symptomsList = document.getElementById('symptomsList');
@@ -391,64 +506,7 @@
 
       if (btnAddSymptom && symptomsList) {
         btnAddSymptom.addEventListener('click', () => {
-          symptomCount++;
-          const symptomBox = document.createElement('div');
-          symptomBox.className = 'symptom-box-item';
-          symptomBox.id = `symptomItem-${symptomCount}`;
-          symptomBox.innerHTML = `
-            <div class="symptom-box-header">
-              <h3 class="symptom-box-title">Symptom ${symptomCount}</h3>
-              <button type="button" class="btn-remove-symptom" aria-label="Remove Symptom ${symptomCount}" onclick="this.closest('.symptom-box-item').remove()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div class="form-grid-2col">
-              <div class="form-field-group">
-                <label class="field-label" for="symptomSelect-${symptomCount}">Symptom <span class="required-star" aria-hidden="true">*</span></label>
-                <div class="select-wrapper">
-                  <select class="form-select-control" id="symptomSelect-${symptomCount}" required>
-                    <option value="" disabled selected hidden>Select symptom</option>
-                    <option value="Headache">Headache</option>
-                    <option value="Insomnia">Insomnia / Sleep disturbance</option>
-                    <option value="Anxiety">Anxiety / Stress</option>
-                    <option value="Acidity">Acidity / Heartburn</option>
-                    <option value="Constipation" selected>Constipation</option>
-                    <option value="Joint Pain">Joint Pain / Stiffness</option>
-                    <option value="Fatigue">Chronic Fatigue</option>
-                  </select>
-                  <span class="select-icon" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-              <div class="form-field-group">
-                <label class="field-label" for="severitySelect-${symptomCount}">Severity <span class="required-star" aria-hidden="true">*</span></label>
-                <div class="select-wrapper">
-                  <select class="form-select-control" id="severitySelect-${symptomCount}" required>
-                    <option value="" disabled selected hidden>Select severity</option>
-                    <option value="Mild">Mild</option>
-                    <option value="Moderate" selected>Moderate</option>
-                    <option value="Severe">Severe</option>
-                  </select>
-                  <span class="select-icon" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="form-field-group">
-              <label class="field-label" for="symptomNotes-${symptomCount}">Notes</label>
-              <textarea class="form-textarea-control" id="symptomNotes-${symptomCount}" placeholder="Enter notes" rows="2"></textarea>
-            </div>
-          `;
-          symptomsList.appendChild(symptomBox);
+          addSymptomBox();
         });
       }
 
@@ -458,27 +516,71 @@
 
       if (btnAddMedication && medicationTableBody) {
         btnAddMedication.addEventListener('click', () => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>
-              <input type="text" class="medication-input" placeholder="Enter medicine name" aria-label="Medicine Name">
-            </td>
-            <td>
-              <input type="text" class="medication-input" placeholder="Enter dose" aria-label="Dose">
-            </td>
-            <td>
-              <input type="text" class="medication-input" placeholder="Enter frequency" aria-label="Frequency">
-            </td>
-            <td>
-              <input type="text" class="medication-input" placeholder="Enter Duration" aria-label="Duration">
-            </td>
-            <td>
-              <input type="text" class="medication-input" placeholder="Add Remark" aria-label="Remark">
-            </td>
-          `;
-          medicationTableBody.appendChild(row);
+          addMedicationRow();
         });
       }
+
+      // Load Existing Prescription if editing
+      async function loadExistingPrescription() {
+        const queryTarget = appointmentDbId || appointmentId;
+        if (!queryTarget && !patientId) return;
+
+        try {
+          const fetchUrl = `../api/get_prescription.php?appointment_id=${encodeURIComponent(queryTarget)}&patient_id=${encodeURIComponent(patientId || '')}`;
+          const res = await fetch(fetchUrl);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data && data.has_prescriptions && data.prescription) {
+            const rx = data.prescription;
+
+            // Update UI for Edit Mode
+            const pageHeading = document.querySelector('.page-main-heading');
+            if (pageHeading) pageHeading.textContent = 'Edit Prescription';
+            const pageSub = document.querySelector('.page-sub-heading');
+            if (pageSub) pageSub.textContent = `Update prescription details for ${rx.patient_name || 'Patient'} (${appointmentId ? 'Consultation: ' + appointmentId : ''})`;
+            if (btnSubmitPrescription) btnSubmitPrescription.textContent = 'Update Prescription';
+
+            // Prefill diagnosis & notes
+            if (diagnosisNameInput && rx.diagnosis) diagnosisNameInput.value = rx.diagnosis;
+            if (diagnosisDurationInput && rx.diagnosis_duration) diagnosisDurationInput.value = rx.diagnosis_duration;
+            if (examinationFindingsInput && rx.examination_findings && rx.examination_findings !== 'None recorded') {
+              examinationFindingsInput.value = rx.examination_findings;
+            }
+            if (doctorNotesInput && rx.notes) doctorNotesInput.value = rx.notes;
+
+            // Prefill symptoms
+            let syms = rx.symptoms;
+            if (typeof syms === 'string') {
+              try { syms = JSON.parse(syms); } catch (_) {}
+            }
+            if (Array.isArray(syms) && syms.length > 0) {
+              if (symptomsList) symptomsList.innerHTML = '';
+              symptomCount = 0;
+              syms.forEach(s => {
+                const sName = typeof s === 'string' ? s : (s.symptom || s.name || '');
+                const sSev = typeof s === 'object' ? (s.severity || 'Moderate') : 'Moderate';
+                const sNotes = typeof s === 'object' ? (s.notes || '') : '';
+                addSymptomBox(sName, sSev, sNotes);
+              });
+            }
+
+            // Prefill medications
+            if (Array.isArray(rx.medications) && rx.medications.length > 0) {
+              if (medicationTableBody) medicationTableBody.innerHTML = '';
+              rx.medications.forEach(m => {
+                const mName = m.medication || m.name || '';
+                if (mName) {
+                  addMedicationRow(mName, m.dose || '', m.frequency || '', m.duration || '', m.remarks || '');
+                }
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Could not load existing prescription:', err);
+        }
+      }
+
+      loadExistingPrescription();
 
       // Submit Prescription Action with Backend Integration
       const btnSubmitPrescription = document.getElementById('btnSubmitPrescription');

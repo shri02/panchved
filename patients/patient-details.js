@@ -314,15 +314,26 @@ document.addEventListener('DOMContentLoaded', () => {
                   </span>
                   <span>Change Status</span>
                 </button>
-                <a href="../appointments/add-prescription.html?patient_id=${currentPatientId}&appointment_id=${appt.appointment_id}&id=${appt.id}" class="appt-dropdown-item">
+                <a href="../appointments/add-prescription.html?patient_id=${currentPatientId}&appointment_id=${appt.appointment_id}&id=${appt.id}${appt.has_prescription ? '&mode=edit' : ''}" class="appt-dropdown-item">
                   <span class="appt-dropdown-item-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"></path>
                       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
                   </span>
-                  <span>Add Prescription</span>
+                  <span>${appt.has_prescription ? 'Edit Prescription' : 'Add Prescription'}</span>
                 </a>
+                ${appt.has_prescription ? `
+                  <button type="button" class="appt-dropdown-item" onclick="confirmDeletePrescription(${appt.id}, '${escapeHtml(appt.appointment_id)}')" style="color: #ef4444;">
+                    <span class="appt-dropdown-item-icon" style="color: #ef4444;">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </span>
+                    <span>Remove Prescription</span>
+                  </button>
+                ` : ''}
               </div>
 
               <!-- Step 2: Status Options Popover (Image 2: Completed, Scheduled, Absent) -->
@@ -853,24 +864,51 @@ document.addEventListener('DOMContentLoaded', () => {
           if (rxDoctorPhone) rxDoctorPhone.textContent = rx.doctor_phone || '--';
           if (rxDoctorEmail) rxDoctorEmail.textContent = rx.doctor_email || '--';
 
-          // Medications Table
-          if (rxMedicationRows) {
-            if (Array.isArray(rx.medications) && rx.medications.length > 0) {
-              let medHtml = '';
-              rx.medications.forEach(m => {
-                medHtml += 
-                  '<div class="rx-med-row-grid">' +
-                    '<span class="rx-med-cell rx-med-name">' + escapeHtml(m.medication || m.name || '--') + '</span>' +
-                    '<span class="rx-med-cell rx-med-dose">' + escapeHtml(m.dose || '--') + '</span>' +
-                    '<span class="rx-med-cell rx-med-freq">' + escapeHtml(m.frequency || '--') + '</span>' +
-                    '<span class="rx-med-cell rx-med-dur">' + escapeHtml(m.duration || '--') + '</span>' +
-                    '<span class="rx-med-cell rx-med-rem">' + escapeHtml(m.remarks || '--') + '</span>' +
-                  '</div>';
-              });
-              rxMedicationRows.innerHTML = medHtml;
+          // Render Medication Grid matching Patient Consultation page exactly
+          const rxMedGrid = document.getElementById('rxMedicationGrid') || rxMedicationRows;
+          if (rxMedGrid) {
+            const meds = (Array.isArray(rx.medications) ? rx.medications : []).filter(m => {
+              const name = m && (m.medication || m.name);
+              return name && name !== 'NULL' && String(name).trim() !== '';
+            });
+
+            if (meds.length > 0) {
+              rxMedGrid.innerHTML = meds.map(med => {
+                const medNameHtml = escapeHtml(med.medication || med.name || '--').replace(/\((.*?)\)/, '<br>($1)');
+                const freqHtml = escapeHtml(med.frequency || '--').replace('BEFORE', '<br>BEFORE');
+                return `
+                  <div class="rx-med-col">
+                    <p class="rx-med-col-header">Medication:</p>
+                    <p class="rx-med-col-val">${medNameHtml}</p>
+                  </div>
+                  <div class="rx-med-col">
+                    <p class="rx-med-col-header">Dose:</p>
+                    <p class="rx-med-col-val">${escapeHtml(med.dose || '--')}</p>
+                  </div>
+                  <div class="rx-med-col">
+                    <p class="rx-med-col-header">Frequency:</p>
+                    <p class="rx-med-col-val">${freqHtml}</p>
+                  </div>
+                  <div class="rx-med-col">
+                    <p class="rx-med-col-header">Duration:</p>
+                    <p class="rx-med-col-val">${escapeHtml(med.duration || '--')}</p>
+                  </div>
+                  <div class="rx-med-col">
+                    <p class="rx-med-col-header">Remarks:</p>
+                    <p class="rx-med-col-val">${escapeHtml(med.remarks || '--')}</p>
+                  </div>
+                `;
+              }).join('');
             } else {
-              rxMedicationRows.innerHTML = '<div style="padding: 14px; color: #64748b; text-align: center;">No medications prescribed for this consultation.</div>';
+              rxMedGrid.innerHTML = '<div style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 22px 14px; color: #64748b; font-style: italic;">No medications prescribed for this consultation.</div>';
             }
+          }
+
+          const rxContactText = document.getElementById('rxContactText');
+          if (rxContactText) {
+            const phone = rx.doctor_phone || '+91 7896543210';
+            const email = rx.doctor_email || 'care@ocayur.com';
+            rxContactText.innerHTML = `${escapeHtml(phone)} &nbsp;|&nbsp; ${escapeHtml(email)}`;
           }
         } else {
           // No prescription found for this patient: show clean helpful empty state
@@ -981,4 +1019,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Fetch
   fetchPatientDetails();
+
+  const btnPrintPrescriptionBottom = document.getElementById('btnPrintPrescriptionBottom');
+  if (btnPrintPrescriptionBottom) {
+    btnPrintPrescriptionBottom.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  window.confirmDeletePrescription = async function(apptId, apptCode) {
+    const confirmed = confirm(`Are you sure you want to remove the prescription for this consultation?`);
+    if (!confirmed) return;
+    try {
+      const res = await fetch('../api/delete_prescription.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: apptId, appointment_id: apptCode })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Prescription removed successfully.');
+        if (typeof fetchPatientDetails === 'function') {
+          fetchPatientDetails(currentPatientId, currentApptPage);
+        }
+      } else {
+        showToast(data.message || 'Could not remove prescription.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error while removing prescription.', true);
+    }
+  };
+
 });
