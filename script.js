@@ -58,6 +58,24 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const forgotPasswordLink = document.getElementById('forgotPasswordLink');
   const termsLink = document.getElementById('termsLink');
+  const rememberMeCheckbox = document.getElementById('rememberMe');
+
+  // Pre-fill remembered doctor credentials
+  try {
+    const rememberedDocPhone = localStorage.getItem('panchved_doctor_remembered_phone') || localStorage.getItem('ocayur_doctor_remembered_phone');
+    const rememberedDocCountry = localStorage.getItem('panchved_doctor_remember_code');
+    if (rememberedDocPhone && phoneInput) {
+      phoneInput.value = rememberedDocPhone;
+      if (rememberMeCheckbox) {
+        rememberMeCheckbox.checked = true;
+      }
+      if (rememberedDocCountry && selectedCountryCode) {
+        selectedCountryCode.textContent = rememberedDocCountry;
+      }
+    }
+  } catch (err) {
+    console.warn('Unable to load remembered doctor credentials:', err);
+  }
   
   const loginBtn = document.getElementById('loginBtn');
   const btnText = loginBtn.querySelector('.btn-text');
@@ -492,6 +510,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isValid) return;
 
+    // Handle Remember Me persistence
+    const isRememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
+    try {
+      if (isRememberMe) {
+        localStorage.setItem('panchved_doctor_remembered_phone', phone);
+        localStorage.setItem('ocayur_doctor_remembered_phone', phone);
+        if (selectedCountryCode) {
+          localStorage.setItem('panchved_doctor_remember_code', selectedCountryCode.textContent.trim());
+        }
+        localStorage.setItem('panchved_doctor_remember_me', 'true');
+      } else {
+        localStorage.removeItem('panchved_doctor_remembered_phone');
+        localStorage.removeItem('ocayur_doctor_remembered_phone');
+        localStorage.removeItem('panchved_doctor_remember_code');
+        localStorage.setItem('panchved_doctor_remember_me', 'false');
+      }
+    } catch (err) {
+      console.warn('Unable to save doctor remember me state:', err);
+    }
+
     // Real Backend Login Request
     setLoadingState(true);
     const fullPhone = phone;
@@ -504,7 +542,8 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       body: JSON.stringify({
         phoneNumber: fullPhone,
-        password: password
+        password: password,
+        remember_me: isRememberMe
       })
     })
     .then(async (response) => {
