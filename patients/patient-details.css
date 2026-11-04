@@ -978,10 +978,12 @@ input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
    PRESCRIPTION MODAL STYLES (Matching Patient Consultation Page Exactly)
    ========================================================================== */
 #viewPrescriptionModal {
+  display: none;
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  -webkit-transform: translate(-50%, -50%) !important;
   width: 92% !important;
   max-width: 760px !important;
   max-height: 88vh !important;
@@ -999,6 +1001,8 @@ input[type="time"].form-input::-webkit-calendar-picker-indicator:hover {
 #viewPrescriptionModal.open {
   display: block !important;
   opacity: 1 !important;
+  transform: translate(-50%, -50%) !important;
+  -webkit-transform: translate(-50%, -50%) !important;
   pointer-events: auto !important;
 }
 

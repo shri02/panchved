@@ -17,7 +17,7 @@
   
   <!-- Stylesheets -->
   <link rel="stylesheet" href="../shared/dashboard.css">
-  <link rel="stylesheet" href="patient-details.css">
+  <link rel="stylesheet" href="patient-details.css?v=2.2">
 </head>
 <body>
 
@@ -663,6 +663,74 @@
       margin: 10mm 15mm;
     }
 
+    /* Prescription Modal Screen Styles */
+    #viewPrescriptionModal {
+      display: none;
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      -webkit-transform: translate(-50%, -50%) !important;
+      width: 92% !important;
+      max-width: 760px !important;
+      max-height: 88vh !important;
+      overflow-y: auto !important;
+      background-color: #ffffff !important;
+      border-radius: 16px !important;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3) !important;
+      z-index: 1050 !important;
+      padding: 28px 36px 36px !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      border: none !important;
+    }
+
+    #viewPrescriptionModal.open {
+      display: block !important;
+      opacity: 1 !important;
+      transform: translate(-50%, -50%) !important;
+      -webkit-transform: translate(-50%, -50%) !important;
+      pointer-events: auto !important;
+    }
+
+    #viewPrescriptionModal .rx-close-btn {
+      position: absolute !important;
+      top: 16px !important;
+      right: 16px !important;
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      background-color: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: #64748b !important;
+      cursor: pointer !important;
+      z-index: 20 !important;
+      padding: 0 !important;
+      transition: background-color 0.15s ease, color 0.15s ease !important;
+    }
+
+    #viewPrescriptionModal .rx-close-btn:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+
+    .rx-history-bar {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      padding: 10px 16px !important;
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      margin-top: 4px !important;
+      margin-bottom: 22px !important;
+      margin-right: 38px !important;
+    }
+
     @media print {
       html, body {
         margin: 0 !important;
@@ -749,7 +817,7 @@
   <!-- 3. View Prescription Modal (Matching Patient Consultation Page Layout) -->
   <div class="modal-dialog prescription-modal-box" id="viewPrescriptionModal" role="dialog" aria-modal="true" aria-labelledby="rxModalTitle" aria-hidden="true">
     <!-- Close Button -->
-    <button type="button" class="modal-close-btn rx-close-btn" id="closePrescriptionModalBtn" aria-label="Close prescription modal">
+    <button type="button" class="modal-close-btn rx-close-btn" id="closePrescriptionModalBtn" aria-label="Close prescription modal" style="position: absolute !important; top: 16px !important; right: 16px !important; z-index: 20;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
