@@ -16,14 +16,15 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+$reqMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($reqMethod === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
 try {
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        @session_start();
     }
 
     $_SESSION = [];
@@ -40,7 +41,7 @@ try {
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
     setcookie('ocayur_doctor_remember', '', time() - 42000, '/', '', $isSecure, true);
 
-    session_destroy();
+    @session_destroy();
 
     echo json_encode([
         'success' => true,

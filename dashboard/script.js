@@ -28,6 +28,36 @@ function showToast(message, type = 'info') {
 window.showToast = showToast;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-redirect to dashboard if doctor is already logged in with Remember Me
+  const isDoctorRemembered = (localStorage.getItem('panchved_doctor_logged_in') === 'true' || localStorage.getItem('panchved_doctor_remember_me') === 'true');
+  const localDoctor = localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor');
+  const isDoctorLogoutAction = window.location.hash === '#logout' || window.location.search.includes('logout=true');
+
+  if (!isDoctorLogoutAction && isDoctorRemembered && localDoctor) {
+    window.location.replace('dashboard/dashboard.html');
+    return;
+  }
+
+  if (!isDoctorLogoutAction) {
+    fetch('api/session_check.php', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      return res.json().catch(() => null);
+    })
+    .then((data) => {
+      if (data && data.success && data.logged_in && data.doctor) {
+        localStorage.setItem('ocayur_doctor', JSON.stringify(data.doctor));
+        localStorage.setItem('panchved_doctor', JSON.stringify(data.doctor));
+        localStorage.setItem('panchved_doctor_logged_in', 'true');
+        window.location.replace('dashboard/dashboard.html');
+      }
+    })
+    .catch(() => {});
+  }
+
   // Page Loader Overlay Logic
   const pageLoader = document.getElementById('pageLoader');
   const hidePageLoader = () => {
@@ -552,6 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.ok && data && data.success) {
         // Save authenticated doctor & user profile to localStorage for seamless cross-page sync
+        if (isRememberMe) {
+          localStorage.setItem('panchved_doctor_logged_in', 'true');
+        } else {
+          localStorage.removeItem('panchved_doctor_logged_in');
+        }
         if (data.doctor) {
           localStorage.setItem('ocayur_doctor', JSON.stringify(data.doctor)); localStorage.setItem('panchved_doctor', JSON.stringify(data.doctor));
         }

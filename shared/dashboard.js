@@ -979,10 +979,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const auth = window.OcayurAuth || window.PanchvedAuth; if (auth && typeof auth.showLogoutModal === 'function') {
         auth.showLogoutModal();
       } else {
+        localStorage.removeItem('panchved_doctor_logged_in');
+        localStorage.removeItem('panchved_doctor_remember_me');
         localStorage.removeItem('ocayur_doctor'); localStorage.removeItem('panchved_doctor');
         localStorage.removeItem('ocayur_user'); localStorage.removeItem('panchved_user');
         sessionStorage.clear();
-        window.location.href = isInSubfolder ? '../index.html' : 'index.html';
+        window.location.href = (isInSubfolder ? '../index.html' : 'index.html') + '#logout';
       }
     });
   });
