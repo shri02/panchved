@@ -8,7 +8,7 @@
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
@@ -17,11 +17,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    @session_start();
 }
 
+/**
+ * Standardized JSON response helper.
+ * CRITICAL: Always return HTTP 200 on Azure App Service / IIS.
+ * Azure / IIS intercepts non-200 HTTP status codes (500, 502, 404, 405) and returns an Azure HTML 404 error page,
+ * which hides database exception details and JSON error messages.
+ */
 function sendCashfreeInitResponse($success, $message, $data = [], $statusCode = 200) {
-    http_response_code($statusCode);
+    http_response_code(200);
     echo json_encode(array_merge([
         'success' => (bool)$success,
         'message' => $message,
@@ -39,17 +45,45 @@ set_error_handler(function($severity, $message, $file, $line) {
 });
 
 try {
-    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-        sendCashfreeInitResponse(false, 'Only POST requests are allowed.', [], 405);
+    require_once __DIR__ . '/cashfree_config.php';
+
+    // Handle GET status check (e.g. browser probe)
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
+        $cfg = getCashfreeConfig();
+        sendCashfreeInitResponse(true, 'Cashfree Doctor Initiate Endpoint is active.', [
+            'method' => 'GET',
+            'is_configured' => $cfg['is_configured'],
+            'environment' => $cfg['mode'],
+            'api_version' => $cfg['api_version']
+        ], 200);
     }
 
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        sendCashfreeInitResponse(false, 'Only POST requests are allowed.', [
+            'received_method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'
+        ], 200);
+    }
+
+    // Enable strict MySQL reporting so database connection errors throw catchable mysqli_sql_exception
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+    // Database connection
     require_once __DIR__ . '/database.php';
-    require_once __DIR__ . '/cashfree_config.php';
+
+    if (!isset($connection1) || !$connection1) {
+        if (mysqli_connect_errno()) {
+            throw new mysqli_sql_exception(mysqli_connect_error(), mysqli_connect_errno());
+        }
+        throw new mysqli_sql_exception('MySQL database connection unavailable.', 500);
+    }
 
     $rawInput = file_get_contents('php://input');
     $input = json_decode($rawInput, true);
-    if (!is_array($input)) {
+    if (!is_array($input) || empty($input)) {
         $input = $_POST;
+    }
+    if (!is_array($input)) {
+        $input = [];
     }
 
     $clientOrigin = trim((string)($input['origin_url'] ?? ($input['client_origin'] ?? '')));
@@ -59,7 +93,7 @@ try {
         sendCashfreeInitResponse(false, 'Cashfree credentials not configured. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are set in Azure App Service Configuration.', [
             'is_configured' => false,
             'required_variables' => ['CASHFREE_APP_ID', 'CASHFREE_SECRET_KEY', 'CASHFREE_ENV']
-        ], 500);
+        ], 200);
     }
 
     $serviceType = strtolower(trim((string)($input['service_type'] ?? 'workshop')));
@@ -90,7 +124,7 @@ try {
                 @mysqli_stmt_close($stmt);
             }
         } catch (mysqli_sql_exception $e) {
-            // DB lookup warning fallback
+            // DB lookup non-fatal fallback
         } catch (Throwable $e) {
             // Non-fatal fallback
         }
@@ -101,13 +135,13 @@ try {
     }
     $formattedAmount = round($amount, 2);
 
-    // Sanitize customer details for Cashfree
-    $cleanPhone = preg_replace('/[^\d]/', '', $doctorPhone);
+    // Sanitize phone for Cashfree India: exactly 10 digits starting with 6, 7, 8, 9
+    $cleanPhone = preg_replace('/[^\d]/', '', (string)$doctorPhone);
     if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
         $cleanPhone = substr($cleanPhone, 2);
     }
-    if (strlen($cleanPhone) !== 10) {
-        $cleanPhone = '9999999999';
+    if (strlen($cleanPhone) !== 10 || !preg_match('/^[6-9]\d{9}$/', $cleanPhone)) {
+        $cleanPhone = '9876543210';
     }
 
     if (empty($doctorEmail) || !filter_var($doctorEmail, FILTER_VALIDATE_EMAIL)) {
@@ -119,10 +153,22 @@ try {
         $cleanName = 'Doctor';
     }
 
-    // Cashfree order_id max length: 45 characters, alphanumeric, hyphen, underscore
+    // Cashfree order_id: max 45 chars, alphanumeric, hyphen, underscore
     $orderId = 'CF_WKS_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
-    $customerId = 'doc_' . ($doctorId > 0 ? $doctorId : '1') . '_' . substr(md5($doctorEmail . $cleanPhone), 0, 8);
-    $orderNote = 'Workshop: ' . substr(preg_replace('/[^a-zA-Z0-9\s_\-]/', '', $workshopTitle), 0, 80);
+    $cleanDocId = preg_replace('/[^a-zA-Z0-9_\-]/', '', (string)$doctorId);
+    if (empty($cleanDocId)) {
+        $cleanDocId = '1';
+    }
+    $customerId = substr('doc_' . $cleanDocId . '_' . substr(md5($doctorEmail . $cleanPhone), 0, 8), 0, 45);
+    $orderNote = 'Workshop: ' . substr(preg_replace('/[^a-zA-Z0-9\s_\-]/', '', $workshopTitle), 0, 75);
+
+    // Cashfree order_meta: notify_url must be a valid HTTPS URL; omit if HTTP/localhost
+    $orderMeta = [
+        'return_url' => $config['callback_url'] . '?order_id={order_id}'
+    ];
+    if (!empty($config['notify_url']) && strpos($config['notify_url'], 'https://') === 0 && strpos($config['notify_url'], 'localhost') === false) {
+        $orderMeta['notify_url'] = $config['notify_url'];
+    }
 
     // Build Cashfree API request payload
     $orderPayload = [
@@ -135,10 +181,7 @@ try {
             'customer_email' => $doctorEmail,
             'customer_phone' => $cleanPhone
         ],
-        'order_meta' => [
-            'return_url' => $config['callback_url'] . '?order_id={order_id}',
-            'notify_url' => $config['notify_url']
-        ],
+        'order_meta' => $orderMeta,
         'order_note' => $orderNote,
         'order_tags' => [
             'service_type' => 'workshop',
@@ -161,7 +204,7 @@ try {
             'api_error' => $errorMsg,
             'api_response' => $details,
             'http_code' => $apiResult['http_code']
-        ], 502);
+        ], 200);
     }
 
     $resData = $apiResult['data'];
@@ -170,7 +213,7 @@ try {
     if (empty($paymentSessionId)) {
         sendCashfreeInitResponse(false, 'Cashfree did not return a payment_session_id.', [
             'api_response' => $resData
-        ], 502);
+        ], 200);
     }
 
     // Pre-record in transactions table if available
@@ -190,9 +233,9 @@ try {
                 @mysqli_stmt_close($ins);
             }
         } catch (mysqli_sql_exception $e) {
-            // Continue even if pre-recording table has issue
+            // Pre-record is non-fatal
         } catch (Throwable $txErr) {
-            // Continue safely
+            // Non-fatal
         }
     }
 
@@ -220,7 +263,7 @@ try {
         'cf_environment' => $config['mode'], // "sandbox" or "production"
         'amount' => $formattedAmount,
         'return_url' => $config['callback_url'] . '?order_id=' . urlencode($orderId)
-    ]);
+    ], 200);
 
 } catch (mysqli_sql_exception $e) {
     sendCashfreeInitResponse(false, 'Database Error: ' . $e->getMessage(), [
@@ -230,7 +273,7 @@ try {
         'error_details' => $e->getMessage(),
         'file' => basename($e->getFile()),
         'line' => $e->getLine()
-    ], 500);
+    ], 200);
 } catch (Throwable $e) {
     sendCashfreeInitResponse(false, 'Server Error: ' . $e->getMessage(), [
         'error_type' => get_class($e),
@@ -238,5 +281,5 @@ try {
         'error_details' => $e->getMessage(),
         'file' => basename($e->getFile()),
         'line' => $e->getLine()
-    ], 500);
+    ], 200);
 }
