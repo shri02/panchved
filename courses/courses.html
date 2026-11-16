@@ -576,14 +576,14 @@
 
                 <div class="payment-methods-list" role="radiogroup" aria-label="Payment Method Options">
                   
-                  <!-- PayU Payment Gateway -->
-                  <label class="payment-method-row active" for="coursesPayPayU">
+                  <!-- Cashfree Payment Gateway -->
+                  <label class="payment-method-row active" for="coursesPayCashfree">
                     <div class="payment-method-left">
-                      <input type="radio" id="coursesPayPayU" name="coursesPayOption" value="payu" class="payment-radio" checked>
-                      <span class="payment-label">PayU Payment Gateway (UPI, Cards, NetBanking, Wallets)</span>
+                      <input type="radio" id="coursesPayCashfree" name="coursesPayOption" value="cashfree" class="payment-radio" checked>
+                      <span class="payment-label">Cashfree Payment Gateway (UPI, Cards, NetBanking, Wallets)</span>
                     </div>
                     <div class="payment-logo">
-                      <span style="font-weight: 800; font-size: 15px; color: #009933; letter-spacing: -0.5px;">Pay<span style="color: #66cc33;">U</span></span>
+                      <span style="font-weight: 800; font-size: 15px; color: #0084ff; letter-spacing: -0.5px;">Cash<span style="color: #00d084;">free</span></span>
                     </div>
                   </label>
 
@@ -1074,7 +1074,7 @@
     // =========================================================================
     async function handleConfirmPaymentCourses() {
       const confirmBtn = document.getElementById('btnCoursesConfirmPay');
-      const selectedPayment = 'PayU';
+      const selectedPayment = 'Cashfree';
       const userName = document.getElementById('coursesUserName').textContent.trim();
       const userEmail = document.getElementById('coursesUserEmail').textContent.trim();
       const userPhone = document.getElementById('coursesUserPhone').textContent.trim();
@@ -1089,12 +1089,13 @@
         doctorId = doc.id || 0;
       } catch (_) {}
 
-      // Process through PayU Gateway
-      if (window.PayUCheckout) {
+      // Process through Cashfree Gateway
+      const checkoutHandler = window.CashfreeCheckout || window.PayUCheckout;
+      if (checkoutHandler) {
         try {
           const numericAmt = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.]/g, '')) : parseFloat(amount);
           const wsTitle = currentWorkshopData ? (currentWorkshopData.title || currentWorkshopData.name || 'Ayurveda Workshop') : 'Ayurveda Workshop';
-          const payuPayload = {
+          const cfPayload = {
             service_type: 'workshop',
             workshop_id: currentCourseId,
             workshop_title: wsTitle,
@@ -1106,13 +1107,13 @@
             amount: numericAmt || 500.00
           };
 
-          const res = await window.PayUCheckout.processPayment(payuPayload);
+          const res = await checkoutHandler.processPayment(cfPayload);
           if (res && res.redirected) {
-            return; // Browser redirected to PayU gateway
+            return; // Browser redirected to Cashfree gateway
           }
-        } catch (payuErr) {
-          console.error('PayU Doctor Workshop Error:', payuErr);
-          showToast(payuErr.message || 'Payment initiation failed. Please try again.');
+        } catch (cfErr) {
+          console.error('Cashfree Doctor Workshop Error:', cfErr);
+          showToast(cfErr.message || 'Payment initiation failed. Please try again.');
           confirmBtn.textContent = 'Confirm Payment';
           confirmBtn.disabled = false;
           return;
@@ -1399,6 +1400,8 @@
       });
     }
   </script>
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <script src="../shared/cashfree_checkout.js"></script>
   <script src="../shared/payu_checkout.js"></script>
   <script src="../shared/api_config.js"></script>
   <script src="../shared/dashboard.js"></script>

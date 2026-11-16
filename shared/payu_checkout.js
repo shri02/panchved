@@ -1,8 +1,8 @@
 /**
- * Ocayur / Panchved - PayU Hosted Checkout Helper (Doctor Portal)
+ * Ocayur / Panchved - Payment Gateway Checkout Helper (Doctor Portal)
  * 
- * Initiates payment with PayU by contacting api/payu_initiate.php
- * and auto-submitting the signed POST form to PayU's payment gateway.
+ * Migrated to Cashfree Payment Gateway SDK v3.
+ * Maintains window.PayUCheckout and window.CashfreeCheckout for backwards compatibility.
  */
 (function(window) {
   'use strict';
@@ -10,23 +10,43 @@
   function getInitiateEndpoint() {
     const pathname = window.location.pathname || '';
     if (pathname.includes('/courses/')) {
-      return '../api/payu_initiate.php';
+      return '../api/cashfree_initiate.php';
     }
-    return 'api/payu_initiate.php';
+    return 'api/cashfree_initiate.php';
   }
 
-  const PayUCheckout = {
-    /**
-     * Process checkout with PayU
-     * @param {Object} payload - { service_type, workshop_id, workshop_title, amount, doctor_id, doctor_name, doctor_email, doctor_phone }
-     * @returns {Promise<{ redirected: boolean }>}
-     */
-    async processPayment(payload) {
+  function loadCashfreeSDK() {
+    return new Promise((resolve, reject) => {
+      if (typeof window.Cashfree === 'function') {
+        return resolve(window.Cashfree);
+      }
+      const existingScript = document.querySelector('script[src*="cashfree.com/js/v3/cashfree.js"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(window.Cashfree));
+        existingScript.addEventListener('error', (err) => reject(new Error('Failed to load Cashfree JS SDK')));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+      script.async = true;
+      script.onload = () => {
+        if (typeof window.Cashfree === 'function') {
+          resolve(window.Cashfree);
+        } else {
+          reject(new Error('Cashfree SDK loaded but Cashfree function not found.'));
+        }
+      };
+      script.onerror = () => reject(new Error('Failed to load Cashfree JS SDK from CDN.'));
+      document.head.appendChild(script);
+    });
+  }
+
+  const CashfreeCheckout = {
+    async processPayment(payload, options = {}) {
       if (!payload || !payload.amount) {
         throw new Error('Payment amount and details are required.');
       }
 
-      // Add client origin for dynamic return URL construction
       const fullPayload = {
         ...payload,
         client_origin: window.location.origin
@@ -46,40 +66,34 @@
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data || !data.success) {
-        const errorMsg = data && data.message ? data.message : 'Failed to initiate PayU payment gateway.';
+        const errorMsg = data && data.message ? data.message : 'Failed to initiate Cashfree payment gateway.';
         const err = new Error(errorMsg);
         err.data = data;
         throw err;
       }
 
-      const { action_url, params } = data;
-      if (!action_url || !params) {
-        throw new Error('Invalid payment parameters received from server.');
+      const { payment_session_id, order_id, cf_environment } = data;
+      if (!payment_session_id) {
+        throw new Error('Invalid payment session received from server.');
       }
 
-      // Create and submit hidden POST form to PayU gateway
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = action_url;
-      form.style.display = 'none';
+      const CashfreeInit = await loadCashfreeSDK();
+      const isProd = (cf_environment === 'production' || cf_environment === 'prod');
+      const cashfreeInstance = CashfreeInit({
+        mode: isProd ? 'production' : 'sandbox'
+      });
 
-      for (const [key, val] of Object.entries(params)) {
-        if (val !== undefined && val !== null) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = typeof val === 'object' ? JSON.stringify(val) : String(val);
-          form.appendChild(input);
-        }
-      }
+      const redirectTarget = options.redirectTarget || '_self';
 
-      document.body.appendChild(form);
-      form.submit();
+      cashfreeInstance.checkout({
+        paymentSessionId: payment_session_id,
+        redirectTarget: redirectTarget
+      });
 
-      return { redirected: true };
+      return { redirected: true, order_id: order_id };
     }
   };
 
-  window.PayUCheckout = PayUCheckout;
+  window.CashfreeCheckout = CashfreeCheckout;
+  window.PayUCheckout = CashfreeCheckout;
 })(window);
-

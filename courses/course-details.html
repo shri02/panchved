@@ -782,12 +782,13 @@
       confirmBtn.textContent = 'Processing...';
       confirmBtn.disabled = true;
 
-      // Process through PayU Gateway
-      if (window.PayUCheckout) {
+      // Process through Cashfree Gateway
+      const checkoutHandler = window.CashfreeCheckout || window.PayUCheckout;
+      if (checkoutHandler) {
         try {
           const numericAmt = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.]/g, '')) : parseFloat(amount);
           const wsTitle = currentWorkshopData ? (currentWorkshopData.title || currentWorkshopData.name || 'Ayurveda Workshop') : 'Ayurveda Workshop';
-          const payuPayload = {
+          const cfPayload = {
             service_type: 'workshop',
             workshop_id: currentCourseId,
             workshop_title: wsTitle,
@@ -799,13 +800,13 @@
             amount: numericAmt || 500.00
           };
 
-          const res = await window.PayUCheckout.processPayment(payuPayload);
+          const res = await checkoutHandler.processPayment(cfPayload);
           if (res && res.redirected) {
-            return; // Browser has redirected to PayU payment gateway
+            return; // Browser has redirected to Cashfree payment gateway
           }
-        } catch (payuErr) {
-          console.error('PayU Doctor Workshop Error:', payuErr);
-          showToast(payuErr.message || 'Payment initiation failed. Please try again.');
+        } catch (cfErr) {
+          console.error('Cashfree Doctor Workshop Error:', cfErr);
+          showToast(cfErr.message || 'Payment initiation failed. Please try again.');
           confirmBtn.textContent = 'Confirm Payment';
           confirmBtn.disabled = false;
           return;
@@ -1107,6 +1108,8 @@
       fetchAndPopulateUserDetails();
     }
   </script>
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <script src="../shared/cashfree_checkout.js"></script>
   <script src="../shared/payu_checkout.js"></script>
   <script src="../shared/api_config.js"></script>
   <script src="../shared/dashboard.js"></script>

@@ -46,7 +46,13 @@ $clientOrigin = trim((string)($input['origin_url'] ?? ($input['client_origin'] ?
 $config = getPayUConfig($clientOrigin);
 
 if (!$config['is_configured']) {
-    sendInitiateResponse(false, 'PayU credentials not found. Please ensure PAYU_MERCHANT_KEY and PAYU_SALT are set in Azure App Service Configuration.', [
+    require_once __DIR__ . '/cashfree_config.php';
+    $cfConfig = getCashfreeConfig($clientOrigin);
+    if ($cfConfig['is_configured']) {
+        require __DIR__ . '/cashfree_initiate.php';
+        exit;
+    }
+    sendInitiateResponse(false, 'Payment gateway credentials not found. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are set in Azure App Service Configuration.', [
         'is_configured' => false
     ], 500);
 }
