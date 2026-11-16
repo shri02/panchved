@@ -36,8 +36,11 @@ function sendCashfreeInitResponse($success, $message, $data = [], $statusCode = 
     exit();
 }
 
-// Convert PHP warnings and notices to ErrorException so they don't corrupt JSON output
+// Convert PHP warnings and notices to ErrorException so they don't corrupt JSON output, while ignoring deprecation notices
 set_error_handler(function($severity, $message, $file, $line) {
+    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
+        return false;
+    }
     if (!(error_reporting() & $severity)) {
         return false;
     }

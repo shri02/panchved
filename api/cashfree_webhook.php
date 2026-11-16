@@ -17,6 +17,9 @@ require_once __DIR__ . '/cashfree_config.php';
 require_once __DIR__ . '/activity_logger.php';
 
 set_error_handler(function($severity, $message, $file, $line) {
+    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
+        return false;
+    }
     if (!(error_reporting() & $severity)) {
         return false;
     }

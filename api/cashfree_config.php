@@ -163,7 +163,11 @@ if (!function_exists('cashfreeApiCall')) {
         $rawResponse = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
-        curl_close($ch);
+        // curl_close() is deprecated in PHP 8.5+ as CurlHandle objects are auto-closed since PHP 8.0
+        if (PHP_VERSION_ID < 80500 && is_resource($ch)) {
+            @curl_close($ch);
+        }
+        unset($ch);
 
         if (!empty($curlError)) {
             return [
