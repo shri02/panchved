@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 /* ==========================================================================
    Ocayur Doctor Portal - Dashboard Stylesheet (Fully Responsive)
@@ -7,8 +7,10 @@
 
 /* Design Tokens & Custom Properties */
 :root {
-  --font-family-base: 'Outfit', 'Plus Jakarta Sans', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-serif: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-family-base:
+    "Outfit", "Plus Jakarta Sans", "Montserrat", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Outfit", "Plus Jakarta Sans", sans-serif;
 
   /* ========================================================
      Ocayur Brand Design System (Ayurveda Lifestyle)
@@ -24,57 +26,63 @@
        - Olive Light:     #F1F3EA
        - Berry / Maroon:  #80142F (Chart & Stat Accent)
      ======================================================== */
-  --brand-cream: #FAF6EE;
-  --brand-cream-soft: #FCF8F2;
-  --brand-cream-muted: #F6EEE0;
+  --brand-cream: #faf6ee;
+  --brand-cream-soft: #fcf8f2;
+  --brand-cream-muted: #f6eee0;
 
-  --brand-terracotta: #723F1E;
-  --brand-terracotta-hover: #5D3318;
-  --brand-terracotta-active: #4A2813;
-  --brand-terracotta-light: #FBF2EB;
+  --brand-terracotta: #723f1e;
+  --brand-terracotta-hover: #5d3318;
+  --brand-terracotta-active: #4a2813;
+  --brand-terracotta-light: #fbf2eb;
   --brand-terracotta-glow: rgba(114, 63, 30, 0.22);
 
   --brand-olive: #484831;
   --brand-olive-hover: #383826;
-  --brand-olive-active: #28281B;
-  --brand-olive-light: #F1F3EA;
+  --brand-olive-active: #28281b;
+  --brand-olive-light: #f1f3ea;
   --brand-olive-glow: rgba(72, 72, 49, 0.2);
 
-  --brand-berry: #80142F;
-  --brand-berry-light: #FDF2F4;
+  --brand-berry: #80142f;
+  --brand-berry-light: #fdf2f4;
 
   /* Primary Brand Roles (Terracotta is the primary accent & action color) */
-  --color-primary: #723F1E;
-  --color-primary-hover: #5D3318;
-  --color-primary-active: #4A2813;
-  --color-primary-light: #FBF2EB;
+  --color-primary: #723f1e;
+  --color-primary-hover: #5d3318;
+  --color-primary-active: #4a2813;
+  --color-primary-light: #fbf2eb;
   --color-primary-focus-ring: rgba(114, 63, 30, 0.22);
 
   --color-secondary: #484831;
   --color-secondary-hover: #383826;
-  --color-secondary-light: #F1F3EA;
+  --color-secondary-light: #f1f3ea;
 
-  --color-accent: #723F1E;
-  --color-accent-hover: #5D3318;
-  --color-accent-light: #FBF2EB;
+  --color-accent: #723f1e;
+  --color-accent-hover: #5d3318;
+  --color-accent-light: #fbf2eb;
 
   /* Neutral Palette - Official Warm Ivory Linen #FAF6EE */
-  --color-bg-page: #FAF6EE;
-  --color-card-bg: #FFFFFF;
-  --color-text-main: #25231F;
-  --color-text-muted: #5C564D;
-  --color-text-subtle: #8E877B;
+  --color-bg-page: #faf6ee;
+  --color-card-bg: #ffffff;
+  --color-text-main: #25231f;
+  --color-text-muted: #5c564d;
+  --color-text-subtle: #8e877b;
 
   /* Border & Divider */
-  --color-border-card: #ECE5D9;
-  --color-border-light: #ECE5D9;
-  --color-border-subtle: #F5EFE5;
-  --color-border-hover: #DCD2C2;
+  --color-border-card: #ece5d9;
+  --color-border-light: #ece5d9;
+  --color-border-subtle: #f5efe5;
+  --color-border-hover: #dcd2c2;
 
   /* Shadows */
-  --shadow-card: 0 4px 18px -2px rgba(114, 63, 30, 0.05), 0 2px 6px -1px rgba(72, 72, 49, 0.03);
-  --shadow-hover: 0 8px 24px -4px rgba(114, 63, 30, 0.12), 0 4px 8px -2px rgba(72, 72, 49, 0.06);
-  --shadow-dropdown: 0 10px 25px -5px rgba(114, 63, 30, 0.12), 0 8px 10px -6px rgba(72, 72, 49, 0.06);
+  --shadow-card:
+    0 4px 18px -2px rgba(114, 63, 30, 0.05),
+    0 2px 6px -1px rgba(72, 72, 49, 0.03);
+  --shadow-hover:
+    0 8px 24px -4px rgba(114, 63, 30, 0.12),
+    0 4px 8px -2px rgba(72, 72, 49, 0.06);
+  --shadow-dropdown:
+    0 10px 25px -5px rgba(114, 63, 30, 0.12),
+    0 8px 10px -6px rgba(72, 72, 49, 0.06);
 
   /* Border Radius */
   --radius-card: 16px;
@@ -87,13 +95,16 @@
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   min-height: 100%;
   font-family: var(--font-family-base);
   background-color: var(--color-bg-page);
@@ -246,7 +257,10 @@ html, body {
   font-size: 0.95rem;
   font-weight: 500;
   border-radius: 12px;
-  transition: background-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .nav-link .nav-icon {
@@ -306,7 +320,10 @@ html, body {
   font-size: 0.925rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .logout-btn:hover {
@@ -343,7 +360,7 @@ html, body {
 }
 
 .welcome-heading .page-title {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-family: "Outfit", "Plus Jakarta Sans", sans-serif;
   font-size: 1.65rem;
   font-weight: 700;
   color: var(--color-text-main);
@@ -448,7 +465,9 @@ html, body {
   justify-content: space-between;
   min-height: 112px;
   box-shadow: var(--shadow-card);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .metric-card:hover {
@@ -477,7 +496,7 @@ html, body {
 }
 
 .metric-value {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-family: "Outfit", "Plus Jakarta Sans", sans-serif;
   font-size: 2.15rem;
   font-weight: 700;
   color: var(--color-text-main);
@@ -501,7 +520,7 @@ html, body {
 }
 
 .section-title {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-family: "Outfit", "Plus Jakarta Sans", sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text-main);
@@ -511,7 +530,7 @@ html, body {
 /* Responsive Table */
 .table-container {
   width: 100%;
-  overflow-x: auto;
+  /* overflow-x: auto; */
   border-radius: 10px;
   -webkit-overflow-scrolling: touch;
 }
@@ -609,7 +628,8 @@ html, body {
 }
 
 /* Time & Package Cells */
-.cell-time, .cell-package {
+.cell-time,
+.cell-package {
   font-weight: 500;
   color: #334155;
 }
@@ -690,7 +710,9 @@ html, body {
   border-radius: 50%;
   color: #64748b;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .action-menu-btn:hover {
@@ -731,7 +753,9 @@ html, body {
   font-weight: 500;
   color: var(--color-text-main);
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .dropdown-item:hover {
@@ -782,7 +806,10 @@ html, body {
   border-radius: 6px;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .pagination-btn:hover:not(:disabled) {
@@ -940,7 +967,10 @@ html, body {
   transform: translateY(100px);
   opacity: 0;
   visibility: hidden;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.35s ease,
+    visibility 0.35s ease;
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -1008,7 +1038,9 @@ html, body {
   z-index: 99999;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s ease;
+  transition:
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.35s ease;
 }
 
 .page-loader-overlay.hidden {
@@ -1026,7 +1058,9 @@ html, body {
   background: #ffffff;
   border: 1px solid var(--color-border-card, #e2e8f0);
   border-radius: 18px;
-  box-shadow: 0 20px 35px -10px rgba(72, 72, 49, 0.12), 0 8px 15px -5px rgba(114, 63, 30, 0.05);
+  box-shadow:
+    0 20px 35px -10px rgba(72, 72, 49, 0.12),
+    0 8px 15px -5px rgba(114, 63, 30, 0.05);
   transform: scale(1);
   transition: transform 0.3s ease;
 }
@@ -1038,19 +1072,23 @@ html, body {
 .page-loader-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid var(--color-primary-light, #FBF2EB);
-  border-top-color: var(--color-primary, #723F1E);
+  border: 4px solid var(--color-primary-light, #fbf2eb);
+  border-top-color: var(--color-primary, #723f1e);
   border-radius: 50%;
   animation: pageLoaderSpin 0.75s linear infinite;
 }
 
 @keyframes pageLoaderSpin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .page-loader-text {
-  font-family: var(--font-family-base, 'Outfit', sans-serif);
+  font-family: var(--font-family-base, "Outfit", sans-serif);
   font-size: 15px;
   font-weight: 600;
   color: var(--color-text-main, #1e293b);
@@ -1086,7 +1124,9 @@ html, body {
   max-width: 440px;
   background-color: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.15),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   transform: scale(0.95);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
@@ -1151,7 +1191,10 @@ html, body {
   border-radius: 50%;
   color: #64748b;
   cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .logout-modal-close-btn:hover {
@@ -1194,7 +1237,10 @@ html, body {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .btn-logout-cancel:hover {
@@ -1212,7 +1258,9 @@ html, body {
   border: 1px solid #dc2626;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn-logout-confirm:hover {
@@ -1220,4 +1268,3 @@ html, body {
   border-color: #b91c1c;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
-
