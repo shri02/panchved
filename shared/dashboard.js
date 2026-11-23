@@ -470,7 +470,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function fetchDashboardData(page = 1) {
     if (!consultationTableBody && !metricToday) return;
 
-    fetch(getApiUrl(`dashboard_data.php?page=${page}&limit=${itemsPerPage}`), {
+    // Get current logged-in doctor ID
+    let doctorId = 0;
+    try {
+      const dObj = JSON.parse(localStorage.getItem('panchved_doctor') || localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_user') || '{}');
+      doctorId = dObj.id || 0;
+    } catch(_) {}
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const clientNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    // 1. Fetch Today's Upcoming Consultations for this doctor using get_appointments.php
+    fetch(getApiUrl(`get_appointments.php?tab=upcoming&today=1&page=${page}&limit=${itemsPerPage}&doctor_id=${doctorId}&client_now=${encodeURIComponent(clientNow)}`), {
       method: 'GET',
       headers: {
         'Accept': 'application/json'
@@ -478,28 +490,13 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(async (res) => {
       if (!res.ok) return null;
-      return res.json();
+      return res.json().catch(() => null);
     })
     .then(data => {
       if (data && data.success) {
-        // Sync doctor header
-        if (data.doctor) {
-          localStorage.setItem('ocayur_doctor', JSON.stringify(data.doctor)); localStorage.setItem('panchved_doctor', JSON.stringify(data.doctor));
-          syncDoctorUI(data.doctor);
-        }
+        const consultations = data.appointments || [];
+        renderConsultationRows(consultations);
 
-        // Update 4 Metrics dynamically from DB
-        if (data.metrics) {
-          if (metricToday) metricToday.textContent = data.metrics.today_consultations ?? 0;
-          if (metricActive) metricActive.textContent = data.metrics.active_patients ?? 0;
-          if (metricPending) metricPending.textContent = data.metrics.pending_followups ?? 0;
-          if (metricMessages) metricMessages.textContent = data.metrics.unread_messages ?? 0;
-        }
-
-        // Render Table Rows dynamically
-        renderConsultationRows(data.consultations || []);
-
-        // Update Pagination Controls dynamically
         if (data.pagination) {
           currentDashboardPage = data.pagination.current_page || 1;
           const totalPages = data.pagination.total_pages || 1;
@@ -518,6 +515,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (prevBtn) prevBtn.disabled = currentDashboardPage <= 1;
           if (nextBtn) nextBtn.disabled = currentDashboardPage >= totalPages;
+
+          // Today's consultation metric dynamically synced to today's count for this doctor
+          if (metricToday) {
+            metricToday.textContent = totalItems;
+          }
         }
       } else {
         if (consultationTableBody) {
@@ -532,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch(err => {
-      console.warn('Dashboard data fetch error:', err);
+      console.warn('Dashboard get_appointments error:', err);
       if (consultationTableBody) {
         consultationTableBody.innerHTML = `
           <tr>
@@ -546,6 +548,36 @@ document.addEventListener('DOMContentLoaded', () => {
     .finally(() => {
       hidePageLoader();
     });
+
+    // 2. Fetch doctor profile and other metrics (Active Patients, Follow-ups, Messages)
+    fetch(getApiUrl(`dashboard_data.php?doctor_id=${doctorId}`), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      return res.json().catch(() => null);
+    })
+    .then(data => {
+      if (data && data.success) {
+        // Sync doctor header
+        if (data.doctor) {
+          localStorage.setItem('ocayur_doctor', JSON.stringify(data.doctor));
+          localStorage.setItem('panchved_doctor', JSON.stringify(data.doctor));
+          syncDoctorUI(data.doctor);
+        }
+
+        // Update remaining metrics
+        if (data.metrics) {
+          if (metricActive) metricActive.textContent = data.metrics.active_patients ?? 0;
+          if (metricPending) metricPending.textContent = data.metrics.pending_followups ?? 0;
+          if (metricMessages) metricMessages.textContent = data.metrics.unread_messages ?? 0;
+        }
+      }
+    })
+    .catch(() => {});
   }
 
   // Pagination Button Click Handlers

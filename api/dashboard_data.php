@@ -116,29 +116,129 @@ try {
 
     $docId = $doctor ? intval($doctor['id']) : 0;
     $docName = $doctor ? $doctor['full_name'] : '';
+    $docStartTime = (!empty($doctor['start_time'])) ? $doctor['start_time'] : null;
+    $docEndTime = (!empty($doctor['end_time'])) ? $doctor['end_time'] : null;
+
+    // Time parsing expression for checking doctor availability
+    $docTimeExpr = "COALESCE(
+        TIME(STR_TO_DATE(CONCAT('2026-01-01 ', TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), 
+            CASE 
+                WHEN TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%AM%' 
+                     AND TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%PM%'
+                     AND `a`.`appointment_time` LIKE '%PM%' THEN ' PM'
+                WHEN TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%AM%' 
+                     AND TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%PM%'
+                     AND `a`.`appointment_time` LIKE '%AM%' THEN ' AM'
+                ELSE ''
+            END
+        ), '%Y-%m-%d %h:%i %p')),
+        TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%h:%i %p')),
+        TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%H:%i:%s')),
+        TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%H:%i'))
+    )";
+
+    // Doctor filter condition
+    $docWhereSql = "";
+    $docParams = [];
+    $docTypes = "";
+    if ($docId > 0) {
+        $cleanDocName = trim(preg_replace('/\s+/', ' ', preg_replace('/^dr\.?\s+/i', '', $docName)));
+        $docLike = '%' . $cleanDocName . '%';
+        $docWhereSql = "(`a`.`doctor_id` = ? OR `a`.`doctor_name` = ? OR `a`.`doctor_name` LIKE ? OR `a`.`doctor_id` IS NULL OR `a`.`doctor_id` = 0)";
+        $docParams = [$docId, $docName, $docLike];
+        $docTypes = "iss";
+
+        if (!empty($docStartTime) && !empty($docEndTime)) {
+            if ($docStartTime <= $docEndTime) {
+                $docWhereSql .= " AND ({$docTimeExpr} IS NULL OR ({$docTimeExpr} >= ? AND {$docTimeExpr} <= ?))";
+            } else {
+                $docWhereSql .= " AND ({$docTimeExpr} IS NULL OR ({$docTimeExpr} >= ? OR {$docTimeExpr} <= ?))";
+            }
+            $docParams[] = $docStartTime;
+            $docParams[] = $docEndTime;
+            $docTypes .= "ss";
+        }
+    }
 
     // 2. Dynamic Metrics Calculation from Database Tables
     // Metric 1: Today's Consultation
     $todayConsultationCount = 0;
-    $qToday = "SELECT COUNT(*) as cnt FROM `appointments` WHERE `appointment_date` = CURDATE() AND `status` != 'Cancelled'";
-    $resToday = mysqli_query($connection1, $qToday);
-    if ($resToday && $row = mysqli_fetch_assoc($resToday)) {
-        $todayConsultationCount = intval($row['cnt']);
+    $whereToday = ["`a`.`appointment_date` = CURDATE()", "`a`.`status` != 'Cancelled'"];
+    $paramsToday = [];
+    $typesToday = '';
+    if (!empty($docWhereSql)) {
+        $whereToday[] = $docWhereSql;
+        $paramsToday = array_merge($paramsToday, $docParams);
+        $typesToday .= $docTypes;
+    }
+    $qToday = "SELECT COUNT(*) as cnt FROM `appointments` `a` WHERE " . implode(' AND ', $whereToday);
+    if (!empty($paramsToday)) {
+        $stmtT = mysqli_prepare($connection1, $qToday);
+        if ($stmtT) {
+            mysqli_stmt_bind_param($stmtT, $typesToday, ...$paramsToday);
+            mysqli_stmt_execute($stmtT);
+            $resT = mysqli_stmt_get_result($stmtT);
+            if ($resT && $rowT = mysqli_fetch_assoc($resT)) {
+                $todayConsultationCount = intval($rowT['cnt']);
+            }
+            mysqli_stmt_close($stmtT);
+        }
+    } else {
+        $resToday = mysqli_query($connection1, $qToday);
+        if ($resToday && $row = mysqli_fetch_assoc($resToday)) {
+            $todayConsultationCount = intval($row['cnt']);
+        }
     }
     if ($todayConsultationCount === 0) {
-        $qScheduled = "SELECT COUNT(*) as cnt FROM `appointments` WHERE `status` IN ('Scheduled', 'Upcoming', 'Active')";
-        $resSched = mysqli_query($connection1, $qScheduled);
-        if ($resSched && $rowSched = mysqli_fetch_assoc($resSched)) {
-            $todayConsultationCount = intval($rowSched['cnt']);
+        $whereSched = ["`a`.`status` IN ('Scheduled', 'Upcoming', 'Active')"];
+        $paramsSched = [];
+        $typesSched = '';
+        if (!empty($docWhereSql)) {
+            $whereSched[] = $docWhereSql;
+            $paramsSched = array_merge($paramsSched, $docParams);
+            $typesSched .= $docTypes;
+        }
+        $qScheduled = "SELECT COUNT(*) as cnt FROM `appointments` `a` WHERE " . implode(' AND ', $whereSched);
+        if (!empty($paramsSched)) {
+            $stmtS = mysqli_prepare($connection1, $qScheduled);
+            if ($stmtS) {
+                mysqli_stmt_bind_param($stmtS, $typesSched, ...$paramsSched);
+                mysqli_stmt_execute($stmtS);
+                $resS = mysqli_stmt_get_result($stmtS);
+                if ($resS && $rowSched = mysqli_fetch_assoc($resS)) {
+                    $todayConsultationCount = intval($rowSched['cnt']);
+                }
+                mysqli_stmt_close($stmtS);
+            }
+        } else {
+            $resSched = mysqli_query($connection1, $qScheduled);
+            if ($resSched && $rowSched = mysqli_fetch_assoc($resSched)) {
+                $todayConsultationCount = intval($rowSched['cnt']);
+            }
         }
     }
 
     // Metric 2: Active Patients
     $activePatientsCount = 0;
-    $qPatients = "SELECT COUNT(*) as cnt FROM `patients` WHERE `status` IN ('Ongoing', 'Active')";
-    $resPatients = mysqli_query($connection1, $qPatients);
-    if ($resPatients && $row = mysqli_fetch_assoc($resPatients)) {
-        $activePatientsCount = intval($row['cnt']);
+    if (!empty($docWhereSql)) {
+        $qDocPatients = "SELECT COUNT(DISTINCT `a`.`patient_id`) as cnt FROM `appointments` `a` WHERE `a`.`status` != 'Cancelled' AND " . $docWhereSql;
+        $stmtDP = mysqli_prepare($connection1, $qDocPatients);
+        if ($stmtDP) {
+            mysqli_stmt_bind_param($stmtDP, $docTypes, ...$docParams);
+            mysqli_stmt_execute($stmtDP);
+            $resDP = mysqli_stmt_get_result($stmtDP);
+            if ($resDP && $rowDP = mysqli_fetch_assoc($resDP)) {
+                $activePatientsCount = intval($rowDP['cnt']);
+            }
+            mysqli_stmt_close($stmtDP);
+        }
+    }
+    if ($activePatientsCount === 0) {
+        $qPatients = "SELECT COUNT(*) as cnt FROM `patients` WHERE `status` IN ('Ongoing', 'Active')";
+        $resPatients = mysqli_query($connection1, $qPatients);
+        if ($resPatients && $row = mysqli_fetch_assoc($resPatients)) {
+            $activePatientsCount = intval($row['cnt']);
+        }
     }
     if ($activePatientsCount === 0) {
         $qAllPatients = "SELECT COUNT(*) as cnt FROM `patients`";
@@ -150,16 +250,58 @@ try {
 
     // Metric 3: Pending Follow-ups
     $pendingFollowupsCount = 0;
-    $qFollowups = "SELECT COUNT(*) as cnt FROM `appointments` WHERE (`status` IN ('Scheduled', 'Upcoming', 'Pending') AND (`agenda` LIKE '%follow%' OR `service_type` LIKE '%follow%')) OR `status` = 'Pending'";
-    $resFollow = mysqli_query($connection1, $qFollowups);
-    if ($resFollow && $row = mysqli_fetch_assoc($resFollow)) {
-        $pendingFollowupsCount = intval($row['cnt']);
+    $whereFollow = ["((`a`.`status` IN ('Scheduled', 'Upcoming', 'Pending') AND (`a`.`agenda` LIKE '%follow%' OR `a`.`service_type` LIKE '%follow%')) OR `a`.`status` = 'Pending')"];
+    $paramsFollow = [];
+    $typesFollow = '';
+    if (!empty($docWhereSql)) {
+        $whereFollow[] = $docWhereSql;
+        $paramsFollow = array_merge($paramsFollow, $docParams);
+        $typesFollow .= $docTypes;
+    }
+    $qFollowups = "SELECT COUNT(*) as cnt FROM `appointments` `a` WHERE " . implode(' AND ', $whereFollow);
+    if (!empty($paramsFollow)) {
+        $stmtF = mysqli_prepare($connection1, $qFollowups);
+        if ($stmtF) {
+            mysqli_stmt_bind_param($stmtF, $typesFollow, ...$paramsFollow);
+            mysqli_stmt_execute($stmtF);
+            $resF = mysqli_stmt_get_result($stmtF);
+            if ($resF && $row = mysqli_fetch_assoc($resF)) {
+                $pendingFollowupsCount = intval($row['cnt']);
+            }
+            mysqli_stmt_close($stmtF);
+        }
+    } else {
+        $resFollow = mysqli_query($connection1, $qFollowups);
+        if ($resFollow && $row = mysqli_fetch_assoc($resFollow)) {
+            $pendingFollowupsCount = intval($row['cnt']);
+        }
     }
     if ($pendingFollowupsCount === 0) {
-        $qUpcoming = "SELECT COUNT(*) as cnt FROM `appointments` WHERE `status` = 'Scheduled' AND `appointment_date` >= CURDATE()";
-        $resUp = mysqli_query($connection1, $qUpcoming);
-        if ($resUp && $rowUp = mysqli_fetch_assoc($resUp)) {
-            $pendingFollowupsCount = intval($rowUp['cnt']);
+        $whereUp = ["`a`.`status` = 'Scheduled'", "`a`.`appointment_date` >= CURDATE()"];
+        $paramsUp = [];
+        $typesUp = '';
+        if (!empty($docWhereSql)) {
+            $whereUp[] = $docWhereSql;
+            $paramsUp = array_merge($paramsUp, $docParams);
+            $typesUp .= $docTypes;
+        }
+        $qUpcoming = "SELECT COUNT(*) as cnt FROM `appointments` `a` WHERE " . implode(' AND ', $whereUp);
+        if (!empty($paramsUp)) {
+            $stmtU = mysqli_prepare($connection1, $qUpcoming);
+            if ($stmtU) {
+                mysqli_stmt_bind_param($stmtU, $typesUp, ...$paramsUp);
+                mysqli_stmt_execute($stmtU);
+                $resU = mysqli_stmt_get_result($stmtU);
+                if ($resU && $rowUp = mysqli_fetch_assoc($resU)) {
+                    $pendingFollowupsCount = intval($rowUp['cnt']);
+                }
+                mysqli_stmt_close($stmtU);
+            }
+        } else {
+            $resUp = mysqli_query($connection1, $qUpcoming);
+            if ($resUp && $rowUp = mysqli_fetch_assoc($resUp)) {
+                $pendingFollowupsCount = intval($rowUp['cnt']);
+            }
         }
     }
 
@@ -184,16 +326,56 @@ try {
     // 3. Consultation Table Data with Pagination
     $page = max(1, intval($_GET['page'] ?? 1));
     $limit = max(1, intval($_GET['limit'] ?? 3));
+    $todayOnly = (!empty($_GET['today']) || !empty($_GET['today_only']) || (isset($_GET['filter']) && strtolower($_GET['filter']) === 'today'));
+
+    $tableWhereClauses = [];
+    $tableParams = [];
+    $tableTypes = '';
+
+    if ($todayOnly) {
+        $tableWhereClauses[] = "`a`.`appointment_date` = CURDATE()";
+        $tableWhereClauses[] = "`a`.`status` NOT IN ('Completed', 'Cancelled')";
+    }
+
+    if (!empty($docWhereSql)) {
+        $tableWhereClauses[] = $docWhereSql;
+        $tableParams = array_merge($tableParams, $docParams);
+        $tableTypes .= $docTypes;
+    }
+
+    $tableWhereSql = !empty($tableWhereClauses) ? ('WHERE ' . implode(' AND ', $tableWhereClauses)) : '';
 
     // Count total available consultations
-    $countQuery = "SELECT COUNT(*) as total FROM `appointments` `a` LEFT JOIN `patients` `p` ON (`a`.`patient_id` = `p`.`id` OR `a`.`patient_name` = `p`.`full_name`)";
-    $resCount = mysqli_query($connection1, $countQuery);
-    $rowCount = $resCount ? mysqli_fetch_assoc($resCount) : null;
-    $totalItems = intval($rowCount['total'] ?? 0);
+    $countQuery = "SELECT COUNT(*) as total FROM `appointments` `a` LEFT JOIN `patients` `p` ON (`a`.`patient_id` = `p`.`id` OR `a`.`patient_name` = `p`.`full_name`) {$tableWhereSql}";
+    if (!empty($tableParams)) {
+        $stmtCount = mysqli_prepare($connection1, $countQuery);
+        if ($stmtCount) {
+            mysqli_stmt_bind_param($stmtCount, $tableTypes, ...$tableParams);
+            mysqli_stmt_execute($stmtCount);
+            $resCount = mysqli_stmt_get_result($stmtCount);
+            $rowCount = $resCount ? mysqli_fetch_assoc($resCount) : null;
+            $totalItems = intval($rowCount['total'] ?? 0);
+            mysqli_stmt_close($stmtCount);
+        } else {
+            $totalItems = 0;
+        }
+    } else {
+        $resCount = mysqli_query($connection1, $countQuery);
+        $rowCount = $resCount ? mysqli_fetch_assoc($resCount) : null;
+        $totalItems = intval($rowCount['total'] ?? 0);
+    }
 
     $totalPages = max(1, ceil($totalItems / $limit));
     $page = min($page, $totalPages);
     $offset = ($page - 1) * $limit;
+
+    // Check if `meet_link` column exists in `appointments` table
+    $hasMeetCol = false;
+    $chkColRes = mysqli_query($connection1, "SHOW COLUMNS FROM `appointments` LIKE 'meet_link'");
+    if ($chkColRes && mysqli_num_rows($chkColRes) > 0) {
+        $hasMeetCol = true;
+    }
+    $meetSelectExpr = $hasMeetCol ? "COALESCE(`a`.`meet_link`, '') AS `meet_link`" : "'' AS `meet_link`";
 
     // Fetch paginated consultations ordered: today first, then future upcoming, then past
     $query = "SELECT 
@@ -209,11 +391,13 @@ try {
                 a.service_type,
                 a.status,
                 a.agenda,
+                a.notes,
                 a.prescription,
                 a.doctor_name,
-                COALESCE(a.meet_link, '') AS meet_link
+                {$meetSelectExpr}
               FROM `appointments` a
               LEFT JOIN `patients` p ON (a.patient_id = p.id OR a.patient_name = p.full_name)
+              {$tableWhereSql}
               ORDER BY 
                 CASE WHEN a.appointment_date = CURDATE() THEN 0 
                      WHEN a.appointment_date > CURDATE() THEN 1 
@@ -226,7 +410,9 @@ try {
     $consultations = [];
 
     if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "ii", $limit, $offset);
+        $fullParams = array_merge($tableParams, [$limit, $offset]);
+        $fullTypes = $tableTypes . 'ii';
+        mysqli_stmt_bind_param($stmt, $fullTypes, ...$fullParams);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 
@@ -239,8 +425,13 @@ try {
                 elseif ($status === 'Cancelled') $statusClass = 'status-cancelled';
                 elseif ($status === 'Upcoming') $statusClass = 'status-upcoming';
 
-                // Check meeting link
+                // Check meeting link (from meet_link column or extracted from notes)
                 $rawMeet = trim((string)($row['meet_link'] ?? ''));
+                if (empty($rawMeet) && !empty($row['notes'])) {
+                    if (preg_match('/(https?:\/\/[^\s\'"<>]+meet[^\s\'"<>]*|https?:\/\/meet\.google\.com\/[a-z0-9\-]+)/i', $row['notes'], $mLink)) {
+                        $rawMeet = $mLink[0];
+                    }
+                }
                 $meetLink = '';
                 if (!empty($rawMeet) && $rawMeet !== '#' && strtolower($rawMeet) !== 'null') {
                     $meetLink = $rawMeet;

@@ -19,7 +19,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 function sendMeetResponse($success, $message, $data = [], $code = 200) {
-    http_response_code($code);
+    // Avoid sending HTTP >= 400 on Azure/IIS so JSON response is not replaced by IIS 404/500 error pages
+    http_response_code(200);
     echo json_encode(array_merge([
         'success' => (bool)$success,
         'message' => $message,
@@ -106,16 +107,54 @@ try {
         sendMeetResponse(false, 'Appointment not found in database.', [], 404);
     }
 
-    // Update meet link
-    $upQuery = "UPDATE appointments SET meet_link = ?, updated_at = NOW() WHERE id = ?";
-    $upStmt = mysqli_prepare($connection1, $upQuery);
-    if (!$upStmt) {
-        throw new mysqli_sql_exception(mysqli_error($connection1), mysqli_errno($connection1));
+    // Check if `meet_link` column exists in `appointments` table
+    $hasMeetCol = false;
+    $chkColRes = mysqli_query($connection1, "SHOW COLUMNS FROM `appointments` LIKE 'meet_link'");
+    if ($chkColRes && mysqli_num_rows($chkColRes) > 0) {
+        $hasMeetCol = true;
     }
 
-    mysqli_stmt_bind_param($upStmt, "si", $cleanMeetLink, $appDbId);
-    $executed = mysqli_stmt_execute($upStmt);
-    mysqli_stmt_close($upStmt);
+    if ($hasMeetCol) {
+        $upQuery = "UPDATE `appointments` SET `meet_link` = ?, `updated_at` = NOW() WHERE `id` = ?";
+        $upStmt = mysqli_prepare($connection1, $upQuery);
+        if (!$upStmt) {
+            throw new mysqli_sql_exception(mysqli_error($connection1), mysqli_errno($connection1));
+        }
+
+        mysqli_stmt_bind_param($upStmt, "si", $cleanMeetLink, $appDbId);
+        $executed = mysqli_stmt_execute($upStmt);
+        mysqli_stmt_close($upStmt);
+    } else {
+        // Fallback: If `meet_link` column does not exist yet, store meeting link in `notes`
+        // so data is never lost, and provide recommendation
+        $currentNotes = '';
+        $nStmt = mysqli_prepare($connection1, "SELECT `notes` FROM `appointments` WHERE `id` = ? LIMIT 1");
+        if ($nStmt) {
+            mysqli_stmt_bind_param($nStmt, "i", $appDbId);
+            mysqli_stmt_execute($nStmt);
+            $nRes = mysqli_stmt_get_result($nStmt);
+            if ($nRow = mysqli_fetch_assoc($nRes)) {
+                $currentNotes = (string)($nRow['notes'] ?? '');
+            }
+            mysqli_stmt_close($nStmt);
+        }
+
+        $cleanedNotes = preg_replace('/(https?:\/\/[^\s\'"<>]+meet[^\s\'"<>]*|https?:\/\/meet\.google\.com\/[a-z0-9\-]+)/i', '', $currentNotes);
+        $cleanedNotes = trim($cleanedNotes);
+        $newNotes = !empty($cleanMeetLink) 
+            ? (!empty($cleanedNotes) ? ($cleanMeetLink . "\n" . $cleanedNotes) : $cleanMeetLink) 
+            : $cleanedNotes;
+
+        $upQuery = "UPDATE `appointments` SET `notes` = ?, `updated_at` = NOW() WHERE `id` = ?";
+        $upStmt = mysqli_prepare($connection1, $upQuery);
+        if (!$upStmt) {
+            throw new mysqli_sql_exception(mysqli_error($connection1), mysqli_errno($connection1));
+        }
+
+        mysqli_stmt_bind_param($upStmt, "si", $newNotes, $appDbId);
+        $executed = mysqli_stmt_execute($upStmt);
+        mysqli_stmt_close($upStmt);
+    }
 
     if (!$executed) {
         throw new mysqli_sql_exception('Failed to execute meet link update statement.');

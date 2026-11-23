@@ -26,6 +26,19 @@ set_error_handler(function($severity, $message, $file, $line) {
     throw new ErrorException($message, 0, $severity, $file, $line);
 });
 
+if (!function_exists('getInitials')) {
+    function getInitials($name) {
+        $words = preg_split('/\s+/', trim((string)$name));
+        $initials = '';
+        foreach ($words as $w) {
+            if (!empty($w)) {
+                $initials .= strtoupper($w[0]);
+            }
+        }
+        return substr($initials, 0, 2) ?: 'PT';
+    }
+}
+
 function calculateDurationFromTime($timeStr, $fallbackDuration = '45 mins') {
     if (empty($timeStr)) {
         return formatDurationString($fallbackDuration);
@@ -83,13 +96,16 @@ try {
     $page = max(1, intval($_GET['page'] ?? 1));
     $limit = max(1, intval($_GET['limit'] ?? 5));
     $doctorId = intval($_GET['doctor_id'] ?? $_SESSION['doctor_id'] ?? 0);
+    $todayOnly = (!empty($_GET['today']) || !empty($_GET['today_only']) || (isset($_GET['filter']) && strtolower($_GET['filter']) === 'today') || (isset($_GET['date']) && strtolower($_GET['date']) === 'today'));
 
     // Current Local Time handling
     $clientNow = trim($_GET['client_now'] ?? '');
     if (!empty($clientNow) && strtotime($clientNow) !== false) {
         $nowStr = date('Y-m-d H:i:s', strtotime($clientNow));
+        $todayDate = date('Y-m-d', strtotime($clientNow));
     } else {
         $nowStr = date('Y-m-d H:i:s');
+        $todayDate = date('Y-m-d');
     }
 
     // SQL expression to accurately compute appointment end/start datetime from date and time string
@@ -106,16 +122,20 @@ try {
     $params = [];
     $types = '';
 
-    // 1. Doctor Filter
+    // 1. Doctor Filter & Time Availability Check
     if ($doctorId > 0) {
         $currentDocName = '';
-        if ($stmtDoc = mysqli_prepare($connection1, "SELECT full_name FROM doctors WHERE id = ? OR doctorid = ? LIMIT 1")) {
+        $docStartTime = null;
+        $docEndTime = null;
+        if ($stmtDoc = mysqli_prepare($connection1, "SELECT full_name, start_time, end_time FROM doctors WHERE id = ? OR doctorid = ? LIMIT 1")) {
             $docIdStr = (string)$doctorId;
             mysqli_stmt_bind_param($stmtDoc, "is", $doctorId, $docIdStr);
             mysqli_stmt_execute($stmtDoc);
             $resDoc = mysqli_stmt_get_result($stmtDoc);
             if ($rowDoc = mysqli_fetch_assoc($resDoc)) {
                 $currentDocName = trim($rowDoc['full_name']);
+                if (!empty($rowDoc['start_time'])) $docStartTime = $rowDoc['start_time'];
+                if (!empty($rowDoc['end_time'])) $docEndTime = $rowDoc['end_time'];
             }
             mysqli_stmt_close($stmtDoc);
         }
@@ -133,18 +153,62 @@ try {
             $params[] = $doctorId;
             $types .= 'i';
         }
+
+        // Filter appointments for doctors available at that particular time
+        if (!empty($docStartTime) && !empty($docEndTime)) {
+            $timeExpr = "COALESCE(
+                TIME(STR_TO_DATE(CONCAT('2026-01-01 ', TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), 
+                    CASE 
+                        WHEN TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%AM%' 
+                             AND TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%PM%'
+                             AND `a`.`appointment_time` LIKE '%PM%' THEN ' PM'
+                        WHEN TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%AM%' 
+                             AND TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)) NOT LIKE '%PM%'
+                             AND `a`.`appointment_time` LIKE '%AM%' THEN ' AM'
+                        ELSE ''
+                    END
+                ), '%Y-%m-%d %h:%i %p')),
+                TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%h:%i %p')),
+                TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%H:%i:%s')),
+                TIME(STR_TO_DATE(TRIM(SUBSTRING_INDEX(`a`.`appointment_time`, '-', 1)), '%H:%i'))
+            )";
+
+            if ($docStartTime <= $docEndTime) {
+                $whereClauses[] = "({$timeExpr} IS NULL OR ({$timeExpr} >= ? AND {$timeExpr} <= ?))";
+                $params[] = $docStartTime;
+                $params[] = $docEndTime;
+                $types .= 'ss';
+            } else {
+                $whereClauses[] = "({$timeExpr} IS NULL OR ({$timeExpr} >= ? OR {$timeExpr} <= ?))";
+                $params[] = $docStartTime;
+                $params[] = $docEndTime;
+                $types .= 'ss';
+            }
+        }
     }
 
-    // 2. Tab Condition (Upcoming after present time vs History in past)
-    if ($tab === 'upcoming') {
-        $whereClauses[] = "`a`.`status` NOT IN ('Completed', 'Cancelled')";
-        $whereClauses[] = "{$dtExpr} >= ?";
-        $params[] = $nowStr;
+    // 2. Tab & Date Condition
+    if ($todayOnly) {
+        $whereClauses[] = "`a`.`appointment_date` = ?";
+        $params[] = $todayDate;
         $types .= 's';
-    } elseif ($tab === 'history') {
-        $whereClauses[] = "(`a`.`status` IN ('Completed', 'Cancelled') OR {$dtExpr} < ?)";
-        $params[] = $nowStr;
-        $types .= 's';
+
+        if ($tab === 'upcoming') {
+            $whereClauses[] = "`a`.`status` NOT IN ('Completed', 'Cancelled')";
+        } elseif ($tab === 'history') {
+            $whereClauses[] = "`a`.`status` IN ('Completed', 'Cancelled')";
+        }
+    } else {
+        if ($tab === 'upcoming') {
+            $whereClauses[] = "`a`.`status` NOT IN ('Completed', 'Cancelled')";
+            $whereClauses[] = "{$dtExpr} >= ?";
+            $params[] = $nowStr;
+            $types .= 's';
+        } elseif ($tab === 'history') {
+            $whereClauses[] = "(`a`.`status` IN ('Completed', 'Cancelled') OR {$dtExpr} < ?)";
+            $params[] = $nowStr;
+            $types .= 's';
+        }
     }
 
     // 3. Search Condition
@@ -188,6 +252,14 @@ try {
     $page = min($page, $totalPages);
     $offset = ($page - 1) * $limit;
 
+    // Check if `meet_link` column exists in `appointments` table
+    $hasMeetCol = false;
+    $chkColRes = mysqli_query($connection1, "SHOW COLUMNS FROM `appointments` LIKE 'meet_link'");
+    if ($chkColRes && mysqli_num_rows($chkColRes) > 0) {
+        $hasMeetCol = true;
+    }
+    $meetSelectExpr = $hasMeetCol ? "COALESCE(`a`.`meet_link`, '') AS `meet_link`" : "'' AS `meet_link`";
+
     // Fetch Paginated Records
     $dataQuery = "SELECT 
                     `a`.`id`,
@@ -205,7 +277,7 @@ try {
                     `a`.`notes`,
                     `a`.`prescription`,
                     `a`.`doctor_name`,
-                    COALESCE(`a`.`meet_link`, '') AS `meet_link`
+                    {$meetSelectExpr}
                   FROM `appointments` `a`
                   LEFT JOIN `patients` `p` ON (`a`.`patient_id` = `p`.`id` OR `a`.`patient_name` = `p`.`full_name`)
                   {$whereSql}
@@ -245,22 +317,49 @@ try {
             $rxRaw = trim((string)($row['prescription'] ?? ''));
             $hasPrescription = (!empty($rxRaw) && $rxRaw !== 'null' && $rxRaw !== '{}' && $rxRaw !== '[]');
 
+            // Normalize meet link (from meet_link column or extracted from notes)
+            $rawMeet = trim((string)($row['meet_link'] ?? ''));
+            if (empty($rawMeet) && !empty($row['notes'])) {
+                if (preg_match('/(https?:\/\/[^\s\'"<>]+meet[^\s\'"<>]*|https?:\/\/meet\.google\.com\/[a-z0-9\-]+)/i', $row['notes'], $mLink)) {
+                    $rawMeet = $mLink[0];
+                }
+            }
+            $meetLink = '';
+            if (!empty($rawMeet) && $rawMeet !== '#' && strtolower($rawMeet) !== 'null') {
+                $meetLink = $rawMeet;
+                if (!preg_match('/^https?:\/\//i', $meetLink)) {
+                    $meetLink = 'https://' . $meetLink;
+                }
+            }
+
+            $statusClass = 'status-scheduled';
+            if ($status === 'Completed') $statusClass = 'status-completed';
+            elseif ($status === 'Pending') $statusClass = 'status-pending';
+            elseif ($status === 'Cancelled') $statusClass = 'status-cancelled';
+            elseif ($status === 'Upcoming') $statusClass = 'status-upcoming';
+
             $appointments[] = [
                 'id' => intval($row['id']),
                 'appointment_id' => $row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT)),
                 'patient_id' => intval($row['patient_id'] ?: 1),
                 'patient_code' => $row['patient_code'] ?: ('P00' . ($row['patient_id'] ?: 1)),
                 'patient_name' => $row['patient_name'] ?: 'Patient',
+                'patient_initials' => getInitials($row['patient_name'] ?: 'Patient'),
                 'package_name' => $row['package_name'] ?: 'Stresscare',
                 'date_raw' => $rawDate,
                 'date' => $formattedDate,
+                'appointment_date' => $rawDate,
                 'time' => $timeStr,
+                'appointment_time' => $timeStr,
                 'duration' => $duration,
                 'agenda' => $agenda,
                 'complaint' => $agenda,
                 'status' => $status,
-                'meet_link' => !empty($row['meet_link']) ? trim($row['meet_link']) : '',
-                'has_meet_link' => !empty($row['meet_link']),
+                'status_class' => $statusClass,
+                'meet_link' => $meetLink,
+                'meeting_link' => $meetLink,
+                'has_meet_link' => !empty($meetLink),
+                'has_meeting_link' => !empty($meetLink),
                 'has_prescription' => (bool)$hasPrescription,
                 'prescription' => $hasPrescription ? $row['prescription'] : null,
                 'prescription_url' => 'add-prescription.html?patient_id=' . intval($row['patient_id'] ?: 1) . '&appointment_id=' . urlencode($row['appointment_id'] ?: ('ABC-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT))) . '&id=' . intval($row['id'])
@@ -289,26 +388,21 @@ try {
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (mysqli_sql_exception $e) {
-    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Database Error: ' . $e->getMessage(),
         'error_type' => 'mysqli_sql_exception',
-        'sqlstate' => method_exists($e, 'getSqlState') ? $e->getSqlState() : null,
+        'sqlstate' => method_exists($e, 'getSqlState') ? $e->getSqlState() : 'HY000',
         'error_code' => $e->getCode(),
-        'error_details' => $e->getMessage(),
-        'file' => basename($e->getFile()),
-        'line' => $e->getLine()
+        'error_details' => $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
-    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Server Error: ' . $e->getMessage(),
         'error_type' => get_class($e),
         'error_code' => $e->getCode(),
-        'error_details' => $e->getMessage(),
-        'file' => basename($e->getFile()),
-        'line' => $e->getLine()
+        'sqlstate' => 'HY000',
+        'error_details' => $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 }
