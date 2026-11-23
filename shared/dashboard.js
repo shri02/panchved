@@ -233,6 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.action-menu-dropdown').forEach(d => d.classList.remove('show'));
   });
 
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function renderConsultationRows(consultations) {
     if (!consultationTableBody) return;
 
@@ -250,43 +260,116 @@ document.addEventListener('DOMContentLoaded', () => {
     let rowsHtml = '';
     consultations.forEach((item, index) => {
       const rowId = index + 1;
+      const rawMeet = (item.meeting_link || '').trim();
+      const hasMeet = Boolean(item.has_meeting_link && rawMeet !== '' && rawMeet !== '#');
+
+      let meetText = 'meet.google...';
+      if (hasMeet) {
+        try {
+          const u = new URL(rawMeet);
+          meetText = (u.hostname.replace('www.', '') || 'meeting') + '...';
+        } catch (_) {
+          meetText = 'Join Meeting';
+        }
+      }
+
+      const meetCellHtml = hasMeet ? `
+        <div class="meet-action-group" style="display: inline-flex; align-items: center; gap: 6px;">
+          <a href="${escapeHtml(rawMeet)}" target="_blank" rel="noopener noreferrer" class="meet-link" title="${escapeHtml(rawMeet)}">
+            <span>${escapeHtml(meetText)}</span>
+            <svg class="meet-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+          <button type="button" class="btn-edit-meet" onclick="openMeetModal(${item.id}, '${escapeHtml(item.appointment_id)}', '${escapeHtml(rawMeet)}', '${escapeHtml(item.patient_name)}')" title="Edit meeting link" style="background: none; border: 1px solid #e2e8f0; cursor: pointer; color: #64748b; padding: 3px 6px; display: inline-flex; align-items: center; border-radius: 6px; font-size: 0.75rem; transition: all 0.2s;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+        </div>
+      ` : `
+        <button type="button" class="btn-add-meet" onclick="openMeetModal(${item.id}, '${escapeHtml(item.appointment_id)}', '', '${escapeHtml(item.patient_name)}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; font-size: 0.8rem; font-weight: 600; color: #0284c7; background: #f0f9ff; border: 1px dashed #7dd3fc; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>+ Add Meet</span>
+        </button>
+      `;
+
+      const patientUrl = `../patients/patient-details.html?id=${encodeURIComponent(item.patient_id)}`;
+      const prescriptionUrl = `../appointments/add-prescription.html?patient_id=${encodeURIComponent(item.patient_id)}&appointment_id=${encodeURIComponent(item.appointment_id)}&id=${item.id}${item.has_prescription ? '&mode=edit' : ''}`;
+      const meetLinkEscaped = hasMeet ? escapeHtml(rawMeet) : '';
+
+      const actionCellHtml = `
+        <div class="action-dropdown-wrapper">
+          <button class="action-menu-btn" aria-label="Actions for ${escapeHtml(item.patient_name)}" data-row="${rowId}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="2"></circle>
+              <circle cx="12" cy="12" r="2"></circle>
+              <circle cx="12" cy="19" r="2"></circle>
+            </svg>
+          </button>
+          <div class="action-menu-dropdown" id="dropdown-${rowId}">
+            <a href="${prescriptionUrl}" class="dropdown-item" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span>${item.has_prescription ? 'Edit Prescription' : 'Add Prescription'}</span>
+            </a>
+            <button type="button" class="dropdown-item" onclick="openMeetModal(${item.id}, '${escapeHtml(item.appointment_id)}', '${meetLinkEscaped}', '${escapeHtml(item.patient_name)}')" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 10l5-5v14l-5-5"></path>
+                <rect x="2" y="6" width="13" height="12" rx="2"></rect>
+              </svg>
+              <span>${hasMeet ? 'Edit Meeting Link' : 'Add Meeting Link'}</span>
+            </button>
+            <a href="${patientUrl}" class="dropdown-item" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>View Patient</span>
+            </a>
+            ${item.status !== 'Completed' ? `
+            <button type="button" class="dropdown-item" onclick="markAppointmentCompleted(${item.id}, '${escapeHtml(item.patient_name)}')" style="display: flex; align-items: center; gap: 8px; color: #16a34a;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Mark Completed</span>
+            </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
 
       rowsHtml += `
         <tr>
           <td class="cell-patient">
-            <div class="patient-profile">
-              <div class="patient-avatar">${item.patient_initials}</div>
-              <div class="patient-details">
-                <span class="patient-name">${item.patient_name}</span>
-                <span class="patient-id">${item.patient_code}</span>
+            <a href="${patientUrl}" style="text-decoration: none; color: inherit;" title="View ${escapeHtml(item.patient_name)} details">
+              <div class="patient-profile">
+                <div class="patient-avatar">${escapeHtml(item.patient_initials)}</div>
+                <div class="patient-details">
+                  <span class="patient-name">${escapeHtml(item.patient_name)}</span>
+                  <span class="patient-id">${escapeHtml(item.patient_code)}</span>
+                </div>
               </div>
-            </div>
-          </td>
-          <td class="cell-time">${item.appointment_time}</td>
-          <td class="cell-package">${item.package_name}</td>
-          <td class="cell-status">
-            <span class="status-badge ${item.status_class}">${item.status}</span>
-          </td>
-          <td class="cell-meeting">
-            <a href="${item.meeting_link}" target="_blank" rel="noopener noreferrer" class="meet-link" title="Open Google Meet link">
-              <span>meet.google...</span>
-              <svg class="meet-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
             </a>
           </td>
+          <td class="cell-time">${escapeHtml(item.appointment_time)}</td>
+          <td class="cell-package">${escapeHtml(item.package_name)}</td>
+          <td class="cell-status">
+            <span class="status-badge ${escapeHtml(item.status_class)}">${escapeHtml(item.status)}</span>
+          </td>
+          <td class="cell-meeting">
+            ${meetCellHtml}
+          </td>
           <td class="cell-action">
-            <div class="action-dropdown-wrapper">
-              <button class="action-menu-btn" aria-label="Actions for ${item.patient_name}" data-row="${rowId}">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="5" r="2"></circle>
-                  <circle cx="12" cy="12" r="2"></circle>
-                  <circle cx="12" cy="19" r="2"></circle>
-                </svg>
-              </button>
-            </div>
+            ${actionCellHtml}
           </td>
         </tr>
       `;
@@ -295,6 +378,94 @@ document.addEventListener('DOMContentLoaded', () => {
     consultationTableBody.innerHTML = rowsHtml;
     bindActionDropdowns();
   }
+
+  // Window modal controllers for Meeting Link and Appointment Status
+  window.openMeetModal = function(id, code, link, patientName) {
+    const modal = document.getElementById('meetModalBackdrop');
+    if (!modal) return;
+    const dbIdInput = document.getElementById('meetAppointmentDbId');
+    const codeInput = document.getElementById('meetAppointmentCode');
+    const linkInput = document.getElementById('meetLinkInput');
+    const titleEl = document.getElementById('meetModalTitle');
+    const subEl = document.getElementById('meetModalSubtitle');
+
+    if (dbIdInput) dbIdInput.value = id || '';
+    if (codeInput) codeInput.value = code || '';
+    if (linkInput) linkInput.value = link || '';
+    if (titleEl) titleEl.textContent = link ? 'Update Meeting Link' : 'Set Meeting Link';
+    if (subEl) subEl.textContent = `Consultation: ${code || ('#' + id)} (${patientName || 'Patient'})`;
+
+    modal.style.display = 'flex';
+    setTimeout(() => linkInput?.focus(), 100);
+  };
+
+  window.closeMeetModal = function() {
+    const modal = document.getElementById('meetModalBackdrop');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.handleMeetLinkSubmit = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const id = document.getElementById('meetAppointmentDbId')?.value;
+    const code = document.getElementById('meetAppointmentCode')?.value;
+    const link = document.getElementById('meetLinkInput')?.value.trim();
+    const btn = document.getElementById('meetSubmitBtn');
+    const origText = btn ? btn.textContent : 'Save Link';
+
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+      }
+
+      const res = await fetch(getApiUrl('update_meet_link.php'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ id: id, appointment_id: code, meet_link: link })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        window.closeMeetModal();
+        if (typeof showToast === 'function') {
+          showToast(data.message || 'Meeting link saved successfully!', 'success');
+        }
+        fetchDashboardData(currentDashboardPage);
+      } else {
+        alert(data.message || 'Failed to update meeting link');
+      }
+    } catch (err) {
+      alert('Error saving meeting link: ' + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    }
+  };
+
+  window.markAppointmentCompleted = async function(id, patientName) {
+    if (!confirm(`Mark consultation for ${patientName || 'this patient'} as Completed?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(getApiUrl('update_appointment_status.php'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ id: id, appointment_id: id, status: 'Completed' })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (typeof showToast === 'function') {
+          showToast('Consultation marked as Completed!', 'success');
+        }
+        fetchDashboardData(currentDashboardPage);
+      } else {
+        alert(data.message || 'Failed to update consultation status.');
+      }
+    } catch (err) {
+      alert('Error updating status: ' + err.message);
+    }
+  };
 
   function fetchDashboardData(page = 1) {
     if (!consultationTableBody && !metricToday) return;
