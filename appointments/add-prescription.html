@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ocayur - Doctor Portal | Add Prescription</title>
-  <meta name="description" content="Add new prescription, medical history, diagnosis, and medications at Ocayur Doctor Portal.">
+  <meta name="description" content="Add new prescription with vitals, clinical history, diagnosis, medications, investigations, advice, and follow-up at Ocayur Doctor Portal.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -171,8 +171,8 @@
       <!-- Top Page Header -->
       <header class="content-header">
         <div class="welcome-heading">
-          <h1 class="page-title">Add Prescription</h1>
-          <p class="welcome-subtitle">Communicate with your assigned patients.</p>
+          <h1 class="page-title">Digital Prescription (Rx Pad)</h1>
+          <p class="welcome-subtitle">Record vitals, clinical history, diagnosis, medications, investigations, advice, and follow-up.</p>
         </div>
 
         <!-- Doctor Profile Card Pill -->
@@ -202,146 +202,438 @@
           </a>
         </div>
 
+        <!-- Eka-Style Encounter / Patient Banner -->
+        <div class="rx-encounter-banner" id="rxEncounterBanner">
+          <div class="rx-encounter-patient">
+            <div class="rx-patient-avatar" id="bannerAvatar">PT</div>
+            <div>
+              <h2 class="rx-encounter-name" id="bannerPatientName">Patient</h2>
+              <p class="rx-encounter-meta" id="bannerPatientMeta">Age: -- | Gender: --</p>
+            </div>
+          </div>
+          <div class="rx-encounter-right">
+            <span class="rx-meta-pill" id="bannerDatePill">Date: --</span>
+            <span class="rx-meta-pill" id="bannerApptPill" style="display: none;">Appt: --</span>
+          </div>
+        </div>
+
         <!-- Form Stack -->
         <form class="prescription-form-container" id="prescriptionForm" onsubmit="return false;">
-          
-          <!-- Card 1: Medical History -->
-          <section class="prescription-form-card" aria-labelledby="headingMedicalHistory">
-            <h2 class="card-title" id="headingMedicalHistory">Medical History</h2>
 
-            <div id="symptomsList">
-              <!-- Symptom 1 Item -->
-              <div class="symptom-box-item" id="symptomItem-1">
-                <div class="symptom-box-header">
-                  <h3 class="symptom-box-title">Symptom 1</h3>
+          <!-- ============================================================
+               SECTION 1: VITALS
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingVitals">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingVitals">Vitals</h2>
+                  <p class="card-subtitle-hint">Record triage measurements (BMI auto-calculates from weight &amp; height)</p>
                 </div>
+              </div>
+              <button type="button" class="btn-quick-fill" id="btnNormalVitals" title="Fill standard normal vitals">
+                Fill Normal Vitals
+              </button>
+            </div>
 
-                <div class="form-grid-2col">
-                  <!-- Symptom Select -->
-                  <div class="form-field-group">
-                    <label class="field-label" for="symptomSelect-1">Symptom <span class="required-star" aria-hidden="true">*</span></label>
-                    <div class="select-wrapper">
-                      <select class="form-select-control" id="symptomSelect-1" required>
-                        <option value="" disabled selected hidden>Select symptom</option>
-                        <option value="headache">Headache</option>
-                        <option value="insomnia">Insomnia / Sleep disturbance</option>
-                        <option value="anxiety">Anxiety / Stress</option>
-                        <option value="acidity">Acidity / Heartburn</option>
-                        <option value="constipation">Constipation</option>
-                        <option value="joint_pain">Joint Pain / Stiffness</option>
-                        <option value="fatigue">Chronic Fatigue</option>
-                      </select>
-                      <span class="select-icon" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Severity Select -->
-                  <div class="form-field-group">
-                    <label class="field-label" for="severitySelect-1">Severity <span class="required-star" aria-hidden="true">*</span></label>
-                    <div class="select-wrapper">
-                      <select class="form-select-control" id="severitySelect-1" required>
-                        <option value="" disabled selected hidden>Select severity</option>
-                        <option value="mild">Mild</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="severe">Severe</option>
-                      </select>
-                      <span class="select-icon" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </span>
-                    </div>
-                  </div>
+            <div class="vitals-grid">
+              <div class="form-field-group">
+                <label class="field-label" for="vitalBP">Blood Pressure (BP)</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalBP" placeholder="e.g. 120/80" list="bpSuggestions">
+                  <span class="vital-unit">mmHg</span>
                 </div>
+              </div>
 
-                <!-- Notes Input -->
-                <div class="form-field-group">
-                  <label class="field-label" for="symptomNotes-1">Notes</label>
-                  <textarea class="form-textarea-control" id="symptomNotes-1" placeholder="Enter notes" rows="2"></textarea>
+              <div class="form-field-group">
+                <label class="field-label" for="vitalPulse">Pulse Rate</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalPulse" placeholder="e.g. 72">
+                  <span class="vital-unit">bpm</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalTemp">Temperature</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalTemp" placeholder="e.g. 98.6">
+                  <span class="vital-unit">°F</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalSpo2">SpO2</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalSpo2" placeholder="e.g. 99">
+                  <span class="vital-unit">%</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalWeight">Weight</label>
+                <div class="vital-input-wrap">
+                  <input type="number" step="0.1" class="form-input-control" id="vitalWeight" placeholder="e.g. 68">
+                  <span class="vital-unit">kg</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalHeight">Height</label>
+                <div class="vital-input-wrap">
+                  <input type="number" step="0.1" class="form-input-control" id="vitalHeight" placeholder="e.g. 170">
+                  <span class="vital-unit">cm</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalBMI">BMI</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalBMI" placeholder="Auto or custom">
+                  <span class="vital-unit">kg/m²</span>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="vitalRBS">Blood Sugar (RBS)</label>
+                <div class="vital-input-wrap">
+                  <input type="text" class="form-input-control" id="vitalRBS" placeholder="e.g. 110">
+                  <span class="vital-unit">mg/dL</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============================================================
+               SECTION 2: CHIEF COMPLAINTS / SYMPTOMS
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingSymptoms">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingSymptoms">Chief Complaints / Symptoms</h2>
+                  <p class="card-subtitle-hint">Select from common symptoms or type any custom symptom directly</p>
                 </div>
               </div>
             </div>
 
-            <!-- Add Symptom Button -->
+            <div id="symptomsList">
+              <!-- Populated dynamically / initial row -->
+            </div>
+
             <button type="button" class="btn-form-action-teal" id="btnAddSymptom">
-              Add Symptom
+              + Add Symptom
             </button>
           </section>
 
-          <!-- Card 2: Diagnosis -->
-          <section class="prescription-form-card" aria-labelledby="headingDiagnosis">
-            <h2 class="card-title" id="headingDiagnosis">Diagnosis</h2>
+          <!-- ============================================================
+               SECTION 3: CLINICAL & MEDICAL HISTORY (Preset Chips + Custom)
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingMedicalHistory">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingMedicalHistory">Clinical &amp; Medical History</h2>
+                  <p class="card-subtitle-hint">Tap any option to select, or add your own custom entry</p>
+                </div>
+              </div>
+            </div>
 
-            <div class="form-grid-2col">
+            <!-- Past / Chronic History -->
+            <div class="chip-section-block" data-chip-group="past_history">
+              <span class="chip-group-label">Past / Chronic History</span>
+              <div class="chip-cloud" id="chips-past_history"></div>
+              <div class="custom-chip-adder">
+                <input type="text" class="custom-chip-input" id="input-past_history" placeholder="Add custom medical history...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="past_history">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Allergies -->
+            <div class="chip-section-block" data-chip-group="allergies">
+              <span class="chip-group-label">Allergies</span>
+              <div class="chip-cloud" id="chips-allergies"></div>
+              <div class="custom-chip-adder">
+                <input type="text" class="custom-chip-input" id="input-allergies" placeholder="Add custom allergy...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="allergies">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Lifestyle / Personal History -->
+            <div class="chip-section-block" data-chip-group="lifestyle">
+              <span class="chip-group-label">Lifestyle &amp; Personal History</span>
+              <div class="chip-cloud" id="chips-lifestyle"></div>
+              <div class="custom-chip-adder">
+                <input type="text" class="custom-chip-input" id="input-lifestyle" placeholder="Add custom lifestyle detail...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="lifestyle">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Additional Medical History Notes -->
+            <div class="form-field-group" style="margin-top: 12px;">
+              <label class="field-label" for="medicalHistoryNotes">Additional History Notes (Family / Surgical / Prakriti)</label>
+              <textarea class="form-textarea-control" id="medicalHistoryNotes" placeholder="Enter any additional medical, surgical, or family history notes..." rows="2"></textarea>
+            </div>
+          </section>
+
+          <!-- ============================================================
+               SECTION 4: EXAMINATION FINDINGS (Preset Chips + Custom)
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingFindings">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingFindings">Examination Findings</h2>
+                  <p class="card-subtitle-hint">Select systemic / Ayurvedic exam findings or type custom notes</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chip-section-block" data-chip-group="exam_findings">
+              <div class="chip-cloud" id="chips-exam_findings"></div>
+              <div class="custom-chip-adder" style="margin-bottom: 12px;">
+                <input type="text" class="custom-chip-input" id="input-exam_findings" placeholder="Add custom finding...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="exam_findings">+ Add</button>
+              </div>
+            </div>
+
+            <textarea class="form-textarea-control" id="examinationFindings" placeholder="Enter detailed examination findings..." rows="3"></textarea>
+          </section>
+
+          <!-- ============================================================
+               SECTION 5: DIAGNOSIS
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingDiagnosis">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingDiagnosis">Diagnosis</h2>
+                  <p class="card-subtitle-hint">Choose from suggestions or type any diagnosis &amp; duration</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-grid-3col">
               <div class="form-field-group">
-                <label class="field-label" for="diagnosisName">Diagnosis name <span class="required-star" aria-hidden="true">*</span></label>
-                <input type="text" class="form-input-control" id="diagnosisName" placeholder="Enter diagnosis" required>
+                <label class="field-label" for="diagnosisName">Diagnosis Name <span class="required-star" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input-control" id="diagnosisName" list="diagnosisSuggestions" placeholder="Select or type diagnosis" required>
               </div>
 
               <div class="form-field-group">
-                <label class="field-label" for="diagnosisDuration">Duration <span class="required-star" aria-hidden="true">*</span></label>
-                <input type="text" class="form-input-control" id="diagnosisDuration" placeholder="enter duration" required>
+                <label class="field-label" for="diagnosisDuration">Duration / Since <span class="required-star" aria-hidden="true">*</span></label>
+                <input type="text" class="form-input-control" id="diagnosisDuration" list="durationSuggestions" placeholder="e.g. 3 months" required>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="diagnosisType">Diagnosis Status</label>
+                <input type="text" class="form-input-control" id="diagnosisType" list="diagnosisTypeSuggestions" placeholder="e.g. Provisional / Confirmed" value="Provisional">
               </div>
             </div>
           </section>
 
-          <!-- Card 3: Prescription -->
+          <!-- ============================================================
+               SECTION 6: MEDICATIONS (Rx)
+               ============================================================ -->
           <section class="prescription-form-card" aria-labelledby="headingPrescription">
-            <h2 class="card-title" id="headingPrescription">Prescription</h2>
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.5 20.5L3.5 13.5a4.95 4.95 0 1 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"></path>
+                    <line x1="8.5" y1="8.5" x2="15.5" y2="15.5"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingPrescription">Medications (Rx)</h2>
+                  <p class="card-subtitle-hint">Select from dropdown suggestions or type custom drug, form, dose, frequency, timing &amp; duration</p>
+                </div>
+              </div>
+            </div>
 
             <div class="medication-table-container">
               <table class="medication-table" aria-label="Prescription Medication Table">
                 <thead>
                   <tr>
-                    <th scope="col" style="width: 28%;">Medication <span class="required-star" aria-hidden="true">*</span></th>
-                    <th scope="col" style="width: 18%;">Dose <span class="required-star" aria-hidden="true">*</span></th>
-                    <th scope="col" style="width: 18%;">Frequency <span class="required-star" aria-hidden="true">*</span></th>
-                    <th scope="col" style="width: 18%;">Duration <span class="required-star" aria-hidden="true">*</span></th>
-                    <th scope="col" style="width: 18%;">Remarks</th>
+                    <th scope="col" style="width: 22%;">Medication <span class="required-star" aria-hidden="true">*</span></th>
+                    <th scope="col" style="width: 12%;">Form / Type</th>
+                    <th scope="col" style="width: 11%;">Dose</th>
+                    <th scope="col" style="width: 13%;">Frequency</th>
+                    <th scope="col" style="width: 14%;">Timing / Route</th>
+                    <th scope="col" style="width: 11%;">Duration</th>
+                    <th scope="col" style="width: 13%;">Remarks</th>
+                    <th scope="col" style="width: 4%;"></th>
                   </tr>
                 </thead>
                 <tbody id="medicationTableBody">
-                  <tr>
-                    <td>
-                      <input type="text" class="medication-input" placeholder="Enter medicine name" aria-label="Medicine Name">
-                    </td>
-                    <td>
-                      <input type="text" class="medication-input" placeholder="Enter dose" aria-label="Dose">
-                    </td>
-                    <td>
-                      <input type="text" class="medication-input" placeholder="Enter frequency" aria-label="Frequency">
-                    </td>
-                    <td>
-                      <input type="text" class="medication-input" placeholder="Enter Duration" aria-label="Duration">
-                    </td>
-                    <td>
-                      <input type="text" class="medication-input" placeholder="Add Remark" aria-label="Remark">
-                    </td>
-                  </tr>
+                  <!-- Initial row injected by JS -->
                 </tbody>
               </table>
             </div>
 
-            <!-- Add Medication Button -->
             <button type="button" class="btn-form-action-teal" id="btnAddMedication">
-              Add Medication
+              + Add Medication
             </button>
           </section>
 
-          <!-- Card 4: Examination Findings -->
-          <section class="prescription-form-card" aria-labelledby="headingFindings">
-            <h2 class="card-title" id="headingFindings">Examination Findings</h2>
-            <textarea class="form-textarea-control" id="examinationFindings" placeholder="Enter text" rows="3"></textarea>
+          <!-- ============================================================
+               SECTION 7: INVESTIGATIONS & PROCEDURES (Preset Chips + Custom)
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingInvestigations">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 3h6"></path>
+                    <path d="M10 3v6l-4 8a2 2 0 0 0 1.8 2.9h8.4A2 2 0 0 0 18 17l-4-8V3"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingInvestigations">Lab Investigations &amp; Procedures</h2>
+                  <p class="card-subtitle-hint">Select recommended lab tests or procedures, or add custom ones</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lab Investigations -->
+            <div class="chip-section-block" data-chip-group="investigations">
+              <span class="chip-group-label">Lab Tests &amp; Diagnostics</span>
+              <div class="chip-cloud" id="chips-investigations"></div>
+              <div class="custom-chip-adder">
+                <input type="text" class="custom-chip-input" id="input-investigations" placeholder="Add custom lab test or scan...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="investigations">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Procedures -->
+            <div class="chip-section-block" data-chip-group="procedures">
+              <span class="chip-group-label">Procedures / Therapies</span>
+              <div class="chip-cloud" id="chips-procedures"></div>
+              <div class="custom-chip-adder">
+                <input type="text" class="custom-chip-input" id="input-procedures" placeholder="Add custom procedure or Panchakarma therapy...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="procedures">+ Add</button>
+              </div>
+            </div>
           </section>
 
-          <!-- Card 5: Notes -->
-          <section class="prescription-form-card" aria-labelledby="headingNotes">
-            <h2 class="card-title" id="headingNotes">Notes</h2>
-            <textarea class="form-textarea-control" id="doctorNotes" placeholder="Enter text" rows="3"></textarea>
+          <!-- ============================================================
+               SECTION 8: ADVICE, DIET & NOTES (Preset Chips + Custom)
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingAdvice">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingAdvice">Advice, Diet &amp; Doctor Notes</h2>
+                  <p class="card-subtitle-hint">Pick lifestyle/dietary advice or add custom instructions</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chip-section-block" data-chip-group="advice">
+              <span class="chip-group-label">Dietary &amp; Lifestyle Advice</span>
+              <div class="chip-cloud" id="chips-advice"></div>
+              <div class="custom-chip-adder" style="margin-bottom: 14px;">
+                <input type="text" class="custom-chip-input" id="input-advice" placeholder="Add custom advice...">
+                <button type="button" class="btn-add-custom-chip" data-add-chip="advice">+ Add</button>
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="doctorNotes">General Notes / Special Instructions</label>
+              <textarea class="form-textarea-control" id="doctorNotes" placeholder="Enter additional advice, precautions, or notes..." rows="3"></textarea>
+            </div>
+          </section>
+
+          <!-- ============================================================
+               SECTION 9: FOLLOW-UP & SIGN-OFF
+               ============================================================ -->
+          <section class="prescription-form-card" aria-labelledby="headingFollowup">
+            <div class="card-header-row">
+              <div class="card-title-group">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h2 class="card-title" id="headingFollowup">Follow-up &amp; Sign-off</h2>
+                  <p class="card-subtitle-hint">Schedule next visit, referral, and digital sign-off</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-grid-3col">
+              <div class="form-field-group">
+                <label class="field-label" for="followUpDate">Follow-up Date</label>
+                <input type="date" class="form-input-control" id="followUpDate">
+                <div class="followup-quick-pills">
+                  <button type="button" class="rx-chip" data-followup-days="3">+3 Days</button>
+                  <button type="button" class="rx-chip" data-followup-days="7">+7 Days</button>
+                  <button type="button" class="rx-chip" data-followup-days="15">+15 Days</button>
+                  <button type="button" class="rx-chip" data-followup-days="30">+1 Month</button>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="followUpNotes">Follow-up Instructions / Referral</label>
+                <input type="text" class="form-input-control" id="followUpNotes" list="followUpNoteSuggestions" placeholder="e.g. Review with lab reports / SOS">
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="doctorRegNo">Doctor Reg. / License No.</label>
+                <input type="text" class="form-input-control" id="doctorRegNo" placeholder="e.g. AYU-REG-12458">
+              </div>
+            </div>
+
+            <div class="signoff-box">
+              <div class="form-field-group" style="max-width: 380px;">
+                <label class="field-label" for="digitalSignature">Digital Signature / Stamp Text</label>
+                <input type="text" class="form-input-control" id="digitalSignature" placeholder="e.g. Digitally Signed by Dr. Ananya Prasad">
+              </div>
+              <label class="signoff-toggle">
+                <input type="checkbox" id="includeQrVerification" checked>
+                <span>Include verification stamp &amp; Rx code on printed prescription</span>
+              </label>
+            </div>
           </section>
 
           <!-- Final Submit Action Row -->
@@ -358,6 +650,131 @@
 
   </div>
 
+  <!-- Shared Datalists for Combo Inputs (Pick preset OR type custom) -->
+  <datalist id="bpSuggestions">
+    <option value="120/80">
+    <option value="110/70">
+    <option value="130/85">
+    <option value="140/90">
+  </datalist>
+
+  <datalist id="symptomSuggestions">
+    <option value="Headache">
+    <option value="Fever">
+    <option value="Insomnia / Sleep disturbance">
+    <option value="Anxiety / Stress">
+    <option value="Acidity / Heartburn">
+    <option value="Constipation">
+    <option value="Joint Pain / Stiffness">
+    <option value="Chronic Fatigue">
+    <option value="Cough / Cold">
+    <option value="Indigestion / Bloating">
+    <option value="Hair Fall">
+    <option value="Skin Rash / Itching">
+  </datalist>
+
+  <datalist id="severitySuggestions">
+    <option value="Mild">
+    <option value="Moderate">
+    <option value="Severe">
+  </datalist>
+
+  <datalist id="durationSuggestions">
+    <option value="1 day">
+    <option value="3 days">
+    <option value="1 week">
+    <option value="2 weeks">
+    <option value="1 month">
+    <option value="3 months">
+    <option value="6 months">
+    <option value="1 year">
+  </datalist>
+
+  <datalist id="diagnosisSuggestions">
+    <option value="Migraine">
+    <option value="Acid Peptic Disease (Amlapitta)">
+    <option value="Insomnia (Anidra)">
+    <option value="Osteoarthritis (Sandhivata)">
+    <option value="General Debility / Fatigue">
+    <option value="Allergic Rhinitis (Pratishyaya)">
+    <option value="Irritable Bowel Syndrome (Grahani)">
+    <option value="Anxiety / Stress Disorder">
+    <option value="Hypertension">
+    <option value="Type 2 Diabetes Mellitus">
+  </datalist>
+
+  <datalist id="diagnosisTypeSuggestions">
+    <option value="Provisional">
+    <option value="Confirmed">
+    <option value="Differential">
+  </datalist>
+
+  <datalist id="medFormSuggestions">
+    <option value="Tablet">
+    <option value="Capsule">
+    <option value="Syrup">
+    <option value="Churna">
+    <option value="Kashayam">
+    <option value="Vati">
+    <option value="Taila">
+    <option value="Ghrita">
+    <option value="Drops">
+    <option value="Ointment">
+    <option value="Inhaler">
+    <option value="Injection">
+  </datalist>
+
+  <datalist id="medDoseSuggestions">
+    <option value="1 tab">
+    <option value="2 tabs">
+    <option value="5 ml">
+    <option value="10 ml">
+    <option value="15 ml">
+    <option value="1 tsp">
+    <option value="500 mg">
+    <option value="250 mg">
+    <option value="2 drops">
+  </datalist>
+
+  <datalist id="medFreqSuggestions">
+    <option value="1-0-1 (BD)">
+    <option value="1-0-0 (OD)">
+    <option value="0-0-1 (HS)">
+    <option value="1-1-1 (TDS)">
+    <option value="1-1-1-1 (QID)">
+    <option value="SOS">
+    <option value="Once Weekly">
+  </datalist>
+
+  <datalist id="medTimingSuggestions">
+    <option value="After Food">
+    <option value="Before Food">
+    <option value="Empty Stomach">
+    <option value="With Warm Water">
+    <option value="With Milk">
+    <option value="With Honey">
+    <option value="At Bedtime">
+    <option value="Topical Application">
+  </datalist>
+
+  <datalist id="medDurationSuggestions">
+    <option value="3 days">
+    <option value="5 days">
+    <option value="7 days">
+    <option value="10 days">
+    <option value="15 days">
+    <option value="1 month">
+    <option value="2 months">
+    <option value="3 months">
+  </datalist>
+
+  <datalist id="followUpNoteSuggestions">
+    <option value="Review with lab reports">
+    <option value="Follow up if symptoms persist">
+    <option value="Routine follow-up check">
+    <option value="SOS / As needed">
+  </datalist>
+
   <!-- Success Toast -->
   <div class="prescription-toast" id="prescriptionToast" role="alert" aria-live="polite">
     <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -371,124 +788,60 @@
   <script src="../shared/dashboard.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Read query params
       const urlParams = new URLSearchParams(window.location.search);
       let patientId = parseInt(urlParams.get('patient_id') || '0', 10);
       let appointmentId = urlParams.get('appointment_id') || '';
       let appointmentDbId = parseInt(urlParams.get('appointment_db_id') || '0', 10);
 
-      // Support 'id' param: could be appointment DB id or patient id depending on caller
       const idParam = parseInt(urlParams.get('id') || '0', 10);
       if (idParam > 0) {
         if (urlParams.has('patient_id') || appointmentId) {
-          // If patient_id or appointment_id is present, id is the appointment DB ID
           if (appointmentDbId <= 0) appointmentDbId = idParam;
         } else if (patientId <= 0) {
-          // If only ?id=X is present, id is the patient_id
           patientId = idParam;
         }
       }
 
-      // If appointment_id is numeric, treat as appointmentDbId
       if (/^\d+$/.test(appointmentId) && appointmentDbId <= 0) {
         appointmentDbId = parseInt(appointmentId, 10);
       }
-
       if (patientId <= 0) patientId = 1;
 
       const isEditMode = (urlParams.get('mode') === 'edit');
       const pageTitleEl = document.querySelector('.page-title');
       const welcomeSubEl = document.querySelector('.welcome-subtitle');
+      const btnSubmitPrescription = document.getElementById('btnSubmitPrescription');
+      const toast = document.getElementById('prescriptionToast');
 
       if (isEditMode) {
         document.title = 'Ocayur - Edit Prescription';
         if (pageTitleEl) pageTitleEl.textContent = 'Edit Prescription';
-        if (welcomeSubEl) welcomeSubEl.textContent = 'Update prescription, symptoms, diagnosis, and medications.';
+        if (welcomeSubEl) welcomeSubEl.textContent = 'Update vitals, clinical history, diagnosis, medications, advice, and follow-up.';
+        if (btnSubmitPrescription) btnSubmitPrescription.textContent = 'Update Prescription';
       }
 
-      const diagnosisNameInput = document.getElementById('diagnosisName');
-      const diagnosisDurationInput = document.getElementById('diagnosisDuration');
-      const examinationFindingsInput = document.getElementById('examinationFindings');
-      const doctorNotesInput = document.getElementById('doctorNotes');
-      const btnSubmitPrescription = document.getElementById('btnSubmitPrescription');
-      const toast = document.getElementById('prescriptionToast');
+      // Set today's date in banner
+      const bannerDatePill = document.getElementById('bannerDatePill');
+      if (bannerDatePill) {
+        bannerDatePill.textContent = 'Date: ' + new Date().toLocaleDateString('en-GB');
+      }
+      const bannerApptPill = document.getElementById('bannerApptPill');
+      if (bannerApptPill && (appointmentId || appointmentDbId)) {
+        bannerApptPill.style.display = 'inline-flex';
+        bannerApptPill.textContent = 'Appt: ' + (appointmentId || ('#' + appointmentDbId));
+      }
 
-      // Helper to add a symptom box
-      function addSymptomBox(sName = '', sSev = 'Moderate', sNotes = '') {
-        symptomCount++;
-        const symptomBox = document.createElement('div');
-        symptomBox.className = 'symptom-box-item';
-        symptomBox.id = `symptomItem-${symptomCount}`;
-        
-        const standardSymptoms = [
-          'Headache', 'Insomnia', 'Anxiety', 'Acidity', 'Constipation', 'Joint Pain', 'Fatigue'
-        ];
-        let optionsHtml = '<option value="" disabled hidden>Select symptom</option>';
-        let matched = false;
-        standardSymptoms.forEach(opt => {
-          const isSel = (opt.toLowerCase() === (sName || '').toLowerCase());
-          if (isSel) matched = true;
-          optionsHtml += `<option value="${opt}" ${isSel ? 'selected' : ''}>${opt}</option>`;
-        });
-        if (sName && !matched) {
-          optionsHtml += `<option value="${escapeHtml(sName)}" selected>${escapeHtml(sName)}</option>`;
+      // Prefill digital signature from logged-in doctor name if available
+      const digitalSigInput = document.getElementById('digitalSignature');
+      try {
+        const storedDoc = JSON.parse(localStorage.getItem('ocayur_doctor') || localStorage.getItem('panchved_doctor') || '{}');
+        if (digitalSigInput && storedDoc?.full_name) {
+          digitalSigInput.value = 'Digitally Signed by ' + storedDoc.full_name;
         }
-
-        const sevOptions = ['Mild', 'Moderate', 'Severe'];
-        let sevHtml = '';
-        sevOptions.forEach(sv => {
-          const isSel = (sv.toLowerCase() === (sSev || '').toLowerCase());
-          sevHtml += `<option value="${sv}" ${isSel ? 'selected' : ''}>${sv}</option>`;
-        });
-
-        symptomBox.innerHTML = `
-          <div class="symptom-box-header">
-            <h3 class="symptom-box-title">Symptom ${symptomCount}</h3>
-            <button type="button" class="btn-remove-symptom" aria-label="Remove Symptom ${symptomCount}" onclick="this.closest('.symptom-box-item').remove()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          <div class="form-grid-2col">
-            <div class="form-field-group">
-              <label class="field-label" for="symptomSelect-${symptomCount}">Symptom <span class="required-star" aria-hidden="true">*</span></label>
-              <div class="select-wrapper">
-                <select class="form-select-control" id="symptomSelect-${symptomCount}" required>
-                  ${optionsHtml}
-                </select>
-                <span class="select-icon" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </span>
-              </div>
-            </div>
-            <div class="form-field-group">
-              <label class="field-label" for="severitySelect-${symptomCount}">Severity <span class="required-star" aria-hidden="true">*</span></label>
-              <div class="select-wrapper">
-                <select class="form-select-control" id="severitySelect-${symptomCount}" required>
-                  ${sevHtml}
-                </select>
-                <span class="select-icon" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="form-field-group">
-            <label class="field-label" for="symptomNotes-${symptomCount}">Notes</label>
-            <textarea class="form-textarea-control" id="symptomNotes-${symptomCount}" placeholder="Enter notes" rows="2">${escapeHtml(sNotes)}</textarea>
-          </div>
-        `;
-        symptomsList.appendChild(symptomBox);
-      }
+      } catch (_) {}
 
       function escapeHtml(str) {
-        if (!str) return '';
+        if (str === null || str === undefined) return '';
         return String(str)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
@@ -497,52 +850,246 @@
           .replace(/'/g, '&#039;');
       }
 
-      // Helper to add medication row
-      function addMedicationRow(name = '', dose = '', freq = '', dur = '', remarks = '') {
+      // ============================================================
+      // 1. Vitals Auto-BMI & Quick Normal Fill
+      // ============================================================
+      const vitalBP = document.getElementById('vitalBP');
+      const vitalPulse = document.getElementById('vitalPulse');
+      const vitalTemp = document.getElementById('vitalTemp');
+      const vitalSpo2 = document.getElementById('vitalSpo2');
+      const vitalWeight = document.getElementById('vitalWeight');
+      const vitalHeight = document.getElementById('vitalHeight');
+      const vitalBMI = document.getElementById('vitalBMI');
+      const vitalRBS = document.getElementById('vitalRBS');
+
+      function recalcBMI() {
+        const w = parseFloat(vitalWeight?.value);
+        const h = parseFloat(vitalHeight?.value);
+        if (w > 0 && h > 0) {
+          const hm = h / 100;
+          vitalBMI.value = (w / (hm * hm)).toFixed(1);
+        }
+      }
+      vitalWeight?.addEventListener('input', recalcBMI);
+      vitalHeight?.addEventListener('input', recalcBMI);
+
+      document.getElementById('btnNormalVitals')?.addEventListener('click', () => {
+        if (vitalBP && !vitalBP.value) vitalBP.value = '120/80';
+        if (vitalPulse && !vitalPulse.value) vitalPulse.value = '72';
+        if (vitalTemp && !vitalTemp.value) vitalTemp.value = '98.6';
+        if (vitalSpo2 && !vitalSpo2.value) vitalSpo2.value = '99';
+      });
+
+      // ============================================================
+      // 2. Reusable Preset + Custom Chip Cloud Manager
+      // ============================================================
+      const chipPresets = {
+        past_history: ['No Known History', 'Diabetes', 'Hypertension', 'Thyroid', 'Asthma', 'Migraine', 'Gastritis', 'PCOS', 'Arthritis'],
+        allergies: ['No Known Drug Allergies', 'Penicillin', 'Sulfa Drugs', 'NSAIDs', 'Dust / Pollen', 'Lactose', 'Gluten'],
+        lifestyle: ['Vegetarian', 'Non-Vegetarian', 'Regular Exercise', 'Sedentary', 'High Stress', 'Irregular Sleep', 'Smoking', 'Alcohol'],
+        exam_findings: ['General Condition Fair', 'No Pallor / Icterus', 'Chest Clear', 'CVS S1 S2 Normal', 'Abdomen Soft', 'Jihva Pariksha: Coated', 'Nadi: Vata-Pitta', 'Mild Tenderness'],
+        investigations: ['CBC', 'Blood Sugar (FBS / PPBS)', 'HbA1c', 'Lipid Profile', 'LFT', 'KFT', 'Thyroid Profile (TSH)', 'Vitamin D3', 'Vitamin B12', 'Urine Routine', 'ECG', 'X-Ray'],
+        procedures: ['Abhyanga', 'Shirodhara', 'Swedana', 'Nasya', 'Basti', 'Virechana', 'Dressing', 'Nebulization'],
+        advice: ['Drink 2–3L warm water daily', 'Eat light, freshly cooked meals', 'Avoid spicy, oily & junk food', 'Avoid cold drinks & refrigerated food', 'Practice 20 mins Pranayama / Yoga', 'Sleep by 10:30 PM', 'Complete full course of medicines', 'Adequate rest & hydration']
+      };
+
+      const selectedChips = {
+        past_history: new Set(),
+        allergies: new Set(),
+        lifestyle: new Set(),
+        exam_findings: new Set(),
+        investigations: new Set(),
+        procedures: new Set(),
+        advice: new Set()
+      };
+
+      function renderChipGroup(group) {
+        const container = document.getElementById(`chips-${group}`);
+        if (!container) return;
+        const presets = chipPresets[group] || [];
+        const activeSet = selectedChips[group];
+        // Combine presets + any custom active items not in presets
+        const allItems = [...presets];
+        activeSet.forEach(item => {
+          if (!allItems.some(p => p.toLowerCase() === item.toLowerCase())) {
+            allItems.push(item);
+          }
+        });
+
+        container.innerHTML = '';
+        allItems.forEach(label => {
+          const isActive = Array.from(activeSet).some(a => a.toLowerCase() === label.toLowerCase());
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'rx-chip' + (isActive ? ' active' : '');
+          btn.textContent = label;
+          btn.addEventListener('click', () => {
+            const existing = Array.from(activeSet).find(a => a.toLowerCase() === label.toLowerCase());
+            if (existing) {
+              activeSet.delete(existing);
+            } else {
+              activeSet.add(label);
+            }
+            renderChipGroup(group);
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      Object.keys(chipPresets).forEach(renderChipGroup);
+
+      function addCustomChip(group) {
+        const input = document.getElementById(`input-${group}`);
+        if (!input) return;
+        const val = input.value.trim();
+        if (!val) return;
+        selectedChips[group].add(val);
+        input.value = '';
+        renderChipGroup(group);
+      }
+
+      document.querySelectorAll('[data-add-chip]').forEach(btn => {
+        btn.addEventListener('click', () => addCustomChip(btn.getAttribute('data-add-chip')));
+      });
+
+      document.querySelectorAll('.custom-chip-input').forEach(inp => {
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const group = inp.id.replace('input-', '');
+            addCustomChip(group);
+          }
+        });
+      });
+
+      // ============================================================
+      // 3. Symptoms Builder (Combo input + Severity + Since + Notes)
+      // ============================================================
+      const symptomsList = document.getElementById('symptomsList');
+      let symptomCount = 0;
+
+      function addSymptomBox(sName = '', sSev = 'Moderate', sSince = '', sNotes = '') {
+        if (!symptomsList) return;
+        symptomCount++;
+        const idx = symptomCount;
+        const box = document.createElement('div');
+        box.className = 'symptom-box-item';
+        box.id = `symptomItem-${idx}`;
+
+        const removeBtnHtml = idx > 1
+          ? `<button type="button" class="btn-remove-symptom" aria-label="Remove Symptom ${idx}" onclick="this.closest('.symptom-box-item').remove()">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <line x1="18" y1="6" x2="6" y2="18"></line>
+                 <line x1="6" y1="6" x2="18" y2="18"></line>
+               </svg>
+             </button>`
+          : '';
+
+        box.innerHTML = `
+          <div class="symptom-box-header">
+            <h3 class="symptom-box-title">Complaint ${idx}</h3>
+            ${removeBtnHtml}
+          </div>
+          <div class="form-grid-3col">
+            <div class="form-field-group">
+              <label class="field-label" for="symptomInput-${idx}">Symptom / Complaint</label>
+              <input type="text" class="form-input-control symptom-name-input" id="symptomInput-${idx}" list="symptomSuggestions" placeholder="Select or type symptom" value="${escapeHtml(sName)}">
+            </div>
+            <div class="form-field-group">
+              <label class="field-label" for="severityInput-${idx}">Severity</label>
+              <input type="text" class="form-input-control symptom-sev-input" id="severityInput-${idx}" list="severitySuggestions" placeholder="Select or type severity" value="${escapeHtml(sSev)}">
+            </div>
+            <div class="form-field-group">
+              <label class="field-label" for="sinceInput-${idx}">Since / Duration</label>
+              <input type="text" class="form-input-control symptom-since-input" id="sinceInput-${idx}" list="durationSuggestions" placeholder="e.g. 3 days" value="${escapeHtml(sSince)}">
+            </div>
+          </div>
+          <div class="form-field-group">
+            <label class="field-label" for="symptomNotes-${idx}">Notes</label>
+            <textarea class="form-textarea-control symptom-notes-input" id="symptomNotes-${idx}" placeholder="Enter complaint details..." rows="2">${escapeHtml(sNotes)}</textarea>
+          </div>
+        `;
+        symptomsList.appendChild(box);
+      }
+
+      // Initialize with 1 symptom box
+      addSymptomBox();
+      document.getElementById('btnAddSymptom')?.addEventListener('click', () => addSymptomBox());
+
+      // ============================================================
+      // 4. Medications Table Builder (Combo inputs for all columns)
+      // ============================================================
+      const medicationTableBody = document.getElementById('medicationTableBody');
+
+      function addMedicationRow(name = '', form = '', dose = '', freq = '', timing = '', dur = '', remarks = '') {
         if (!medicationTableBody) return;
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>
-            <input type="text" class="medication-input" placeholder="Enter medicine name" aria-label="Medicine Name" value="${escapeHtml(name)}">
+            <input type="text" class="medication-input med-name" placeholder="Enter medicine name" aria-label="Medicine Name" value="${escapeHtml(name)}">
           </td>
           <td>
-            <input type="text" class="medication-input" placeholder="Enter dose" aria-label="Dose" value="${escapeHtml(dose)}">
+            <input type="text" class="medication-input med-form" list="medFormSuggestions" placeholder="Tablet / Syrup..." aria-label="Form" value="${escapeHtml(form)}">
           </td>
           <td>
-            <input type="text" class="medication-input" placeholder="Enter frequency" aria-label="Frequency" value="${escapeHtml(freq)}">
+            <input type="text" class="medication-input med-dose" list="medDoseSuggestions" placeholder="500 mg / 1 tab" aria-label="Dose" value="${escapeHtml(dose)}">
           </td>
           <td>
-            <input type="text" class="medication-input" placeholder="Enter Duration" aria-label="Duration" value="${escapeHtml(dur)}">
+            <input type="text" class="medication-input med-freq" list="medFreqSuggestions" placeholder="1-0-1 / BD" aria-label="Frequency" value="${escapeHtml(freq)}">
           </td>
           <td>
-            <input type="text" class="medication-input" placeholder="Add Remark" aria-label="Remark" value="${escapeHtml(remarks)}">
+            <input type="text" class="medication-input med-timing" list="medTimingSuggestions" placeholder="After Food" aria-label="Timing" value="${escapeHtml(timing)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input med-dur" list="medDurationSuggestions" placeholder="5 days" aria-label="Duration" value="${escapeHtml(dur)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input med-rem" placeholder="Add remark" aria-label="Remark" value="${escapeHtml(remarks)}">
+          </td>
+          <td style="text-align: center;">
+            <button type="button" class="btn-remove-med-row" title="Remove row" onclick="this.closest('tr').remove()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </td>
         `;
         medicationTableBody.appendChild(row);
       }
 
-      // Dynamic Add Symptom
-      const btnAddSymptom = document.getElementById('btnAddSymptom');
-      const symptomsList = document.getElementById('symptomsList');
-      let symptomCount = 1;
+      addMedicationRow();
+      document.getElementById('btnAddMedication')?.addEventListener('click', () => addMedicationRow());
 
-      if (btnAddSymptom && symptomsList) {
-        btnAddSymptom.addEventListener('click', () => {
-          addSymptomBox();
+      // ============================================================
+      // 5. Follow-up Quick Date Pills
+      // ============================================================
+      const followUpDateInput = document.getElementById('followUpDate');
+      document.querySelectorAll('[data-followup-days]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const days = parseInt(btn.getAttribute('data-followup-days'), 10);
+          const d = new Date();
+          d.setDate(d.getDate() + days);
+          const iso = d.toISOString().split('T')[0];
+          if (followUpDateInput) followUpDateInput.value = iso;
+          document.querySelectorAll('[data-followup-days]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
         });
-      }
+      });
 
-      // Dynamic Add Medication Row
-      const btnAddMedication = document.getElementById('btnAddMedication');
-      const medicationTableBody = document.getElementById('medicationTableBody');
+      // ============================================================
+      // 6. Load Patient Banner & Existing Prescription (Edit Mode)
+      // ============================================================
+      const diagnosisNameInput = document.getElementById('diagnosisName');
+      const diagnosisDurationInput = document.getElementById('diagnosisDuration');
+      const diagnosisTypeInput = document.getElementById('diagnosisType');
+      const examinationFindingsInput = document.getElementById('examinationFindings');
+      const doctorNotesInput = document.getElementById('doctorNotes');
+      const medicalHistoryNotesInput = document.getElementById('medicalHistoryNotes');
+      const followUpNotesInput = document.getElementById('followUpNotes');
+      const doctorRegNoInput = document.getElementById('doctorRegNo');
+      const includeQrCheckbox = document.getElementById('includeQrVerification');
 
-      if (btnAddMedication && medicationTableBody) {
-        btnAddMedication.addEventListener('click', () => {
-          addMedicationRow();
-        });
-      }
-
-      // Load Existing Prescription if editing
       async function loadExistingPrescription() {
         const queryTarget = appointmentDbId || appointmentId;
         if (!queryTarget && !patientId) return;
@@ -552,22 +1099,93 @@
           const res = await fetch(fetchUrl);
           if (!res.ok) return;
           const data = await res.json();
+
+          // Update patient banner even if no prescription exists yet
+          const pInfo = data.patient_info || data.prescription;
+          if (pInfo) {
+            const pName = pInfo.patient_name || pInfo.full_name || 'Patient';
+            const bannerName = document.getElementById('bannerPatientName');
+            const bannerMeta = document.getElementById('bannerPatientMeta');
+            const bannerAvatar = document.getElementById('bannerAvatar');
+            if (bannerName) bannerName.textContent = pName;
+            if (bannerMeta) bannerMeta.textContent = `Age: ${pInfo.age || '--'} | Gender: ${pInfo.gender || '--'}`;
+            if (bannerAvatar) {
+              const initials = pName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+              bannerAvatar.textContent = initials || 'PT';
+            }
+          }
+
           if (data && data.has_prescriptions && data.prescription) {
             const rx = data.prescription;
 
-            // Update UI for Edit Mode
             document.title = 'Ocayur - Edit Prescription';
             if (pageTitleEl) pageTitleEl.textContent = 'Edit Prescription';
-            if (welcomeSubEl) welcomeSubEl.textContent = `Update prescription details for ${rx.patient_name || 'Patient'} (${appointmentId ? 'Consultation: ' + appointmentId : ''})`;
+            if (welcomeSubEl) welcomeSubEl.textContent = `Update prescription details for ${rx.patient_name || 'Patient'}${appointmentId ? ' (Consultation: ' + appointmentId + ')' : ''}`;
             if (btnSubmitPrescription) btnSubmitPrescription.textContent = 'Update Prescription';
 
-            // Prefill diagnosis & notes
+            // Vitals
+            if (rx.vitals && typeof rx.vitals === 'object') {
+              if (vitalBP && rx.vitals.bp) vitalBP.value = rx.vitals.bp;
+              if (vitalPulse && rx.vitals.pulse) vitalPulse.value = rx.vitals.pulse;
+              if (vitalTemp && rx.vitals.temp) vitalTemp.value = rx.vitals.temp;
+              if (vitalSpo2 && rx.vitals.spo2) vitalSpo2.value = rx.vitals.spo2;
+              if (vitalWeight && rx.vitals.weight) vitalWeight.value = rx.vitals.weight;
+              if (vitalHeight && rx.vitals.height) vitalHeight.value = rx.vitals.height;
+              if (vitalBMI && rx.vitals.bmi) vitalBMI.value = rx.vitals.bmi;
+              if (vitalRBS && rx.vitals.rbs) vitalRBS.value = rx.vitals.rbs;
+            }
+
+            // Clinical history chips
+            if (rx.clinical_history && typeof rx.clinical_history === 'object') {
+              ['past_history', 'allergies', 'lifestyle'].forEach(grp => {
+                if (Array.isArray(rx.clinical_history[grp])) {
+                  rx.clinical_history[grp].forEach(item => selectedChips[grp].add(item));
+                  renderChipGroup(grp);
+                }
+              });
+              if (medicalHistoryNotesInput && rx.clinical_history.notes) {
+                medicalHistoryNotesInput.value = rx.clinical_history.notes;
+              }
+            } else if (medicalHistoryNotesInput && rx.medical_history && rx.medical_history !== 'None recorded') {
+              medicalHistoryNotesInput.value = rx.medical_history;
+            }
+
+            // Diagnosis
             if (diagnosisNameInput && rx.diagnosis) diagnosisNameInput.value = rx.diagnosis;
             if (diagnosisDurationInput && rx.diagnosis_duration) diagnosisDurationInput.value = rx.diagnosis_duration;
+            if (diagnosisTypeInput && rx.diagnosis_type) diagnosisTypeInput.value = rx.diagnosis_type;
+
+            // Exam findings
+            if (Array.isArray(rx.exam_findings_tags)) {
+              rx.exam_findings_tags.forEach(t => selectedChips.exam_findings.add(t));
+              renderChipGroup('exam_findings');
+            }
             if (examinationFindingsInput && rx.examination_findings && rx.examination_findings !== 'None recorded') {
               examinationFindingsInput.value = rx.examination_findings;
             }
+
+            // Investigations, Procedures, Advice
+            if (Array.isArray(rx.investigations)) {
+              rx.investigations.forEach(t => selectedChips.investigations.add(t));
+              renderChipGroup('investigations');
+            }
+            if (Array.isArray(rx.procedures)) {
+              rx.procedures.forEach(t => selectedChips.procedures.add(t));
+              renderChipGroup('procedures');
+            }
+            if (Array.isArray(rx.advice)) {
+              rx.advice.forEach(t => selectedChips.advice.add(t));
+              renderChipGroup('advice');
+            }
+
             if (doctorNotesInput && rx.notes) doctorNotesInput.value = rx.notes;
+
+            // Follow-up & Sign-off
+            if (followUpDateInput && rx.follow_up_date) followUpDateInput.value = rx.follow_up_date;
+            if (followUpNotesInput && rx.follow_up_notes) followUpNotesInput.value = rx.follow_up_notes;
+            if (doctorRegNoInput && rx.doctor_reg_no) doctorRegNoInput.value = rx.doctor_reg_no;
+            if (digitalSigInput && rx.digital_signature) digitalSigInput.value = rx.digital_signature;
+            if (includeQrCheckbox && rx.include_qr !== undefined) includeQrCheckbox.checked = !!rx.include_qr;
 
             // Prefill symptoms
             let syms = rx.symptoms;
@@ -575,23 +1193,32 @@
               try { syms = JSON.parse(syms); } catch (_) {}
             }
             if (Array.isArray(syms) && syms.length > 0) {
-              if (symptomsList) symptomsList.innerHTML = '';
+              symptomsList.innerHTML = '';
               symptomCount = 0;
               syms.forEach(s => {
                 const sName = typeof s === 'string' ? s : (s.symptom || s.name || '');
                 const sSev = typeof s === 'object' ? (s.severity || 'Moderate') : 'Moderate';
+                const sSince = typeof s === 'object' ? (s.since || s.duration || '') : '';
                 const sNotes = typeof s === 'object' ? (s.notes || '') : '';
-                addSymptomBox(sName, sSev, sNotes);
+                addSymptomBox(sName, sSev, sSince, sNotes);
               });
             }
 
             // Prefill medications
             if (Array.isArray(rx.medications) && rx.medications.length > 0) {
-              if (medicationTableBody) medicationTableBody.innerHTML = '';
+              medicationTableBody.innerHTML = '';
               rx.medications.forEach(m => {
                 const mName = m.medication || m.name || '';
                 if (mName) {
-                  addMedicationRow(mName, m.dose || '', m.frequency || '', m.duration || '', m.remarks || '');
+                  addMedicationRow(
+                    mName,
+                    m.form || '',
+                    m.dose || '',
+                    m.frequency || '',
+                    m.timing || '',
+                    m.duration || '',
+                    m.remarks || ''
+                  );
                 }
               });
             }
@@ -603,12 +1230,14 @@
 
       loadExistingPrescription();
 
-      // Submit Prescription Action with Backend Integration
+      // ============================================================
+      // 7. Submit Prescription
+      // ============================================================
       if (btnSubmitPrescription && toast) {
         btnSubmitPrescription.addEventListener('click', async () => {
-
           const diagnosisName = diagnosisNameInput?.value.trim() || '';
           const diagnosisDuration = diagnosisDurationInput?.value.trim() || '';
+          const diagnosisType = diagnosisTypeInput?.value.trim() || 'Provisional';
           const examinationFindings = examinationFindingsInput?.value.trim() || '';
           const doctorNotes = doctorNotesInput?.value.trim() || '';
 
@@ -618,48 +1247,87 @@
             return;
           }
 
-          // Gather symptoms
+          // Vitals
+          const vitals = {
+            bp: vitalBP?.value.trim() || '',
+            pulse: vitalPulse?.value.trim() || '',
+            temp: vitalTemp?.value.trim() || '',
+            spo2: vitalSpo2?.value.trim() || '',
+            weight: vitalWeight?.value.trim() || '',
+            height: vitalHeight?.value.trim() || '',
+            bmi: vitalBMI?.value.trim() || '',
+            rbs: vitalRBS?.value.trim() || ''
+          };
+
+          // Clinical History
+          const clinicalHistory = {
+            past_history: Array.from(selectedChips.past_history),
+            allergies: Array.from(selectedChips.allergies),
+            lifestyle: Array.from(selectedChips.lifestyle),
+            notes: medicalHistoryNotesInput?.value.trim() || ''
+          };
+
+          // Build backward-compatible medical_history summary string
+          const mhParts = [];
+          if (clinicalHistory.past_history.length) mhParts.push('History: ' + clinicalHistory.past_history.join(', '));
+          if (clinicalHistory.allergies.length) mhParts.push('Allergies: ' + clinicalHistory.allergies.join(', '));
+          if (clinicalHistory.lifestyle.length) mhParts.push('Lifestyle: ' + clinicalHistory.lifestyle.join(', '));
+          if (clinicalHistory.notes) mhParts.push(clinicalHistory.notes);
+          const medicalHistorySummary = mhParts.join(' | ');
+
+          // Build combined examination findings summary
+          const examTags = Array.from(selectedChips.exam_findings);
+          const combinedExamFindings = [
+            examTags.length ? examTags.join(', ') : '',
+            examinationFindings
+          ].filter(Boolean).join(' — ');
+
+          // Symptoms
           const symptoms = [];
           document.querySelectorAll('.symptom-box-item').forEach(box => {
-            const symSelect = box.querySelector('select[id^="symptomSelect"]');
-            const sevSelect = box.querySelector('select[id^="severitySelect"]');
-            const noteInput = box.querySelector('[id^="symptomNotes"]');
-            const symVal = symSelect?.value;
+            const symVal = box.querySelector('.symptom-name-input')?.value.trim();
+            const sevVal = box.querySelector('.symptom-sev-input')?.value.trim() || 'Moderate';
+            const sinceVal = box.querySelector('.symptom-since-input')?.value.trim() || '';
+            const noteVal = box.querySelector('.symptom-notes-input')?.value.trim() || '';
             if (symVal) {
               symptoms.push({
                 symptom: symVal,
-                severity: sevSelect?.value || 'Moderate',
-                notes: noteInput?.value.trim() || ''
+                severity: sevVal,
+                since: sinceVal,
+                notes: noteVal
               });
             }
           });
 
-          // Gather medications
+          // Medications
           const medications = [];
-          if (medicationTableBody) {
-            medicationTableBody.querySelectorAll('tr').forEach(tr => {
-              const inputs = tr.querySelectorAll('input');
-              if (inputs.length >= 5) {
-                const medName = inputs[0].value.trim();
-                const medDose = inputs[1].value.trim();
-                const medFreq = inputs[2].value.trim();
-                const medDur = inputs[3].value.trim();
-                const medRem = inputs[4].value.trim();
+          medicationTableBody?.querySelectorAll('tr').forEach(tr => {
+            const medName = tr.querySelector('.med-name')?.value.trim() || '';
+            if (medName) {
+              medications.push({
+                medication: medName,
+                form: tr.querySelector('.med-form')?.value.trim() || '',
+                dose: tr.querySelector('.med-dose')?.value.trim() || '',
+                frequency: tr.querySelector('.med-freq')?.value.trim() || '',
+                timing: tr.querySelector('.med-timing')?.value.trim() || '',
+                duration: tr.querySelector('.med-dur')?.value.trim() || '',
+                remarks: tr.querySelector('.med-rem')?.value.trim() || ''
+              });
+            }
+          });
 
-                if (medName) {
-                  medications.push({
-                    medication: medName,
-                    dose: medDose,
-                    frequency: medFreq,
-                    duration: medDur,
-                    remarks: medRem
-                  });
-                }
-              }
-            });
-          }
+          const investigations = Array.from(selectedChips.investigations);
+          const procedures = Array.from(selectedChips.procedures);
+          const advice = Array.from(selectedChips.advice);
+
+          const followUpDate = followUpDateInput?.value || '';
+          const followUpNotes = followUpNotesInput?.value.trim() || '';
+          const doctorRegNo = doctorRegNoInput?.value.trim() || '';
+          const digitalSignature = digitalSigInput?.value.trim() || '';
+          const includeQr = includeQrCheckbox ? includeQrCheckbox.checked : true;
 
           btnSubmitPrescription.disabled = true;
+          const prevBtnText = btnSubmitPrescription.textContent;
           btnSubmitPrescription.textContent = 'Saving...';
 
           try {
@@ -670,12 +1338,25 @@
                 patient_id: patientId,
                 appointment_id: appointmentId,
                 appointment_db_id: appointmentDbId,
+                vitals: vitals,
+                clinical_history: clinicalHistory,
+                medical_history: medicalHistorySummary,
+                symptoms: symptoms,
+                exam_findings_tags: examTags,
+                examination_findings: combinedExamFindings,
                 diagnosis_name: diagnosisName,
                 diagnosis_duration: diagnosisDuration,
-                examination_findings: examinationFindings,
+                diagnosis_type: diagnosisType,
+                medications: medications,
+                investigations: investigations,
+                procedures: procedures,
+                advice: advice,
                 notes: doctorNotes,
-                symptoms: symptoms,
-                medications: medications
+                follow_up_date: followUpDate,
+                follow_up_notes: followUpNotes,
+                doctor_reg_no: doctorRegNo,
+                digital_signature: digitalSignature,
+                include_qr: includeQr
               })
             });
 
@@ -693,13 +1374,13 @@
             } else {
               alert(resData.message || 'Could not save prescription. Please check the inputs.');
               btnSubmitPrescription.disabled = false;
-              btnSubmitPrescription.textContent = (isEditMode || btnSubmitPrescription.textContent.includes('Update')) ? 'Update Prescription' : 'Add Prescription';
+              btnSubmitPrescription.textContent = prevBtnText;
             }
           } catch (e) {
             console.error('Prescription submit error:', e);
             alert('A network error occurred while saving the prescription. Please try again.');
             btnSubmitPrescription.disabled = false;
-            btnSubmitPrescription.textContent = (isEditMode || btnSubmitPrescription.textContent.includes('Update')) ? 'Update Prescription' : 'Add Prescription';
+            btnSubmitPrescription.textContent = prevBtnText;
           }
         });
       }

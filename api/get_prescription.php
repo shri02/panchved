@@ -294,6 +294,35 @@ try {
         }
     }
 
+    // Helper to decode JSON fields safely
+    $decodeJsonField = function($val, $default = null) {
+        if (is_array($val)) return $val;
+        if (is_string($val) && trim($val) !== '') {
+            $decoded = json_decode($val, true);
+            if (is_array($decoded)) return $decoded;
+        }
+        return $default;
+    };
+
+    // If rxRecord came from `prescriptions`, also check linked `appointments.prescription` JSON for any extended Eka Care fields not yet in DB columns
+    $apptJsonFallback = [];
+    $rxApptId = intval($rxRecord['appointment_id'] ?? $appointmentId ?? 0);
+    if ($rxApptId > 0) {
+        $ajStmt = mysqli_prepare($connection1, "SELECT `prescription` FROM `appointments` WHERE `id` = ? LIMIT 1");
+        if ($ajStmt) {
+            mysqli_stmt_bind_param($ajStmt, "i", $rxApptId);
+            mysqli_stmt_execute($ajStmt);
+            $ajRes = mysqli_stmt_get_result($ajStmt);
+            if ($ajRow = mysqli_fetch_assoc($ajRes)) {
+                $ajDecoded = json_decode($ajRow['prescription'] ?? '', true);
+                if (is_array($ajDecoded)) {
+                    $apptJsonFallback = $ajDecoded;
+                }
+            }
+            mysqli_stmt_close($ajStmt);
+        }
+    }
+
     // Construct final dynamic prescription response
     $responsePrescription = [
         'id' => intval($rxRecord['id'] ?? 0),
@@ -304,15 +333,27 @@ try {
         'patient_name' => $rxRecord['patient_name'] ?? $patientInfo['full_name'],
         'gender' => $patientInfo['gender'],
         'age' => $patientInfo['age'],
-        'medical_history' => $rxRecord['medical_history'] ?? 'None recorded',
+        'vitals' => $decodeJsonField($rxRecord['vitals'] ?? null, $apptJsonFallback['vitals'] ?? null),
+        'clinical_history' => $decodeJsonField($rxRecord['clinical_history'] ?? null, $apptJsonFallback['clinical_history'] ?? null),
+        'medical_history' => $rxRecord['medical_history'] ?? ($apptJsonFallback['medical_history'] ?? 'None recorded'),
         'symptoms' => $symptomsData,
-        'diagnosis' => $rxRecord['diagnosis'] ?? 'General Consultation',
-        'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? '',
+        'exam_findings_tags' => $decodeJsonField($rxRecord['exam_findings_tags'] ?? null, $apptJsonFallback['exam_findings_tags'] ?? []),
+        'examination_findings' => $rxRecord['examination_findings'] ?? ($apptJsonFallback['examination_findings'] ?? 'None recorded'),
+        'diagnosis' => $rxRecord['diagnosis'] ?? ($apptJsonFallback['diagnosis'] ?? 'General Consultation'),
+        'diagnosis_duration' => $rxRecord['diagnosis_duration'] ?? ($apptJsonFallback['diagnosis_duration'] ?? ''),
+        'diagnosis_type' => $rxRecord['diagnosis_type'] ?? ($apptJsonFallback['diagnosis_type'] ?? ''),
         'medications' => $medications,
-        'examination_findings' => $rxRecord['examination_findings'] ?? 'None recorded',
-        'notes' => $rxRecord['notes'] ?? '',
+        'investigations' => $decodeJsonField($rxRecord['investigations'] ?? null, $apptJsonFallback['investigations'] ?? []),
+        'procedures' => $decodeJsonField($rxRecord['procedures'] ?? null, $apptJsonFallback['procedures'] ?? []),
+        'advice' => $decodeJsonField($rxRecord['advice'] ?? null, $apptJsonFallback['advice'] ?? []),
+        'notes' => $rxRecord['notes'] ?? ($apptJsonFallback['notes'] ?? ''),
+        'follow_up_date' => $rxRecord['follow_up_date'] ?? ($apptJsonFallback['follow_up_date'] ?? ''),
+        'follow_up_notes' => $rxRecord['follow_up_notes'] ?? ($apptJsonFallback['follow_up_notes'] ?? ''),
         'doctor_name' => $rxRecord['doctor_name'] ?? 'Doctor',
         'doctor_specialty' => $rxRecord['doctor_specialty'] ?? 'Ayurvedic Medicine',
+        'doctor_reg_no' => $rxRecord['doctor_reg_no'] ?? ($apptJsonFallback['doctor_reg_no'] ?? ''),
+        'digital_signature' => $rxRecord['digital_signature'] ?? ($apptJsonFallback['digital_signature'] ?? ''),
+        'include_qr' => isset($rxRecord['include_qr']) ? (bool)$rxRecord['include_qr'] : ($apptJsonFallback['include_qr'] ?? true),
         'doctor_phone' => $docPhone ?: '+91 7896543210',
         'doctor_email' => $docEmail ?: 'care@ocayur.com'
     ];

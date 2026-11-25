@@ -882,6 +882,10 @@
         <span>Age : <strong id="rxPatientAge">--</strong></span>
       </div>
 
+      <!-- Vitals Strip (Eka Care Style) -->
+      <div class="rx-vitals-strip" id="rxVitalsStrip" style="display: none; background: #faf6ee; border: 1px solid #ece5d9; border-radius: 8px; padding: 10px 14px; margin: 10px 0 4px; font-size: 13px; color: #25231f; flex-wrap: wrap; gap: 14px;">
+      </div>
+
       <div class="rx-divider" aria-hidden="true"></div>
 
       <!-- Clinical History & Diagnosis Section -->
@@ -905,24 +909,42 @@
         <!-- Rendered dynamically -->
       </section>
 
-      <!-- Examination & Notes -->
+      <!-- Examination, Investigations, Advice & Notes -->
       <section class="rx-findings-section" aria-label="Examination and doctor notes">
         <div class="rx-findings-row">
           <span class="rx-findings-label">Examination Findings : </span>
           <span class="rx-findings-val" id="rxExamFindings">--</span>
         </div>
+        <div class="rx-findings-row" id="rxInvestigationsRow" style="display: none;">
+          <span class="rx-findings-label">Lab Investigations : </span>
+          <span class="rx-findings-val" id="rxInvestigations">--</span>
+        </div>
+        <div class="rx-findings-row" id="rxProceduresRow" style="display: none;">
+          <span class="rx-findings-label">Procedures : </span>
+          <span class="rx-findings-val" id="rxProcedures">--</span>
+        </div>
+        <div class="rx-findings-row" id="rxAdviceRow" style="display: none;">
+          <span class="rx-findings-label">Advice &amp; Diet : </span>
+          <span class="rx-findings-val" id="rxAdvice">--</span>
+        </div>
         <div class="rx-findings-row">
           <span class="rx-findings-label">Notes : </span>
           <span class="rx-findings-val" id="rxDoctorNotes">--</span>
+        </div>
+        <div class="rx-findings-row" id="rxFollowUpRow" style="display: none;">
+          <span class="rx-findings-label">Follow-up : </span>
+          <span class="rx-findings-val" id="rxFollowUp">--</span>
         </div>
       </section>
 
       <!-- Prescription Document Footer -->
       <footer class="rx-footer-row">
         <div class="rx-doctor-referral">
-          <span class="ref-label">Referred To:</span>
+          <span class="ref-label">Prescribed By:</span>
           <span class="ref-doctor" id="rxDoctorName">Doctor</span>
           <span class="ref-specialty" id="rxDoctorSpec">Ayurvedic Medicine</span>
+          <span class="ref-specialty" id="rxDoctorRegNo" style="display: none; font-size: 12px; color: #64748b;"></span>
+          <span class="ref-specialty" id="rxDigitalSign" style="display: none; font-size: 12px; font-style: italic; color: #484831;"></span>
         </div>
         <div class="rx-contact-info" id="rxContactInfo">
           <span id="rxContactText">+91 7896543210 &nbsp;|&nbsp; care@ocayur.com</span>

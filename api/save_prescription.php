@@ -64,11 +64,23 @@ try {
     $patientName = trim($input['patient_name'] ?? '');
     $diagnosis = trim($input['diagnosis_name'] ?? $input['diagnosis'] ?? '');
     $diagnosisDuration = trim($input['diagnosis_duration'] ?? $input['duration'] ?? '');
+    $diagnosisType = trim($input['diagnosis_type'] ?? 'Provisional');
     $symptoms = $input['symptoms'] ?? [];
     $medications = $input['medications'] ?? [];
     $examinationFindings = trim($input['examination_findings'] ?? '');
+    $examFindingsTags = is_array($input['exam_findings_tags'] ?? null) ? $input['exam_findings_tags'] : [];
     $notes = trim($input['notes'] ?? '');
     $medicalHistory = trim($input['medical_history'] ?? '');
+    $vitals = is_array($input['vitals'] ?? null) ? $input['vitals'] : [];
+    $clinicalHistory = is_array($input['clinical_history'] ?? null) ? $input['clinical_history'] : [];
+    $investigations = is_array($input['investigations'] ?? null) ? $input['investigations'] : [];
+    $procedures = is_array($input['procedures'] ?? null) ? $input['procedures'] : [];
+    $advice = is_array($input['advice'] ?? null) ? $input['advice'] : [];
+    $followUpDate = trim($input['follow_up_date'] ?? '');
+    $followUpNotes = trim($input['follow_up_notes'] ?? '');
+    $doctorRegNo = trim($input['doctor_reg_no'] ?? '');
+    $digitalSignature = trim($input['digital_signature'] ?? '');
+    $includeQr = isset($input['include_qr']) ? (bool)$input['include_qr'] : true;
 
     if (empty($diagnosis)) {
         sendPrescriptionResponse(false, 'Diagnosis is required to issue a prescription.', [], 400);
@@ -163,8 +175,10 @@ try {
             if (!empty($mName)) {
                 $cleanMedications[] = [
                     'medication' => $mName,
+                    'form' => trim($med['form'] ?? ''),
                     'dose' => trim($med['dose'] ?? ''),
                     'frequency' => trim($med['frequency'] ?? ''),
+                    'timing' => trim($med['timing'] ?? ''),
                     'duration' => trim($med['duration'] ?? ''),
                     'remarks' => trim($med['remarks'] ?? '')
                 ];
@@ -181,13 +195,25 @@ try {
         'patient_name' => $patientName,
         'doctor_name' => $doctorName,
         'doctor_specialty' => $doctorArea,
+        'doctor_reg_no' => $doctorRegNo,
+        'digital_signature' => $digitalSignature,
+        'include_qr' => $includeQr,
+        'vitals' => $vitals,
+        'clinical_history' => $clinicalHistory,
         'medical_history' => $medicalHistory,
         'symptoms' => $symptoms,
+        'exam_findings_tags' => $examFindingsTags,
+        'examination_findings' => $examinationFindings,
         'diagnosis' => $diagnosis,
         'diagnosis_duration' => $diagnosisDuration,
+        'diagnosis_type' => $diagnosisType,
         'medications' => $medications,
-        'examination_findings' => $examinationFindings,
+        'investigations' => $investigations,
+        'procedures' => $procedures,
+        'advice' => $advice,
         'notes' => $notes,
+        'follow_up_date' => $followUpDate,
+        'follow_up_notes' => $followUpNotes,
         'phone' => $doctorPhone,
         'support_email' => $doctorEmail
     ];
@@ -222,23 +248,72 @@ try {
 
     $prescriptionText = implode("\n", $prescriptionTextLines);
 
-    // 1. Insert into `prescriptions` table in MySQL
+    // 1. Insert into `prescriptions` table in MySQL (inspecting available columns for forward/backward compatibility)
     $symptomsStr = is_array($symptoms) ? json_encode($symptoms, JSON_UNESCAPED_UNICODE) : strval($symptoms);
     $medicationsStr = json_encode($medications, JSON_UNESCAPED_UNICODE);
     $rxCode = 'RX-' . date('ymd') . '-' . strtoupper(substr(md5(uniqid()), 0, 4));
     $today = date('Y-m-d');
     $timeNow = date('h:i A');
 
-    $rxStmt = mysqli_prepare($connection1, "INSERT INTO `prescriptions` 
-        (`prescription_code`, `patient_id`, `patient_name`, `doctor_id`, `doctor_name`, `doctor_specialty`, `doctor_phone`, `doctor_email`, `appointment_id`, `prescription_date`, `prescription_time`, `medical_history`, `symptoms`, `diagnosis`, `diagnosis_duration`, `medications`, `examination_findings`, `notes`) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $existingCols = [];
+    $colRes = mysqli_query($connection1, "SHOW COLUMNS FROM `prescriptions`");
+    if ($colRes) {
+        while ($cRow = mysqli_fetch_assoc($colRes)) {
+            $existingCols[$cRow['Field']] = true;
+        }
+    }
 
+    $rxInsertFields = [
+        ['col' => 'prescription_code', 'type' => 's', 'val' => $rxCode],
+        ['col' => 'patient_id', 'type' => 'i', 'val' => $patientId],
+        ['col' => 'patient_name', 'type' => 's', 'val' => $patientName],
+        ['col' => 'doctor_id', 'type' => 'i', 'val' => $doctorId],
+        ['col' => 'doctor_name', 'type' => 's', 'val' => $doctorName],
+        ['col' => 'doctor_specialty', 'type' => 's', 'val' => $doctorArea],
+        ['col' => 'doctor_phone', 'type' => 's', 'val' => $doctorPhone],
+        ['col' => 'doctor_email', 'type' => 's', 'val' => $doctorEmail],
+        ['col' => 'appointment_id', 'type' => 'i', 'val' => $appointmentId],
+        ['col' => 'prescription_date', 'type' => 's', 'val' => $today],
+        ['col' => 'prescription_time', 'type' => 's', 'val' => $timeNow],
+        ['col' => 'medical_history', 'type' => 's', 'val' => $medicalHistory],
+        ['col' => 'symptoms', 'type' => 's', 'val' => $symptomsStr],
+        ['col' => 'diagnosis', 'type' => 's', 'val' => $diagnosis],
+        ['col' => 'diagnosis_duration', 'type' => 's', 'val' => $diagnosisDuration],
+        ['col' => 'medications', 'type' => 's', 'val' => $medicationsStr],
+        ['col' => 'examination_findings', 'type' => 's', 'val' => $examinationFindings],
+        ['col' => 'notes', 'type' => 's', 'val' => $notes],
+    ];
+
+    $optionalFields = [
+        ['col' => 'vitals', 'type' => 's', 'val' => json_encode($vitals, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'clinical_history', 'type' => 's', 'val' => json_encode($clinicalHistory, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'diagnosis_type', 'type' => 's', 'val' => $diagnosisType],
+        ['col' => 'exam_findings_tags', 'type' => 's', 'val' => json_encode($examFindingsTags, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'investigations', 'type' => 's', 'val' => json_encode($investigations, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'procedures', 'type' => 's', 'val' => json_encode($procedures, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'advice', 'type' => 's', 'val' => json_encode($advice, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'follow_up_date', 'type' => 's', 'val' => (!empty($followUpDate) ? $followUpDate : null)],
+        ['col' => 'follow_up_notes', 'type' => 's', 'val' => $followUpNotes],
+        ['col' => 'doctor_reg_no', 'type' => 's', 'val' => $doctorRegNo],
+        ['col' => 'digital_signature', 'type' => 's', 'val' => $digitalSignature],
+        ['col' => 'include_qr', 'type' => 'i', 'val' => ($includeQr ? 1 : 0)],
+    ];
+
+    foreach ($optionalFields as $opt) {
+        if (isset($existingCols[$opt['col']])) {
+            $rxInsertFields[] = $opt;
+        }
+    }
+
+    $colNames = array_map(fn($f) => '`' . $f['col'] . '`', $rxInsertFields);
+    $placeholders = array_fill(0, count($rxInsertFields), '?');
+    $bindTypes = implode('', array_map(fn($f) => $f['type'], $rxInsertFields));
+    $bindVals = array_map(fn($f) => $f['val'], $rxInsertFields);
+
+    $rxSql = "INSERT INTO `prescriptions` (" . implode(', ', $colNames) . ") VALUES (" . implode(', ', $placeholders) . ")";
+    $rxStmt = mysqli_prepare($connection1, $rxSql);
     if ($rxStmt) {
-        mysqli_stmt_bind_param($rxStmt, "sisissssisssssssss", 
-            $rxCode, $patientId, $patientName, $doctorId, $doctorName, $doctorArea,
-            $doctorPhone, $doctorEmail,
-            $appointmentId, $today, $timeNow, $medicalHistory, $symptomsStr, $diagnosis, $diagnosisDuration, $medicationsStr, $examinationFindings, $notes
-        );
+        mysqli_stmt_bind_param($rxStmt, $bindTypes, ...$bindVals);
         mysqli_stmt_execute($rxStmt);
         mysqli_stmt_close($rxStmt);
     }
