@@ -358,42 +358,50 @@
               </div>
             </div>
 
-            <!-- Past / Chronic History (Structured: Condition, Duration, Active/Inactive, Severity, Notes) -->
-            <div class="chip-section-block" data-chip-group="past_history">
-              <span class="chip-group-label">Quick-Add Past / Chronic History</span>
+            <!-- Past / Chronic History Panel -->
+            <div class="mh-panel" data-chip-group="past_history">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <span class="chip-group-label" style="margin-bottom: 0;">Past / Chronic Conditions</span>
+                <span style="font-size: 0.76rem; color: #8E877B;">Click a condition chip to add &amp; set duration, status, severity</span>
+              </div>
               <div class="chip-cloud" id="chips-past_history"></div>
               <div class="custom-chip-adder" style="margin-bottom: 14px;">
-                <input type="text" class="custom-chip-input" id="input-past_history" placeholder="Add custom condition...">
+                <input type="text" class="custom-chip-input" id="input-past_history" placeholder="Type any other condition...">
                 <button type="button" class="btn-add-custom-chip" data-add-chip="past_history">+ Add</button>
               </div>
               <div id="medicalHistoryItemsList"></div>
-              <button type="button" class="btn-form-action-teal" id="btnAddMedicalHistory" style="margin-top: 4px;">
-                + Add Medical History Entry
+              <button type="button" class="btn-quick-fill" id="btnAddMedicalHistory" style="margin-top: 2px;">
+                + Add Blank Condition Row
               </button>
             </div>
 
-            <!-- Allergies -->
-            <div class="chip-section-block" data-chip-group="allergies">
-              <span class="chip-group-label">Allergies</span>
-              <div class="chip-cloud" id="chips-allergies"></div>
-              <div class="custom-chip-adder">
-                <input type="text" class="custom-chip-input" id="input-allergies" placeholder="Add custom allergy...">
-                <button type="button" class="btn-add-custom-chip" data-add-chip="allergies">+ Add</button>
+            <!-- Allergies & Lifestyle Side-by-Side -->
+            <div class="mh-subpanels-grid">
+              <div class="mh-subpanel" data-chip-group="allergies">
+                <div>
+                  <span class="chip-group-label">Allergies</span>
+                  <div class="chip-cloud" id="chips-allergies"></div>
+                </div>
+                <div class="custom-chip-adder" style="max-width: 100%;">
+                  <input type="text" class="custom-chip-input" id="input-allergies" placeholder="Add custom allergy...">
+                  <button type="button" class="btn-add-custom-chip" data-add-chip="allergies">+ Add</button>
+                </div>
               </div>
-            </div>
 
-            <!-- Lifestyle / Personal History -->
-            <div class="chip-section-block" data-chip-group="lifestyle">
-              <span class="chip-group-label">Lifestyle &amp; Personal History</span>
-              <div class="chip-cloud" id="chips-lifestyle"></div>
-              <div class="custom-chip-adder">
-                <input type="text" class="custom-chip-input" id="input-lifestyle" placeholder="Add custom lifestyle detail...">
-                <button type="button" class="btn-add-custom-chip" data-add-chip="lifestyle">+ Add</button>
+              <div class="mh-subpanel" data-chip-group="lifestyle">
+                <div>
+                  <span class="chip-group-label">Lifestyle &amp; Personal History</span>
+                  <div class="chip-cloud" id="chips-lifestyle"></div>
+                </div>
+                <div class="custom-chip-adder" style="max-width: 100%;">
+                  <input type="text" class="custom-chip-input" id="input-lifestyle" placeholder="Add custom lifestyle detail...">
+                  <button type="button" class="btn-add-custom-chip" data-add-chip="lifestyle">+ Add</button>
+                </div>
               </div>
             </div>
 
             <!-- Additional Medical History Notes -->
-            <div class="form-field-group" style="margin-top: 12px;">
+            <div class="form-field-group">
               <label class="field-label" for="medicalHistoryNotes">Additional History Notes (Family / Surgical / Prakriti)</label>
               <textarea class="form-textarea-control" id="medicalHistoryNotes" placeholder="Enter any additional medical, surgical, or family history notes..." rows="2"></textarea>
             </div>
@@ -1024,13 +1032,22 @@
           btn.className = 'rx-chip' + (isActive ? ' active' : '');
           btn.textContent = label;
           btn.addEventListener('click', () => {
+            const existing = Array.from(activeSet).find(a => a.toLowerCase() === label.toLowerCase());
             if (group === 'past_history') {
-              addMedicalHistoryItem(label, '', 'Active', 'Moderate', '');
-              selectedChips.past_history.add(label);
+              if (existing) {
+                activeSet.delete(existing);
+                document.querySelectorAll('.mh-item-box').forEach(b => {
+                  if ((b.querySelector('.mh-condition')?.value || '').trim().toLowerCase() === label.toLowerCase()) {
+                    b.remove();
+                  }
+                });
+              } else {
+                activeSet.add(label);
+                addMedicalHistoryItem(label, '', 'Active', 'Moderate', '');
+              }
               renderChipGroup(group);
               return;
             }
-            const existing = Array.from(activeSet).find(a => a.toLowerCase() === label.toLowerCase());
             if (existing) {
               activeSet.delete(existing);
             } else {
@@ -1179,44 +1196,76 @@
       function addMedicalHistoryItem(condition = '', duration = '', status = 'Active', severity = 'Moderate', notes = '') {
         if (!medicalHistoryItemsList) return;
         mhCount++;
-        const idx = mhCount;
         const box = document.createElement('div');
-        box.className = 'symptom-box-item mh-item-box';
+        box.className = 'mh-compact-card mh-item-box';
+
+        const statusVal = status || 'Active';
+        const sevVal = severity || 'Moderate';
+
         box.innerHTML = `
-          <div class="symptom-box-header">
-            <h3 class="symptom-box-title">History Entry ${idx}</h3>
-            <button type="button" class="btn-remove-symptom" aria-label="Remove History Entry ${idx}" onclick="this.closest('.mh-item-box').remove()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div class="mh-compact-top">
+            <div class="mh-compact-field">
+              <span class="mh-compact-label">Condition</span>
+              <input type="text" class="mh-compact-input mh-condition" list="pastHistorySuggestions" placeholder="Condition name" value="${escapeHtml(condition)}">
+            </div>
+            <div class="mh-compact-field">
+              <span class="mh-compact-label">Duration</span>
+              <input type="text" class="mh-compact-input mh-duration" list="durationSuggestions" placeholder="e.g. 2 years" value="${escapeHtml(duration)}">
+            </div>
+            <div class="mh-compact-field">
+              <span class="mh-compact-label">Status</span>
+              <input type="hidden" class="mh-status" value="${escapeHtml(statusVal)}">
+              <div class="segmented-pills" data-seg="status">
+                <button type="button" class="seg-pill ${statusVal.toLowerCase() === 'active' ? 'active' : ''}" data-val="Active">Active</button>
+                <button type="button" class="seg-pill ${statusVal.toLowerCase() === 'inactive' ? 'active' : ''}" data-val="Inactive">Inactive</button>
+              </div>
+            </div>
+            <div class="mh-compact-field">
+              <span class="mh-compact-label">Severity</span>
+              <input type="hidden" class="mh-severity" value="${escapeHtml(sevVal)}">
+              <div class="segmented-pills" data-seg="severity">
+                <button type="button" class="seg-pill ${sevVal.toLowerCase() === 'mild' ? 'active' : ''}" data-val="Mild">Mild</button>
+                <button type="button" class="seg-pill ${sevVal.toLowerCase() === 'moderate' ? 'active' : ''}" data-val="Moderate">Moderate</button>
+                <button type="button" class="seg-pill ${sevVal.toLowerCase() === 'severe' ? 'active' : ''}" data-val="Severe">Severe</button>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-med-row mh-remove-btn" title="Remove condition" style="margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           </div>
-          <div class="form-grid-2col">
-            <div class="form-field-group">
-              <label class="field-label">Condition / History</label>
-              <input type="text" class="form-input-control mh-condition" list="pastHistorySuggestions" placeholder="Select or type condition" value="${escapeHtml(condition)}">
-            </div>
-            <div class="form-field-group">
-              <label class="field-label">Duration</label>
-              <input type="text" class="form-input-control mh-duration" list="durationSuggestions" placeholder="e.g. 2 years" value="${escapeHtml(duration)}">
-            </div>
-          </div>
-          <div class="form-grid-2col">
-            <div class="form-field-group">
-              <label class="field-label">Active / Status</label>
-              <input type="text" class="form-input-control mh-status" list="historyStatusSuggestions" placeholder="Active / Inactive" value="${escapeHtml(status)}">
-            </div>
-            <div class="form-field-group">
-              <label class="field-label">Severity</label>
-              <input type="text" class="form-input-control mh-severity" list="severitySuggestions" placeholder="Mild / Moderate / Severe" value="${escapeHtml(severity)}">
-            </div>
-          </div>
-          <div class="form-field-group">
-            <label class="field-label">Notes</label>
-            <textarea class="form-textarea-control mh-notes" placeholder="Enter history notes (e.g. on medication, controlled)..." rows="2">${escapeHtml(notes)}</textarea>
+          <div class="mh-compact-field">
+            <input type="text" class="mh-compact-input mh-notes" placeholder="Optional notes (e.g. on medication, controlled, family history)..." value="${escapeHtml(notes)}">
           </div>
         `;
+
+        // Segmented pill click handlers
+        box.querySelectorAll('.segmented-pills').forEach(groupEl => {
+          const hiddenInput = groupEl.previousElementSibling;
+          groupEl.querySelectorAll('.seg-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+              groupEl.querySelectorAll('.seg-pill').forEach(p => p.classList.remove('active'));
+              pill.classList.add('active');
+              if (hiddenInput) hiddenInput.value = pill.getAttribute('data-val');
+            });
+          });
+        });
+
+        // Remove button also un-highlights matching chip
+        box.querySelector('.mh-remove-btn')?.addEventListener('click', () => {
+          const condName = (box.querySelector('.mh-condition')?.value || '').trim().toLowerCase();
+          if (condName) {
+            const match = Array.from(selectedChips.past_history).find(c => c.toLowerCase() === condName);
+            if (match) {
+              selectedChips.past_history.delete(match);
+              renderChipGroup('past_history');
+            }
+          }
+          box.remove();
+        });
+
         medicalHistoryItemsList.appendChild(box);
       }
 
