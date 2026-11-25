@@ -1079,10 +1079,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function triggerPrescriptionPrintOrPdf() {
+    const prevTitle = document.title;
+    const pName = (document.getElementById('rxPatientName')?.textContent || 'Patient').trim().replace(/\s+/g, '_');
+    const pDate = (document.getElementById('rxDate')?.textContent || '').trim().replace(/[\/\s:]+/g, '-');
+    document.title = `Prescription_${pName}${pDate ? '_' + pDate : ''}`;
+    window.print();
+    setTimeout(() => { document.title = prevTitle; }, 500);
+  }
+
   if (rxPrintBtn) {
-    rxPrintBtn.addEventListener('click', () => {
-      window.print();
-    });
+    rxPrintBtn.addEventListener('click', triggerPrescriptionPrintOrPdf);
+  }
+
+  const rxDownloadPdfBtn = document.getElementById('rxDownloadPdfBtn');
+  if (rxDownloadPdfBtn) {
+    rxDownloadPdfBtn.addEventListener('click', triggerPrescriptionPrintOrPdf);
   }
 
   if (rxCreatePrescriptionBtn) {
@@ -1138,9 +1150,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnPrintPrescriptionBottom = document.getElementById('btnPrintPrescriptionBottom');
   if (btnPrintPrescriptionBottom) {
-    btnPrintPrescriptionBottom.addEventListener('click', () => {
-      window.print();
-    });
+    btnPrintPrescriptionBottom.addEventListener('click', triggerPrescriptionPrintOrPdf);
+  }
+
+  const btnDownloadPdfBottom = document.getElementById('btnDownloadPdfBottom');
+  if (btnDownloadPdfBottom) {
+    btnDownloadPdfBottom.addEventListener('click', triggerPrescriptionPrintOrPdf);
   }
 
   window.confirmDeletePrescription = async function(apptId, apptCode) {

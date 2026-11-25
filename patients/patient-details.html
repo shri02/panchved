@@ -731,13 +731,19 @@
       margin-right: 38px !important;
     }
 
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm;
+    }
+
     @media print {
       html, body {
         margin: 0 !important;
         padding: 0 !important;
         background: #ffffff !important;
-        color: #000000 !important;
-        font-size: 11pt !important;
+        color: #1e293b !important;
+        font-size: 10.5pt !important;
+        line-height: 1.5 !important;
         overflow: visible !important;
         height: auto !important;
         min-height: 0 !important;
@@ -794,22 +800,107 @@
         visibility: visible !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding: 18px 24px !important;
+        padding: 18px 22px !important;
         margin: 0 auto !important;
         box-shadow: none !important;
-        border: 1px solid #cbd5e1 !important;
+        border: 1.5px solid #cbd5e1 !important;
         border-radius: 8px !important;
         background: #ffffff !important;
         max-height: none !important;
         overflow: visible !important;
         animation: none !important;
         transform: none !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
       }
 
       .prescription-modal-box * {
         visibility: visible !important;
+      }
+
+      .prescription-top-header {
+        padding-bottom: 12px !important;
+        border-bottom: 2px solid #723F1E !important;
+        margin-bottom: 12px !important;
+      }
+
+      .rx-document-title {
+        font-size: 18pt !important;
+        letter-spacing: 0.08em !important;
+        color: #723F1E !important;
+      }
+
+      .rx-patient-info-row {
+        background: #faf6ee !important;
+        border: 1px solid #e2d9c8 !important;
+        border-radius: 6px !important;
+        padding: 8px 14px !important;
+        margin-bottom: 10px !important;
+        font-size: 10pt !important;
+      }
+
+      .rx-vitals-strip {
+        background: #faf6ee !important;
+        border: 1px solid #e2d9c8 !important;
+        padding: 8px 12px !important;
+        margin: 8px 0 10px !important;
+        font-size: 9.5pt !important;
+        gap: 10px 16px !important;
+      }
+
+      .rx-clinical-section,
+      .rx-findings-section {
+        margin: 10px 0 !important;
+      }
+
+      .rx-clinical-row,
+      .rx-findings-row {
+        padding: 5px 0 !important;
+        border-bottom: 1px dashed #e2e8f0 !important;
+        font-size: 10pt !important;
+        line-height: 1.45 !important;
+      }
+
+      .rx-clinical-row:last-child,
+      .rx-findings-row:last-child {
+        border-bottom: none !important;
+      }
+
+      .rx-label,
+      .rx-findings-label {
+        color: #475569 !important;
+        font-weight: 700 !important;
+      }
+
+      .rx-medication-grid {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        margin: 12px 0 !important;
+        padding: 10px 12px !important;
+        background: #ffffff !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .rx-med-table-header {
+        background: #faf6ee !important;
+        color: #723F1E !important;
+        border-bottom: 1.5px solid #cbd5e1 !important;
+        font-size: 9pt !important;
+      }
+
+      .rx-med-table-row {
+        border-bottom: 1px solid #e2e8f0 !important;
+        font-size: 9.8pt !important;
+        line-height: 1.4 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .rx-footer-row {
+        margin-top: 16px !important;
+        padding-top: 12px !important;
+        border-top: 1.5px solid #cbd5e1 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
     }
   </style>
@@ -834,6 +925,10 @@
         <button type="button" id="rxPrintBtn" class="btn-print-rx" style="padding: 6px 14px; font-size: 13px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
           Print
+        </button>
+        <button type="button" id="rxDownloadPdfBtn" class="btn-print-rx" style="padding: 6px 14px; font-size: 13px; background: #723F1E; color: #ffffff; border-color: #723F1E;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download PDF
         </button>
         <a id="rxAddNewBtn" href="#" class="btn-rx-action" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; background: #0d9488; color: #ffffff; border-radius: 6px; text-decoration: none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -959,8 +1054,8 @@
         </div>
       </footer>
 
-      <!-- Extra Action: Print Button -->
-      <div class="prescription-actions-row">
+      <!-- Extra Action: Print & Download PDF Buttons -->
+      <div class="prescription-actions-row" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
         <button type="button" class="btn-print-rx" id="btnPrintPrescriptionBottom">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -968,6 +1063,14 @@
             <rect x="6" y="14" width="12" height="8"></rect>
           </svg>
           Print Prescription
+        </button>
+        <button type="button" class="btn-print-rx" id="btnDownloadPdfBottom" style="background: #723F1E; color: #ffffff; border-color: #723F1E;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download PDF
         </button>
       </div>
     </div>
