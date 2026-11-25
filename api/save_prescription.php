@@ -74,10 +74,12 @@ try {
     $vitals = is_array($input['vitals'] ?? null) ? $input['vitals'] : [];
     $clinicalHistory = is_array($input['clinical_history'] ?? null) ? $input['clinical_history'] : [];
     $investigations = is_array($input['investigations'] ?? null) ? $input['investigations'] : [];
+    $labResults = is_array($input['lab_results'] ?? null) ? $input['lab_results'] : [];
     $procedures = is_array($input['procedures'] ?? null) ? $input['procedures'] : [];
     $advice = is_array($input['advice'] ?? null) ? $input['advice'] : [];
     $followUpDate = trim($input['follow_up_date'] ?? '');
     $followUpNotes = trim($input['follow_up_notes'] ?? '');
+    $referral = is_array($input['referral'] ?? null) ? $input['referral'] : [];
     $doctorRegNo = trim($input['doctor_reg_no'] ?? '');
     $digitalSignature = trim($input['digital_signature'] ?? '');
     $includeQr = isset($input['include_qr']) ? (bool)$input['include_qr'] : true;
@@ -209,11 +211,13 @@ try {
         'diagnosis_type' => $diagnosisType,
         'medications' => $medications,
         'investigations' => $investigations,
+        'lab_results' => $labResults,
         'procedures' => $procedures,
         'advice' => $advice,
         'notes' => $notes,
         'follow_up_date' => $followUpDate,
         'follow_up_notes' => $followUpNotes,
+        'referral' => $referral,
         'phone' => $doctorPhone,
         'support_email' => $doctorEmail
     ];
@@ -290,10 +294,12 @@ try {
         ['col' => 'diagnosis_type', 'type' => 's', 'val' => $diagnosisType],
         ['col' => 'exam_findings_tags', 'type' => 's', 'val' => json_encode($examFindingsTags, JSON_UNESCAPED_UNICODE)],
         ['col' => 'investigations', 'type' => 's', 'val' => json_encode($investigations, JSON_UNESCAPED_UNICODE)],
+        ['col' => 'lab_results', 'type' => 's', 'val' => json_encode($labResults, JSON_UNESCAPED_UNICODE)],
         ['col' => 'procedures', 'type' => 's', 'val' => json_encode($procedures, JSON_UNESCAPED_UNICODE)],
         ['col' => 'advice', 'type' => 's', 'val' => json_encode($advice, JSON_UNESCAPED_UNICODE)],
         ['col' => 'follow_up_date', 'type' => 's', 'val' => (!empty($followUpDate) ? $followUpDate : null)],
         ['col' => 'follow_up_notes', 'type' => 's', 'val' => $followUpNotes],
+        ['col' => 'referral', 'type' => 's', 'val' => json_encode($referral, JSON_UNESCAPED_UNICODE)],
         ['col' => 'doctor_reg_no', 'type' => 's', 'val' => $doctorRegNo],
         ['col' => 'digital_signature', 'type' => 's', 'val' => $digitalSignature],
         ['col' => 'include_qr', 'type' => 'i', 'val' => ($includeQr ? 1 : 0)],

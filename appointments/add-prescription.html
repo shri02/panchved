@@ -358,14 +358,18 @@
               </div>
             </div>
 
-            <!-- Past / Chronic History -->
+            <!-- Past / Chronic History (Structured: Condition, Duration, Active/Inactive, Severity, Notes) -->
             <div class="chip-section-block" data-chip-group="past_history">
-              <span class="chip-group-label">Past / Chronic History</span>
+              <span class="chip-group-label">Quick-Add Past / Chronic History</span>
               <div class="chip-cloud" id="chips-past_history"></div>
-              <div class="custom-chip-adder">
-                <input type="text" class="custom-chip-input" id="input-past_history" placeholder="Add custom medical history...">
+              <div class="custom-chip-adder" style="margin-bottom: 14px;">
+                <input type="text" class="custom-chip-input" id="input-past_history" placeholder="Add custom condition...">
                 <button type="button" class="btn-add-custom-chip" data-add-chip="past_history">+ Add</button>
               </div>
+              <div id="medicalHistoryItemsList"></div>
+              <button type="button" class="btn-form-action-teal" id="btnAddMedicalHistory" style="margin-top: 4px;">
+                + Add Medical History Entry
+              </button>
             </div>
 
             <!-- Allergies -->
@@ -527,12 +531,34 @@
 
             <!-- Lab Investigations -->
             <div class="chip-section-block" data-chip-group="investigations">
-              <span class="chip-group-label">Lab Tests &amp; Diagnostics</span>
+              <span class="chip-group-label">Lab Tests &amp; Diagnostics (Ordered)</span>
               <div class="chip-cloud" id="chips-investigations"></div>
               <div class="custom-chip-adder">
                 <input type="text" class="custom-chip-input" id="input-investigations" placeholder="Add custom lab test or scan...">
                 <button type="button" class="btn-add-custom-chip" data-add-chip="investigations">+ Add</button>
               </div>
+            </div>
+
+            <!-- Lab Results -->
+            <div class="chip-section-block">
+              <span class="chip-group-label">Lab Results (Recorded)</span>
+              <div class="medication-table-container" style="margin-bottom: 12px;">
+                <table class="medication-table" style="min-width: 680px;" aria-label="Lab Results Table">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="width: 28%;">Test Name</th>
+                      <th scope="col" style="width: 22%;">Result / Value</th>
+                      <th scope="col" style="width: 18%;">Status / Flag</th>
+                      <th scope="col" style="width: 28%;">Notes</th>
+                      <th scope="col" style="width: 4%;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="labResultsTableBody"></tbody>
+                </table>
+              </div>
+              <button type="button" class="btn-form-action-teal" id="btnAddLabResult">
+                + Add Lab Result
+              </button>
             </div>
 
             <!-- Procedures -->
@@ -621,6 +647,25 @@
               <div class="form-field-group">
                 <label class="field-label" for="doctorRegNo">Doctor Reg. / License No.</label>
                 <input type="text" class="form-input-control" id="doctorRegNo" placeholder="e.g. AYU-REG-12458">
+              </div>
+            </div>
+
+            <!-- Refer to a Doctor -->
+            <div class="chip-section-block" style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #ECE5D9;">
+              <span class="chip-group-label">Refer to a Doctor (Optional)</span>
+              <div class="form-grid-3col">
+                <div class="form-field-group">
+                  <label class="field-label" for="referDoctorName">Doctor Name</label>
+                  <input type="text" class="form-input-control" id="referDoctorName" placeholder="e.g. Dr. Rajesh Sharma">
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label" for="referSpecialty">Specialty / Department</label>
+                  <input type="text" class="form-input-control" id="referSpecialty" list="specialtySuggestions" placeholder="Select or type specialty">
+                </div>
+                <div class="form-field-group">
+                  <label class="field-label" for="referNotes">Referral Reason / Notes</label>
+                  <input type="text" class="form-input-control" id="referNotes" placeholder="e.g. For Panchakarma / Ortho evaluation">
+                </div>
               </div>
             </div>
 
@@ -775,6 +820,61 @@
     <option value="SOS / As needed">
   </datalist>
 
+  <datalist id="pastHistorySuggestions">
+    <option value="Diabetes">
+    <option value="Hypertension">
+    <option value="Thyroid">
+    <option value="Asthma">
+    <option value="Migraine">
+    <option value="Gastritis">
+    <option value="PCOS">
+    <option value="Arthritis">
+    <option value="No Known History">
+  </datalist>
+
+  <datalist id="historyStatusSuggestions">
+    <option value="Active">
+    <option value="Inactive">
+    <option value="Resolved">
+    <option value="Controlled">
+  </datalist>
+
+  <datalist id="labTestSuggestions">
+    <option value="CBC">
+    <option value="Fasting Blood Sugar (FBS)">
+    <option value="PPBS">
+    <option value="HbA1c">
+    <option value="Lipid Profile">
+    <option value="TSH / Thyroid Profile">
+    <option value="Vitamin D3">
+    <option value="Vitamin B12">
+    <option value="LFT">
+    <option value="KFT">
+    <option value="Hemoglobin">
+  </datalist>
+
+  <datalist id="labStatusSuggestions">
+    <option value="Normal">
+    <option value="High">
+    <option value="Low">
+    <option value="Borderline">
+    <option value="Positive">
+    <option value="Negative">
+  </datalist>
+
+  <datalist id="specialtySuggestions">
+    <option value="Ayurvedic Medicine">
+    <option value="Panchakarma Specialist">
+    <option value="General Physician">
+    <option value="Cardiology">
+    <option value="Orthopedics">
+    <option value="Dermatology">
+    <option value="ENT">
+    <option value="Gynecology">
+    <option value="Pediatrics">
+    <option value="Neurology">
+  </datalist>
+
   <!-- Success Toast -->
   <div class="prescription-toast" id="prescriptionToast" role="alert" aria-live="polite">
     <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -924,6 +1024,12 @@
           btn.className = 'rx-chip' + (isActive ? ' active' : '');
           btn.textContent = label;
           btn.addEventListener('click', () => {
+            if (group === 'past_history') {
+              addMedicalHistoryItem(label, '', 'Active', 'Moderate', '');
+              selectedChips.past_history.add(label);
+              renderChipGroup(group);
+              return;
+            }
             const existing = Array.from(activeSet).find(a => a.toLowerCase() === label.toLowerCase());
             if (existing) {
               activeSet.delete(existing);
@@ -946,6 +1052,9 @@
         selectedChips[group].add(val);
         input.value = '';
         renderChipGroup(group);
+        if (group === 'past_history') {
+          addMedicalHistoryItem(val, '', 'Active', 'Moderate', '');
+        }
       }
 
       document.querySelectorAll('[data-add-chip]').forEach(btn => {
@@ -1062,6 +1171,94 @@
       document.getElementById('btnAddMedication')?.addEventListener('click', () => addMedicationRow());
 
       // ============================================================
+      // 4b. Structured Medical History Items Builder
+      // ============================================================
+      const medicalHistoryItemsList = document.getElementById('medicalHistoryItemsList');
+      let mhCount = 0;
+
+      function addMedicalHistoryItem(condition = '', duration = '', status = 'Active', severity = 'Moderate', notes = '') {
+        if (!medicalHistoryItemsList) return;
+        mhCount++;
+        const idx = mhCount;
+        const box = document.createElement('div');
+        box.className = 'symptom-box-item mh-item-box';
+        box.innerHTML = `
+          <div class="symptom-box-header">
+            <h3 class="symptom-box-title">History Entry ${idx}</h3>
+            <button type="button" class="btn-remove-symptom" aria-label="Remove History Entry ${idx}" onclick="this.closest('.mh-item-box').remove()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="form-grid-2col">
+            <div class="form-field-group">
+              <label class="field-label">Condition / History</label>
+              <input type="text" class="form-input-control mh-condition" list="pastHistorySuggestions" placeholder="Select or type condition" value="${escapeHtml(condition)}">
+            </div>
+            <div class="form-field-group">
+              <label class="field-label">Duration</label>
+              <input type="text" class="form-input-control mh-duration" list="durationSuggestions" placeholder="e.g. 2 years" value="${escapeHtml(duration)}">
+            </div>
+          </div>
+          <div class="form-grid-2col">
+            <div class="form-field-group">
+              <label class="field-label">Active / Status</label>
+              <input type="text" class="form-input-control mh-status" list="historyStatusSuggestions" placeholder="Active / Inactive" value="${escapeHtml(status)}">
+            </div>
+            <div class="form-field-group">
+              <label class="field-label">Severity</label>
+              <input type="text" class="form-input-control mh-severity" list="severitySuggestions" placeholder="Mild / Moderate / Severe" value="${escapeHtml(severity)}">
+            </div>
+          </div>
+          <div class="form-field-group">
+            <label class="field-label">Notes</label>
+            <textarea class="form-textarea-control mh-notes" placeholder="Enter history notes (e.g. on medication, controlled)..." rows="2">${escapeHtml(notes)}</textarea>
+          </div>
+        `;
+        medicalHistoryItemsList.appendChild(box);
+      }
+
+      document.getElementById('btnAddMedicalHistory')?.addEventListener('click', () => addMedicalHistoryItem());
+
+      // ============================================================
+      // 4c. Lab Results Table Builder
+      // ============================================================
+      const labResultsTableBody = document.getElementById('labResultsTableBody');
+
+      function addLabResultRow(test = '', result = '', status = '', notes = '') {
+        if (!labResultsTableBody) return;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <input type="text" class="medication-input lab-test" list="labTestSuggestions" placeholder="Select or type test" value="${escapeHtml(test)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input lab-result" placeholder="e.g. 12.8 g/dL" value="${escapeHtml(result)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input lab-status" list="labStatusSuggestions" placeholder="Normal / High..." value="${escapeHtml(status)}">
+          </td>
+          <td>
+            <input type="text" class="medication-input lab-notes" placeholder="Notes / reference" value="${escapeHtml(notes)}">
+          </td>
+          <td style="text-align: center;">
+            <button type="button" class="btn-remove-med-row" title="Remove row" onclick="this.closest('tr').remove()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </td>
+        `;
+        labResultsTableBody.appendChild(row);
+      }
+
+      addLabResultRow();
+      document.getElementById('btnAddLabResult')?.addEventListener('click', () => addLabResultRow());
+
+      // ============================================================
       // 5. Follow-up Quick Date Pills
       // ============================================================
       const followUpDateInput = document.getElementById('followUpDate');
@@ -1089,6 +1286,9 @@
       const followUpNotesInput = document.getElementById('followUpNotes');
       const doctorRegNoInput = document.getElementById('doctorRegNo');
       const includeQrCheckbox = document.getElementById('includeQrVerification');
+      const referDoctorNameInput = document.getElementById('referDoctorName');
+      const referSpecialtyInput = document.getElementById('referSpecialty');
+      const referNotesInput = document.getElementById('referNotes');
 
       async function loadExistingPrescription() {
         const queryTarget = appointmentDbId || appointmentId;
@@ -1135,7 +1335,7 @@
               if (vitalRBS && rx.vitals.rbs) vitalRBS.value = rx.vitals.rbs;
             }
 
-            // Clinical history chips
+            // Clinical history chips & structured items
             if (rx.clinical_history && typeof rx.clinical_history === 'object') {
               ['past_history', 'allergies', 'lifestyle'].forEach(grp => {
                 if (Array.isArray(rx.clinical_history[grp])) {
@@ -1143,6 +1343,19 @@
                   renderChipGroup(grp);
                 }
               });
+              if (Array.isArray(rx.clinical_history.history_items) && rx.clinical_history.history_items.length > 0) {
+                if (medicalHistoryItemsList) medicalHistoryItemsList.innerHTML = '';
+                mhCount = 0;
+                rx.clinical_history.history_items.forEach(item => {
+                  addMedicalHistoryItem(
+                    item.condition || '',
+                    item.duration || '',
+                    item.status || 'Active',
+                    item.severity || 'Moderate',
+                    item.notes || ''
+                  );
+                });
+              }
               if (medicalHistoryNotesInput && rx.clinical_history.notes) {
                 medicalHistoryNotesInput.value = rx.clinical_history.notes;
               }
@@ -1180,12 +1393,27 @@
 
             if (doctorNotesInput && rx.notes) doctorNotesInput.value = rx.notes;
 
-            // Follow-up & Sign-off
+            // Follow-up, Referral & Sign-off
             if (followUpDateInput && rx.follow_up_date) followUpDateInput.value = rx.follow_up_date;
             if (followUpNotesInput && rx.follow_up_notes) followUpNotesInput.value = rx.follow_up_notes;
             if (doctorRegNoInput && rx.doctor_reg_no) doctorRegNoInput.value = rx.doctor_reg_no;
             if (digitalSigInput && rx.digital_signature) digitalSigInput.value = rx.digital_signature;
             if (includeQrCheckbox && rx.include_qr !== undefined) includeQrCheckbox.checked = !!rx.include_qr;
+            if (rx.referral && typeof rx.referral === 'object') {
+              if (referDoctorNameInput && rx.referral.doctor) referDoctorNameInput.value = rx.referral.doctor;
+              if (referSpecialtyInput && rx.referral.specialty) referSpecialtyInput.value = rx.referral.specialty;
+              if (referNotesInput && rx.referral.notes) referNotesInput.value = rx.referral.notes;
+            }
+
+            // Prefill Lab Results
+            if (Array.isArray(rx.lab_results) && rx.lab_results.length > 0 && labResultsTableBody) {
+              labResultsTableBody.innerHTML = '';
+              rx.lab_results.forEach(lr => {
+                if (lr.test) {
+                  addLabResultRow(lr.test || '', lr.result || '', lr.status || '', lr.notes || '');
+                }
+              });
+            }
 
             // Prefill symptoms
             let syms = rx.symptoms;
@@ -1259,9 +1487,25 @@
             rbs: vitalRBS?.value.trim() || ''
           };
 
+          // Structured Medical History Items
+          const historyItems = [];
+          document.querySelectorAll('.mh-item-box').forEach(box => {
+            const cond = box.querySelector('.mh-condition')?.value.trim() || '';
+            if (cond) {
+              historyItems.push({
+                condition: cond,
+                duration: box.querySelector('.mh-duration')?.value.trim() || '',
+                status: box.querySelector('.mh-status')?.value.trim() || 'Active',
+                severity: box.querySelector('.mh-severity')?.value.trim() || '',
+                notes: box.querySelector('.mh-notes')?.value.trim() || ''
+              });
+            }
+          });
+
           // Clinical History
           const clinicalHistory = {
             past_history: Array.from(selectedChips.past_history),
+            history_items: historyItems,
             allergies: Array.from(selectedChips.allergies),
             lifestyle: Array.from(selectedChips.lifestyle),
             notes: medicalHistoryNotesInput?.value.trim() || ''
@@ -1269,7 +1513,15 @@
 
           // Build backward-compatible medical_history summary string
           const mhParts = [];
-          if (clinicalHistory.past_history.length) mhParts.push('History: ' + clinicalHistory.past_history.join(', '));
+          if (historyItems.length) {
+            const formattedItems = historyItems.map(h => {
+              const meta = [h.duration, h.status, h.severity, h.notes].filter(Boolean).join(', ');
+              return meta ? `${h.condition} (${meta})` : h.condition;
+            });
+            mhParts.push('History: ' + formattedItems.join('; '));
+          } else if (clinicalHistory.past_history.length) {
+            mhParts.push('History: ' + clinicalHistory.past_history.join(', '));
+          }
           if (clinicalHistory.allergies.length) mhParts.push('Allergies: ' + clinicalHistory.allergies.join(', '));
           if (clinicalHistory.lifestyle.length) mhParts.push('Lifestyle: ' + clinicalHistory.lifestyle.join(', '));
           if (clinicalHistory.notes) mhParts.push(clinicalHistory.notes);
@@ -1320,6 +1572,25 @@
           const procedures = Array.from(selectedChips.procedures);
           const advice = Array.from(selectedChips.advice);
 
+          const labResults = [];
+          labResultsTableBody?.querySelectorAll('tr').forEach(tr => {
+            const testName = tr.querySelector('.lab-test')?.value.trim() || '';
+            if (testName) {
+              labResults.push({
+                test: testName,
+                result: tr.querySelector('.lab-result')?.value.trim() || '',
+                status: tr.querySelector('.lab-status')?.value.trim() || '',
+                notes: tr.querySelector('.lab-notes')?.value.trim() || ''
+              });
+            }
+          });
+
+          const referral = {
+            doctor: referDoctorNameInput?.value.trim() || '',
+            specialty: referSpecialtyInput?.value.trim() || '',
+            notes: referNotesInput?.value.trim() || ''
+          };
+
           const followUpDate = followUpDateInput?.value || '';
           const followUpNotes = followUpNotesInput?.value.trim() || '';
           const doctorRegNo = doctorRegNoInput?.value.trim() || '';
@@ -1349,11 +1620,13 @@
                 diagnosis_type: diagnosisType,
                 medications: medications,
                 investigations: investigations,
+                lab_results: labResults,
                 procedures: procedures,
                 advice: advice,
                 notes: doctorNotes,
                 follow_up_date: followUpDate,
                 follow_up_notes: followUpNotes,
+                referral: referral,
                 doctor_reg_no: doctorRegNo,
                 digital_signature: digitalSignature,
                 include_qr: includeQr

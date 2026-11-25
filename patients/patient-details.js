@@ -899,6 +899,33 @@ document.addEventListener('DOMContentLoaded', () => {
           toggleArrayRow('rxProceduresRow', 'rxProcedures', rx.procedures);
           toggleArrayRow('rxAdviceRow', 'rxAdvice', rx.advice);
 
+          const rxLabResultsRow = document.getElementById('rxLabResultsRow');
+          const rxLabResults = document.getElementById('rxLabResults');
+          if (rxLabResultsRow && rxLabResults) {
+            if (Array.isArray(rx.lab_results) && rx.lab_results.length > 0) {
+              rxLabResults.textContent = rx.lab_results.map(lr => {
+                const val = [lr.result, lr.status ? `[${lr.status}]` : '', lr.notes].filter(Boolean).join(' ');
+                return val ? `${lr.test}: ${val}` : lr.test;
+              }).join(' | ');
+              rxLabResultsRow.style.display = '';
+            } else {
+              rxLabResultsRow.style.display = 'none';
+            }
+          }
+
+          const rxReferToRow = document.getElementById('rxReferToRow');
+          const rxReferTo = document.getElementById('rxReferTo');
+          if (rxReferToRow && rxReferTo) {
+            const ref = rx.referral && typeof rx.referral === 'object' ? rx.referral : null;
+            if (ref && (ref.doctor || ref.specialty)) {
+              const refParts = [ref.doctor, ref.specialty ? `(${ref.specialty})` : '', ref.notes ? `— ${ref.notes}` : ''].filter(Boolean);
+              rxReferTo.textContent = refParts.join(' ');
+              rxReferToRow.style.display = '';
+            } else {
+              rxReferToRow.style.display = 'none';
+            }
+          }
+
           const rxFollowUpRow = document.getElementById('rxFollowUpRow');
           const rxFollowUp = document.getElementById('rxFollowUp');
           if (rxFollowUpRow && rxFollowUp) {
